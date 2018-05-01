@@ -1,0 +1,70 @@
+<html>
+  <head>
+    <title>Pepper Player – Test</title>
+    <script src="pepper.js"></script>
+  </head>
+  <body>
+    <video class="pepper" controls width="640" height="480"></video>
+    <script type="text/javascript">
+      /*
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://tf-static.vulcanca.com/" +
+              "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
+              "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/" +
+              "SYC0zeIlORZH1JLBUe4z",
+              base: "http://tf-static.vulcanca.com/" +
+              "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
+              "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
+      */
+
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://media.tfod.tomferry.com/" +
+              "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
+              "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/" +
+              "SYC0zeIlORZH1JLBUe4z",
+              base: "http://media.tfod.tomferry.com/" +
+              "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
+              "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
+
+      /*
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://dash.akamaized.net/dash264/TestCases/5c/" +
+              "nomor/4_1a.mpd",
+              base: "http://dash.akamaized.net/dash264/TestCases/5c/" +
+              "nomor/"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
+      */
+
+      console.log(player.config);
+    </script>
+  </body>
+</html>
