@@ -1,13 +1,13 @@
 import { assert } from './assert';
-import { Hooker } from './hooker';
 import { mergeDicts } from './helpers';
 import { toInt, toDuration } from './convert';
+import { kStreamType } from './constants';
 
 class Rep {
   constructor(adp, rep, override) {
     let id, codecs, width, height, bandwidth, baseURL,
     initialization, mediaTemplate, segmentTemplate, startNumber,
-    timescale, mimeType, segmentDuration;
+    timescale, mimeType, segmentDuration, type;
 
     // source id from rep attribute
     id = rep.getAttribute('id');
@@ -66,6 +66,12 @@ class Rep {
       segmentDuration = toInt(segDurationAttr);
     }
 
+    if (mimeType && mimeType.includes("video") && width && height) {
+      type = kStreamType.video;
+    } else if (mimeType && mimeType.includes("audio") && bandwidth) {
+      type = kStreamType.audio;
+    }
+
     this.id = id;
     this.mimeType = mimeType;
     this.codecs = codecs;
@@ -78,6 +84,7 @@ class Rep {
     this.startNumber = startNumber;
     this.timescale = timescale;
     this.segmentDuration = segmentDuration;
+    this.type = type;
   }
 
   weight() {
@@ -95,12 +102,11 @@ class Rep {
 
 class Adp {
   constructor(adp, i, override) {
-    let maxWidth, maxHeight;
-
     const maxWidthAttr = adp.getAttribute('maxWidth');
     const maxHeightAttr = adp.getAttribute('maxHeight');
 
     this.adp = adp;
+    this.index = i;
     this.maxWidth = toInt(maxWidthAttr);
     this.maxHeight = toInt(maxHeightAttr);
     this.reps = this.reps_(adp, override);
@@ -120,7 +126,7 @@ class Adp {
 
       return reps;
     } else {
-      throw(`No representations present in adaptation[${i}]`);
+      throw(`No representations present in adaptation[${this.index}]`);
     }
   }
 
@@ -233,10 +239,8 @@ class Adp {
   }
 }
 
-class MPD extends Hooker {
+class MPD {
   constructor(config = {}) {
-    super();
-
     const kDefaultConfig = {
       url: "",
       base: "",
@@ -246,7 +250,7 @@ class MPD extends Hooker {
   }
 
   setup() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.fetch_(this.config.url).then((result) => {
         this.parse_(result);
         resolve();

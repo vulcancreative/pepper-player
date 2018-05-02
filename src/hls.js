@@ -13,10 +13,6 @@ function hlsPreferred(config) {
 
   const item = config.playlist[config.index];
 
-  if (item.hls.length && item.hls.includes('.m3u8')) || item.hls === true {
-    return true;
-  }
-
   return false;
 }
 

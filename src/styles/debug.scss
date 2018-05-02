@@ -1,0 +1,58 @@
+video {
+  display: inline-block;
+  float: left;
+}
+
+.qualities {
+  width: 120px;
+  display: inline-block;
+  margin-left: 100px;
+  float: left;
+
+  div {
+    color: white;
+    background: grey;
+    width: 100%;
+    text-align: center;
+    padding: 5px 0;
+    position: relative;
+    cursor: pointer;
+
+    font: {
+      family: sans-serif;
+      size: 14px;
+      weight: 100;
+    }
+
+    &:nth-child(n+2) {
+      margin-top: 2px;
+    }
+
+    &:hover {
+      background: lighten(grey, 10%);
+    }
+  }
+
+  .selected {
+    background: blue;
+    cursor: default;
+
+    &:hover {
+      background: blue;
+    }
+  }
+
+  .auto-selected {
+    &:after {
+      content: '√';
+      color: green;
+      position: absolute;
+      right: -20px;
+
+      font: {
+        family: sans-serif;
+        size: 14px;
+      }
+    }
+  }
+}

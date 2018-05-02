@@ -1,8 +1,8 @@
 import { MPD } from './mpd';
 import { assert } from './assert';
-import { Hooker } from './hooker';
 import { Stream } from './stream';
 import { mergeDicts } from './helpers';
+import { kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
 
 /*
@@ -19,10 +19,8 @@ function configure(config, kDefaultConfig) {
 }
 */
 
-class State extends Hooker {
+class State {
   constructor(config = {}) {
-    super();
-
     const kDefaultConfig = {
       playlist: [],
       base:   0,
@@ -50,17 +48,19 @@ class State extends Hooker {
       this.video = root;
       this.loading = false;
       this.started = false;
+      this.qualityAuto = true;
+      this.qualityQueued = null;
       this.bufferTime = this.config.start;
 
       this.mpd = new MPD({ url: url, base: base });
       this.mpd.setup().then(() => console.log("MPD parsed"))
-                      .then(() => this.mediaSource_() )
+                      .then(() => this.mediaSource_())
                       .then((mediaSource) => {
                         this.mediaSource = mediaSource;
                       })
                       .then(() => this.buildStreams_(
                           this.mpd,
-                          this.mediaSource,
+                          this.mediaSource
                       ))
                       .then((streams) => {
                         this.streams = streams;
@@ -70,7 +70,7 @@ class State extends Hooker {
   }
 
   buildStreams_(mpd, mediaSource) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let counter = 0;
       let streams = [];
 
@@ -130,46 +130,74 @@ class State extends Hooker {
       return URL.createObjectURL(ms);
     } else {
       throw("Media source is invalid.");
-      return null;
     }
   }
 
   adjustQuality(factor = 1.0) {
     // fail if actively buffering
-    if (this.loading) { return Promise.resolve(); }
+    if (this.loading) { return Promise.resolve(false); }
 
     this.loading = true;
 
-    return new Promise((resolve, reject) => {
-      for (let i = 0; i < this.streams.length; i++) {
-        const stream = this.streams[i];
-        const adp = stream.adp;
+    return new Promise((resolve) => {
+      // handle queued, fixed quality
+      if (!this.qualityAuto && this.qualityQueued !== null) {
+        console.log("hit");
 
-        let rep;
+        const stream = this.qualityQueued.stream;
+        const repID = this.qualityQueued.repID;
 
-        // lower quality if factor > 0.5; raise if < 0.25
-        if (factor >= 0.45) {
-          rep = adp.weakerRep(stream.rep.id);
-        } else if (factor <= 0.20) {
-          rep = adp.strongerRep(stream.rep.id);
-        } else {
+        this.qualityQueued = null;
+
+        stream.switchToRep(repID).then(() => {
+          console.log(`Consumed queued rep "${repID}"`);
           this.loading = false;
-          resolve();
-
-          return;
-        }
-
-        assert(rep !== null && typeof rep !== 'undefined',
-               "rep invalid within adjustQuality");
-
-        stream.switchToRep(rep.id).then(() => {
-          if (i === this.streams.length - 1) {
-            this.loading = false;
-            resolve();
-          }
+          resolve(true);
         });
+      // handle automatic quality switching
+      } else if (this.qualityAuto) {
+        for (let i = 0; i < this.streams.length; i++) {
+          const stream = this.streams[i];
+          const adp = stream.adp;
+
+          let rep;
+
+          // lower quality if factor > 0.5; raise if < 0.25
+          if (factor >= 0.45) {
+            rep = adp.weakerRep(stream.rep.id);
+          } else if (factor <= 0.20) {
+            rep = adp.strongerRep(stream.rep.id);
+          } else {
+            this.loading = false;
+            resolve(false);
+            return;
+          }
+
+          assert(rep !== null && typeof rep !== 'undefined',
+                 "rep invalid within adjustQuality");
+
+          stream.switchToRep(rep.id).then(() => {
+            if (i === this.streams.length - 1) {
+              this.loading = false;
+              resolve(true);
+            }
+          });
+        }
+      } else {
+        this.loading = false;
+        resolve(true);
       }
     });
+  }
+
+  audioStream() {
+    for (let i = 0; i != this.streams.length; i++) {
+      const stream = this.streams[i];
+      if (stream.type === kStreamType.audio ||
+          stream.type === kStreamType.muxed) { return stream.rep; }
+    }
+
+    return null;
   }
 
   codecs() {
@@ -180,7 +208,7 @@ class State extends Hooker {
     // fail if actively buffering
     if (this.loading) { return Promise.resolve(); }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       // times measured against current and desired state
       const start = this.bufferTime;
       const lead = this.started ? this.config.lead : this.config.base;
@@ -239,6 +267,54 @@ class State extends Hooker {
         });
       }, Promise.resolve());
     });
+  }
+
+  queueQuality(quality) {
+    assert(quality !== null && typeof quality !== 'undefined');
+
+    const name = quality.name;
+    const repID = quality.repID;
+
+    assert(name !== null && typeof name !== 'undefined');
+    assert(repID !== null && typeof repID !== 'undefined');
+
+    console.log(`name: ${name}, repID: ${repID}`);
+    if (name.toLowerCase() === "auto") {
+      this.qualityAuto = true;
+      this.qualityQueued = null;
+      return;
+    }
+
+    for (let i = 0; i != this.streams.length; i++) {
+      const stream = this.streams[i];
+
+      for (let j = 0; j != stream.sources; j++) {
+        const source = stream.sources[j];
+
+        assert(source !== null && typeof source !== 'undefined');
+        assert(source.id !== null && typeof source.id !== 'undefined');
+
+        if (source.id === repID) {
+          this.qualityAuto = false;
+          this.qualityQueued = { 
+            stream: stream,
+            repID: repID,
+          };
+
+          return;
+        }
+      }
+    }
+  }
+
+  videoStream() {
+    for (let i = 0; i != this.streams.length; i++) {
+      const stream = this.streams[i];
+      if (stream.type === kStreamType.video ||
+          stream.type === kStreamType.muxed) { return stream.rep; }
+    }
+
+    return null;
   }
 }
 

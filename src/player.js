@@ -1,12 +1,10 @@
+import { UI } from './ui';
 import { State } from './state';
-import { assert } from './assert';
-import { Hooker } from './hooker';
+import { h, render } from 'preact';
 import { mergeDicts } from './helpers';
 
-class Player extends Hooker {
+class Player {
   constructor(config = {}) {
-    super()
-
     const kDefaultConfig = {
       playlist: [
         // {
@@ -29,6 +27,9 @@ class Player extends Hooker {
       query:  "video.pepper",
       start:  0,
       track:  0,
+      ui:     {
+        qualityControl:  true,
+      }
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
@@ -45,6 +46,7 @@ class Player extends Hooker {
 
     this.state = new State(this.config);
     this.state.setup().then(() => console.log("State ready"))
+                      .then(() => this.renderUI())
                       .then(() => this.state.fillBuffers())
                       .then((speed) => this.state.adjustQuality(speed))
                       .then(() => {
@@ -93,7 +95,9 @@ class Player extends Hooker {
 
         if (currentTime >= bufferTime - leadTime / 2) {
           this.state.fillBuffers().then((speed) => {
-            this.state.adjustQuality(speed)
+            this.state.adjustQuality(speed).then((adjusted) => {
+              if (adjusted) { this.renderUI(); }
+            });
           });
         }
 
@@ -107,6 +111,14 @@ class Player extends Hooker {
 
   previous() {
     // TODO
+  }
+
+  renderUI() {
+    render(
+      <UI guts={this.state} config={this.config.ui} />,
+      document.querySelectorAll('.root')[0],
+      document.querySelectorAll('.pepper-ui')[0]
+    );
   }
 
   seek() {

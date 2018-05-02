@@ -1,13 +1,10 @@
 import { assert } from './assert';
-import { Hooker } from './hooker';
 import { strings } from './strings';
 import { mergeDicts, isInt } from './helpers';
 import { kSegmentType } from './constants';
 
-class Stream extends Hooker {
+class Stream {
   constructor(config = {}) {
-    super();
-
     const kDefaultConfig = {
       mediaSource:  null,
       mpd:  null,
@@ -29,7 +26,7 @@ class Stream extends Hooker {
   }
 
   setup() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.init_().then((cache) => {
         this.cache = cache;
         resolve();
@@ -38,7 +35,8 @@ class Stream extends Hooker {
   }
 
   init_(cache = []) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      this.type = this.rep.type;
       this.codecs = `${this.rep.mimeType}; codecs="${this.rep.codecs}"`;
 
       this.buffer = this.mediaSource.addSourceBuffer(this.codecs);
@@ -134,7 +132,7 @@ class Stream extends Hooker {
   }
 
   fillBuffer(next) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const rep = this.rep;
 
       const nVarN = /\$Number\$/g,      //e.g "...$Number$.m4s"
@@ -220,7 +218,7 @@ class Stream extends Hooker {
         }
       }
     } else if (isInt(points)) {
-      if (binSearchCache(point) > 1) {
+      if (binSearchCache(points) > 1) {
         // console.log(`point(${point}) found`);
         // console.log(this.cache);
         return true;
@@ -233,7 +231,6 @@ class Stream extends Hooker {
   }
 
   makePoints(current, target) {
-    const rep = this.rep;
     const delta = target - current;
     const steps = parseInt(
       Math.ceil(parseFloat(delta) / parseFloat(this.segmentLength()))
@@ -243,7 +240,6 @@ class Stream extends Hooker {
       Math.ceil(parseFloat(current) / parseFloat(this.segmentLength()))
     );
 
-    let index = 0;
     return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
   }
 
@@ -263,7 +259,7 @@ class Stream extends Hooker {
   }
 
   switchToRep(repID) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       for (let i = 0; i != this.cache.length; i++) {
         const segment = this.cache[i];
 
