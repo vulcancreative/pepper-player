@@ -1,7 +1,9 @@
+import { os } from './os';
 import { UI } from './ui';
 import { State } from './state';
 import { h, render } from 'preact';
 import { mergeDicts } from './helpers';
+import { kStreamType } from './constants';
 
 class Player {
   constructor(config = {}) {
@@ -48,9 +50,24 @@ class Player {
     this.state.setup().then(() => console.log("State ready"))
                       .then(() => this.renderUI())
                       .then(() => this.state.fillBuffers())
-                      .then((speed) => this.state.adjustQuality(speed))
+                      .then((speed, now) => {
+                        const type = this.state.mpd.type;
+                        if (type === 'dynamic') {
+                          this.safariStartTime = now / 1000;
+                        }
+
+                        return this.state.adjustQuality(speed);
+                      })
                       .then(() => {
-                        if (this.config.auto) { this.play(); }
+                        const type = this.state.mpd.type;
+                        if (this.config.auto) {
+                          if (type === 'dynamic' && os.is('safari')) {
+                            const start = this.safariStartTime;
+                            this.state.video.currentTime = start;
+                          }
+
+                          this.play();
+                        }
                       });
   }
 
@@ -72,6 +89,8 @@ class Player {
 
   isPaused() {
     // TODO
+    
+    return false;
   }
 
   makeActive() {
@@ -87,26 +106,54 @@ class Player {
   }
 
   play() {
-    return this.state.video.play().then(() => {
-      this.state.video.ontimeupdate = () => {
-        const currentTime = this.currentTime();
-        const bufferTime = this.bufferTime();
-        const leadTime = this.config.lead;
+    const type = this.state.mpd.type;
 
-        if (currentTime >= bufferTime - leadTime / 2) {
-          this.state.fillBuffers().then((speed) => {
-            this.state.adjustQuality(speed).then((adjusted) => {
-              if (adjusted) { this.renderUI(); }
+    if (type === 'static') {
+      return this.state.video.play().then(() => {
+        this.state.video.ontimeupdate = () => {
+          const currentTime = this.currentTime();
+          const bufferTime = this.bufferTime();
+          const leadTime = this.config.lead;
+
+          if (currentTime >= bufferTime - leadTime / 2) {
+            this.state.fillBuffers().then((speed) => {
+              this.state.adjustQuality(speed).then((adjusted) => {
+                if (adjusted) { this.renderUI(); }
+              });
             });
-          });
-        }
+          }
 
-        if (this.currentTime() >= this.duration()) {
-          this.state.video.currentTime = 0;
-          if (!this.config.loop) { this.state.video.pause(); }
-        }
-      };
-    });
+          if (this.currentTime() >= this.duration()) {
+            this.state.video.currentTime = 0;
+            if (!this.config.loop) { this.state.video.pause(); }
+          }
+        };
+      });
+    } else if (type === 'dynamic') {
+      const lens = this.state.segmentLengths();
+      const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
+      const maxTime = lens.reduce((a,b) => Math.max(a,b));
+      const waitTime = this.lastSpeed ?
+                      minTime - minTime * this.lastSpeed : minTime;
+
+      setInterval(() => {
+        // console.log("ATTEMPTING LIVE BUFFER");
+
+        this.state.fillBuffers(maxTime).then((speed) => {
+          this.lastSpeed = speed;
+
+          if (this.config.auto && !this.isPaused()) {
+            this.state.video.play();
+          }
+
+          this.state.adjustQuality(speed).then((adjusted) => {
+            if (adjusted) { this.renderUI(); }
+          });
+        });
+      }, waitTime);
+    }
+
+    return null;
   }
 
   previous() {
@@ -114,8 +161,50 @@ class Player {
   }
 
   renderUI() {
+    const id = this.state.videoStream().id;
+
+    const videoQualities = () => {
+      const mpd = this.state.mpd;
+      const adps = mpd.adps;
+      
+      let qualities = [];
+
+      for (let i = 0; i != adps.length; i++) {
+        const adp = adps[i];
+
+        if (adp.reps.length < 1) { continue; }
+
+        for (let j = 0; j != adp.reps.length; j++) {
+          const rep = adp.reps[j];
+
+          if (rep.type === kStreamType.video) {
+            const width = rep.width;
+            const height = rep.height;
+
+            qualities.push({
+              name: `${width}:${height}`,
+              repID: rep.id,
+              selected: !this.state.qualityAuto && id === rep.id,
+              weight: adp.reps[j].weight(),
+            });
+          }
+        }
+      }
+
+      qualities.sort((a, b) => a.weight > b.weight);
+      qualities.unshift({
+        name: "auto",
+        repID: id,
+        selected: this.state.qualityAuto,
+        weight: -1,
+      });
+
+      return qualities;
+    };
+
     render(
-      <UI guts={this.state} config={this.config.ui} />,
+      <UI id={id} qualities={videoQualities()}
+      guts={this.state} config={this.config.ui} />,
       document.querySelectorAll('.root')[0],
       document.querySelectorAll('.pepper-ui')[0]
     );

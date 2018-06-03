@@ -4,7 +4,7 @@ import { toInt, toDuration } from './convert';
 import { kStreamType } from './constants';
 
 class Rep {
-  constructor(adp, rep, override) {
+  constructor(adp, rep, url, override) {
     let id, codecs, width, height, bandwidth, baseURL,
     initialization, mediaTemplate, segmentTemplate, startNumber,
     timescale, mimeType, segmentDuration, type;
@@ -37,11 +37,23 @@ class Rep {
       baseURL = override || "";
     }
 
-    if (baseURL.length < 1) {
+    const baseURLFallback = () => {
+      const srcParts = url.split('/');
+      const srcLen = srcParts.length;
+
+      baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
+      baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? '' : '/';
+    };
+
+    if (baseURL && baseURL.length < 1) {
       const urlContainer = adp.querySelectorAll('BaseURL')[0];
       if (urlContainer && urlContainer.textContent) {
         baseURL = urlContainer.textContent.trim();
+      } else {
+        baseURLFallback();
       }
+    } else {
+      baseURLFallback();
     }
 
     // find segment template
@@ -96,12 +108,12 @@ class Rep {
       weight += this.bandwidth;
     }
 
-    return weight;
+    return weight < -1 ? 0 : weight;
   }
 }
 
 class Adp {
-  constructor(adp, i, override) {
+  constructor(adp, i, url, override) {
     const maxWidthAttr = adp.getAttribute('maxWidth');
     const maxHeightAttr = adp.getAttribute('maxHeight');
 
@@ -109,10 +121,10 @@ class Adp {
     this.index = i;
     this.maxWidth = toInt(maxWidthAttr);
     this.maxHeight = toInt(maxHeightAttr);
-    this.reps = this.reps_(adp, override);
+    this.reps = this.reps_(adp, url, override);
   }
 
-  reps_(adp, override) {
+  reps_(adp, url, override) {
     const representations = adp.querySelectorAll("Representation");
 
     if (representations && representations.length > 0) {
@@ -121,7 +133,7 @@ class Adp {
       for (let i = 0; i != representations.length; i++) {
         const rep = representations[i];
 
-        reps.push(new Rep(adp, rep, override));
+        reps.push(new Rep(adp, rep, url, override));
       }
 
       return reps;
@@ -268,7 +280,14 @@ class MPD {
             reject("Attempt to fetch MPD failed");
           }
 
+          const dateHeader = xhr.getResponseHeader("Date");
+          const serverDate = new Date(dateHeader);
+          const now = Date.now();
+
           console.log(xhr.response);
+          console.log(`Date header : ${dateHeader}`);
+          console.log(`server vs. local delta : ${serverDate - now}`);
+
           resolve(xhr.response);
         } else {
           reject("Attempt to fetch MPD failed");
@@ -293,10 +312,11 @@ class MPD {
     // dependency for adp and rep sourcing
     this.baseURL = this.baseURL_(this.mpd, baseOverride);
 
-    this.adps = this.adps_(this.mpd, this.baseURL);
+    this.adps = this.adps_(this.mpd, this.config.url, this.baseURL);
     this.duration = this.duration_(this.mpd);
     this.muxed = this.muxed_(this.mpd);
     this.type = this.type_(this.mpd);
+    this.startTime = this.startTime_(this.mpd);
     this.updatePeriod = this.updatePeriod_(this.mpd);
 
     assert(this.adps !== null && typeof this.adps !== 'undefined');
@@ -305,12 +325,13 @@ class MPD {
     assert(this.muxed !== null && typeof this.muxed !== 'undefined');
     assert(this.type !== null && typeof this.type !== 'undefined');
 
+    assert(typeof this.startTime !== 'undefined');
     assert(typeof this.updatePeriod !== 'undefined');
   }
 
   // source adaptations and populate with critical data and metadata
   // mpd === parsed MPD XML
-  adps_(mpd, override) {
+  adps_(mpd, url, override) {
     const period = mpd.querySelectorAll("Period")[0];
     const adaptations = period.querySelectorAll("AdaptationSet");
 
@@ -319,7 +340,7 @@ class MPD {
 
       for (let i = 0; i != adaptations.length; i++) {
         const adaptation = adaptations[i];
-        adps.push(new Adp(adaptation, i, override));
+        adps.push(new Adp(adaptation, i, url, override));
       }
 
       return adps;
@@ -352,9 +373,10 @@ class MPD {
     if (root !== null && typeof root !== 'undefined') {
       const durationAttr = root.getAttribute("mediaPresentationDuration");
 
-      if (durationAttr !== null && typeof durationAttr !== 'undefined') {
-        if (durationAttr.length < 1) { return null; }
-      }
+      if (durationAttr===null ||
+          typeof durationAttr==='undefined' ||
+          !durationAttr.hasOwnProperty('length') ||
+          durationAttr.length < 1) { return -1; }
 
       return toDuration(durationAttr);
     } else {
@@ -403,6 +425,23 @@ class MPD {
       return type.trim();
     } else {
       throw("MPD is invalid; unable to source type.");
+    }
+  }
+
+  // acquires availability start time from MPD, if possible (live)
+  startTime_(mpd) {
+    const root = mpd.querySelectorAll("MPD")[0];
+    if (root !== null && typeof root !== 'undefined') {
+      const startAttr = root.getAttribute('availabilityStartTime');
+
+      if (startAttr === null || typeof startAttr === 'undefined') {
+        return null;
+      }
+
+      // WARNING: converting ISO 8601 to Date may not work in old browsers
+      return new Date(startAttr);
+    } else {
+      throw("MPD is invalid; unable to source availabilityStartTime.");
     }
   }
 

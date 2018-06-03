@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Pepper Player – Test</title>
+    <title>Pepper Player - Dev Env</title>
     <script src="pepper.js"></script>
   </head>
   <body>
@@ -13,13 +13,10 @@
         playlist: [
           {
             dash: {
-              url: "http://tf-static.vulcanca.com/" +
+              url: "http://media.tfod.tomferry.com/" +
               "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
               "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/" +
-              "SYC0zeIlORZH1JLBUe4z",
-              base: "http://tf-static.vulcanca.com/" +
-              "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
-              "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/"
+              "SYC0zeIlORZH1JLBUe4z"
             },
             hls: {
               gen: true
@@ -33,13 +30,8 @@
         playlist: [
           {
             dash: {
-              url: "http://media.tfod.tomferry.com/" +
-              "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
-              "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/" +
-              "SYC0zeIlORZH1JLBUe4z",
-              base: "http://media.tfod.tomferry.com/" +
-              "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
-              "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/"
+              url: "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd",
+              // base: "https://dash.akamaized.net/akamai/bbb_30fps/",
             },
             hls: {
               gen: true
@@ -53,10 +45,7 @@
         playlist: [
           {
             dash: {
-              url: "http://dash.akamaized.net/dash264/TestCases/5c/" +
-              "nomor/4_1a.mpd",
-              base: "http://dash.akamaized.net/dash264/TestCases/5c/" +
-              "nomor/"
+              url: "http://vm2.dashif.org/livesim/segtimeline_1/testpic_2s/Manifest.mpd"
             },
             hls: {
               gen: true
@@ -65,8 +54,6 @@
         ]
       });
       */
-
-      console.log(player.config);
     </script>
   </body>
 </html>

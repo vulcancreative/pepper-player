@@ -45,6 +45,19 @@ class State {
         reject("Unable to find root element for insertion query.");
       }
 
+      // Handle weird, browser-specific DOMExceptions
+      root.onerror = (e) => {
+        console.error(e.target.error.message);
+      };
+
+      root.addEventListener('waiting', () => {
+        console.error("VIDEO FIRED WAITING EVENT");
+      });
+
+      root.addEventListener('readystatechange', () => {
+        console.log(`VIDEO NOW IN READYSTATE : ${root.readyState}`);
+      });
+
       this.video = root;
       this.loading = false;
       this.started = false;
@@ -142,8 +155,6 @@ class State {
     return new Promise((resolve) => {
       // handle queued, fixed quality
       if (!this.qualityAuto && this.qualityQueued !== null) {
-        console.log("hit");
-
         const stream = this.qualityQueued.stream;
         const repID = this.qualityQueued.repID;
 
@@ -159,13 +170,12 @@ class State {
         for (let i = 0; i < this.streams.length; i++) {
           const stream = this.streams[i];
           const adp = stream.adp;
-
           let rep;
 
           // lower quality if factor > 0.5; raise if < 0.25
-          if (factor >= 0.45) {
+          if (factor >= 0.60) {
             rep = adp.weakerRep(stream.rep.id);
-          } else if (factor <= 0.20) {
+          } else if (factor <= 0.30) {
             rep = adp.strongerRep(stream.rep.id);
           } else {
             this.loading = false;
@@ -185,7 +195,7 @@ class State {
         }
       } else {
         this.loading = false;
-        resolve(true);
+        resolve(false);
       }
     });
   }
@@ -204,36 +214,57 @@ class State {
     return this.streams.map(stream => stream.codecs());
   }
 
-  fillBuffers() {
+  fillBuffers(defer = null) {
+    console.log(this.mpd);
+
+    const dynamic = this.mpd.type === 'dynamic';
+
     // fail if actively buffering
-    if (this.loading) { return Promise.resolve(); }
+    if (!dynamic && this.loading) { return Promise.resolve(); }
+
+    // base line time used for live buffering
+    const now = Date.now();
+    const lens = this.segmentLengths();
+    const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
+
+    if (dynamic) {
+      if (this.lastTime && now - this.lastTime < minTime) {
+        return Promise.resolve();
+      }
+
+      // console.log(`time delta (ms) : ${now - this.lastTime}`);
+    }
 
     return new Promise((resolve) => {
       // times measured against current and desired state
       const start = this.bufferTime;
-      const lead = this.started ? this.config.lead : this.config.base;
+      const lead = defer ? defer :
+                   (this.started ? this.config.lead : this.config.base);
       const end = Math.min(this.mpd.duration, start + lead);
 
-      // used for measuring speed (in bytes)
+      // used for measuring speed (in bytes over time delta)
       let payloadSize = 0;
       let payloadStart = (new Date()).getTime(), payloadEnd;
 
       // load-based lock
-      this.loading = true;
+      if (!dynamic) { this.loading = true; }
 
       // double reducer for serialized Promise returns
       // prevents the need for a (potentially) very large recursion stack
       // derives some logic from: https://stackoverflow.com/a/24985483
       return this.streams.reduce((promise, stream, streamIndex) => {
         return promise.then(() => {
-          const points = stream.makePoints(start, end);
+          let points = stream.makePoints(
+            dynamic ? null : start,
+            dynamic ? null : end,
+            now
+          );
 
-          /*
-          if (stream.inCache(points)) {
-            console.log("point found, returning...");
-            return;
-          }
-          */
+          let duplicates = stream.inCache(points);
+
+          // remove already cached point; prevents toe-stepping
+          points = points.filter(p => !duplicates.includes(p));
+          // console.log(points);
 
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
@@ -256,10 +287,12 @@ class State {
                   this.started = true;
                   this.loading = false;
 
+                  if (dynamic) { this.lastTime = now; }
+
                   console.log(`Buffers filled; download speed: ` +
                               `${speed}kbps, speedFactor: ${factor}`);
 
-                  resolve(factor);
+                  resolve(factor, now);
                 }
               });
             });
@@ -279,6 +312,7 @@ class State {
     assert(repID !== null && typeof repID !== 'undefined');
 
     console.log(`name: ${name}, repID: ${repID}`);
+
     if (name.toLowerCase() === "auto") {
       this.qualityAuto = true;
       this.qualityQueued = null;
@@ -288,7 +322,7 @@ class State {
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
 
-      for (let j = 0; j != stream.sources; j++) {
+      for (let j = 0; j != stream.sources.length; j++) {
         const source = stream.sources[j];
 
         assert(source !== null && typeof source !== 'undefined');
@@ -305,6 +339,10 @@ class State {
         }
       }
     }
+  }
+
+  segmentLengths() {
+    return this.streams.map(stream => stream.segmentLength());
   }
 
   videoStream() {

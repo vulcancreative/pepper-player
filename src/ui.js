@@ -1,5 +1,4 @@
 import { h, render, Component } from 'preact';
-import { kStreamType } from './constants';
 import classNames from 'classnames/bind';
 
 import './styles/debug.scss';
@@ -38,70 +37,47 @@ function scrubberClick(e) {
 }
 */
 
+//////////
+//////////
+//////////
+/// XXX TOO MUCH LOGIC BELOW; PULL ONLY NECESSARY COMPONENTS OUT TO PROPS
+//////////
+//////////
+//////////
 class QualityControl extends Component {
-  constructor(props) {
-    super(props);
+  /*
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.qualities[0].id !== this.props.id) {
+      console.log("SHOULD BE REDRAWING");
+      const prev = prevState.qualities;
 
-    this.state = {
-      qualities: this.videoQualities(),
-    };
-  }
+      let qualities = prev.slice(1, prev.length - 1);
+      qualities.unshift({
+        name: prev[0].name,
+        repID: this.props.id,
+        selected: prev[0].selected,
+        weight: prev[0].weight,
+      });
 
-  videoQualities() {
-    const mpd = this.props.guts.mpd;
-    const adps = mpd.adps;
-    
-    let qualities = [
-      {
-        name: "auto",
-        repID: this.props.guts.videoStream().id,
-        selected: true,
-      }
-    ];
-
-    for (let i = 0; i != adps.length; i++) {
-      const adp = adps[i];
-
-      if (adp.reps.length < 1) { continue; }
-
-      for (let j = 0; j != adp.reps.length; j++) {
-        const rep = adp.reps[j];
-
-        if (rep.type === kStreamType.video) {
-          const width = rep.width;
-          const height = rep.height;
-
-          qualities.push({
-            name: `${width}:${height}`,
-            repID: adp.reps[j].id,
-            selected: false,
-          });
-        }
-      }
+      this.setState({
+        qualities: qualities,
+      });
     }
-
-    return qualities;
   }
+  */
 
   handleClick(index) {
-    this.setState({
-      qualities: this.state.qualities.map((quality, i) => {
-        if (i === index) { this.props.guts.queueQuality(quality); }
-
-        return {
-          name: quality.name,
-          repID: quality.repID,
-          selected: i === index,
-        };
-      }),
+    this.props.qualities.map((quality, i) => {
+      if (i === index) { this.props.guts.queueQuality(quality); }
+      return null;
     });
   }
 
   render() {
-    const auto = this.state.qualities[0].selected;
-    const autoRep = this.state.qualities[0].repID;
+    const auto = this.props.qualities[0].selected;
+    const autoRep = this.props.qualities[0].repID;
 
-    const items = this.state.qualities.map((quality, i) => {
+    const items = this.props.qualities.map((quality, i) => {
       const qualityClass = classNames({
         "quality": true,
         "selected": quality.selected,
@@ -128,7 +104,8 @@ class UI extends Component {
   render() {
     return (
       <div className="pepper-ui">
-        <QualityControl guts={this.props.guts} />
+        <QualityControl id={this.props.id} guts={this.props.guts}
+        qualities={this.props.qualities} />
       </div>
     );
   }

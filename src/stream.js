@@ -1,3 +1,4 @@
+// import { os } from './os';
 import { assert } from './assert';
 import { strings } from './strings';
 import { mergeDicts, isInt } from './helpers';
@@ -17,6 +18,7 @@ class Stream {
 
     this.mediaSource = this.config.mediaSource;
 
+    this.mpd = this.config.mpd;
     this.adp = this.config.adp;
     this.rep = this.config.rep;
     this.sources = this.config.sources;
@@ -42,11 +44,19 @@ class Stream {
       this.buffer = this.mediaSource.addSourceBuffer(this.codecs);
       this.buffer.mode = 'sequence';
 
+      if (this.mpd.type === 'dynamic') {
+        this.buffer.timestampOffset = 0.1;
+      }
+
       for (let i = 0; i != this.sources.length; i++) {
         const source = this.sources[i];
+
+        const id = source.id;
         const initName = source.initialization;
         const baseURL = source.baseURL;
-        const initURL = baseURL ? `${baseURL}${initName}` : initName;
+
+        let initURL = baseURL ? `${baseURL}${initName}` : initName;
+        initURL = initURL.replace(/\$RepresentationID\$/g, `${id}`);
 
         this.fetchSegment_(initURL).then((data) => {
           cache.push({
@@ -121,7 +131,7 @@ class Stream {
         */
       } catch(err) {
         console.log(err);
-        reject(
+        console.log(
           `Failed to append ${segment.type} to buffer for ` +
           `rep "${rep.id}"`
         );
@@ -157,6 +167,7 @@ class Stream {
         const segmentNumberExt = strings.pad(next, amount);
 
         mediaName = mediaName.replace(matches[0], segmentNumberExt);
+        mediaName = mediaName.replace(nVarN, `${next}`);
       } else {
         mediaName = mediaName.replace(nVarN, `${next}`);
       }
@@ -208,39 +219,40 @@ class Stream {
       return -1;
     };
 
+    let duplicates = [];
     if (points.constructor === Array) {
       for (let i = 0; i != points.length; i++) {
         const point = points[i];
-        if (binSearchCache(point) > 1) {
-          // console.log(`point(${point}) found`);
-          // console.log(this.cache);
-          return true;
-        }
+        if (binSearchCache(point) > 1) { duplicates.push(point); }
       }
     } else if (isInt(points)) {
-      if (binSearchCache(points) > 1) {
-        // console.log(`point(${point}) found`);
-        // console.log(this.cache);
-        return true;
-      }
+      const point = points;
+      if (binSearchCache(point) > 1) { duplicates.push(point); }
     } else {
       throw(`Invalid argument value : "${points}"`);
     }
 
-    return false;
+    return duplicates;
   }
 
-  makePoints(current, target) {
-    const delta = target - current;
-    const steps = parseInt(
-      Math.ceil(parseFloat(delta) / parseFloat(this.segmentLength()))
-    );
+  makePoints(current, target, now) {
+    if (this.mpd.type === 'static') {
+      const delta = (target < current ? current+1000 : target) - current;
+      const steps = parseInt(
+        Math.ceil(parseFloat(delta) / parseFloat(this.segmentLength()))
+      );
 
-    const last = parseInt(
-      Math.ceil(parseFloat(current) / parseFloat(this.segmentLength()))
-    );
+      const last = parseInt(
+        Math.ceil(parseFloat(current) / parseFloat(this.segmentLength()))
+      );
 
-    return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
+      return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
+    } else if (this.mpd.type === 'dynamic') {
+      const delta = Math.abs(now - this.mpd.startTime);
+      return [Math.ceil(delta / this.segmentLength() - 10)];
+    } else {
+      throw(`Unable to decipher source type ("${this.mpd.type}")`);
+    }
   }
 
   segmentLength() {
@@ -249,6 +261,10 @@ class Stream {
     if (rep !== null && typeof rep !== 'undefined') {
       const timescale = parseFloat(rep.timescale);
       const duration = parseFloat(rep.segmentDuration);
+
+      if ((timescale===null && typeof timescale==='undefined') ||
+           isNaN(timescale)) { return duration * 1000; }
+
       const ticks = Math.floor(duration / timescale);
       const size = parseInt(ticks) * 1000;
 
@@ -266,6 +282,7 @@ class Stream {
         if (segment.point === 0 && segment.rep === repID) {
           this.appendBuffer(this.buffer, segment).then((buffer) => {
             this.buffer = buffer;
+            this.id = repID;
             
             for (let j = 0; j != this.sources.length; j++) {
               const source = this.sources[j];
