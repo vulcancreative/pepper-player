@@ -8,7 +8,6 @@
 
 # production
 server.js
-/lib/pepper.js
 /build
 
 # misc

@@ -4,6 +4,7 @@
   "author": "Vulcan",
   "private": true,
   "license": "Vulcan Closed-Source",
+  "requires": "true",
   "repository": "github:chris-calo/pepper-player",
   "description": "A JavaScript-based MPEG-DASH player, but more specialer.",
   "scripts": {
