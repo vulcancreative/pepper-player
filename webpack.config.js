@@ -7,6 +7,7 @@ const aliases = {
 };
 
 module.exports = {
+  requires: true,
   entry: `${__dirname}/index.js`,
   resolve: {
     alias: aliases,
