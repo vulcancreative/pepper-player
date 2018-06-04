@@ -7,6 +7,14 @@ module.exports = {
       "eslint:recommended",
       "plugin:react/recommended"
     ],
+    "globals": {
+      "module": true,
+      "require": true,
+      "process": true,
+      "__dirname": true,
+      "__isBrowser__": true,
+      "consoleTable": true,
+    },
     "parserOptions": {
         "ecmaFeatures": {
             "experimentalObjectRestSpread": true,
@@ -145,7 +153,6 @@ module.exports = {
         "no-extra-label": "error",
         "no-extra-parens": "off",
         "no-floating-decimal": "error",
-        "no-implicit-globals": "error",
         "no-implied-eval": "error",
         "no-inline-comments": "off",
         "no-invalid-this": "error",
@@ -184,7 +191,6 @@ module.exports = {
         "no-process-exit": "error",
         "no-proto": "error",
         "no-prototype-builtins": "off",
-        "no-restricted-globals": "error",
         "no-restricted-imports": "error",
         "no-restricted-modules": "error",
         "no-restricted-properties": "error",

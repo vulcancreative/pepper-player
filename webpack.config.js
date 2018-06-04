@@ -2,7 +2,7 @@ const libName = 'pepper';
 const output = `${libName}.js`;
 
 module.exports = {
-  entry: `${__dirname}/src/index.js`,
+  entry: `${__dirname}/index.js`,
   output: {
     path: `${__dirname}/lib`,
     filename: output,
@@ -13,20 +13,18 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        exclude: /node_modules/,
         use: {
-          loader: "babel-loader"
-        }
+          loader: require.resolve("babel-loader"),
+        },
+        exclude: /node_modules/,
       },
       {
-        test: /\.scss$/,
-        use: [{
-          loader: "style-loader"
-        }, {
-          loader: "css-loader"
-        }, {
-          loader: "sass-loader"
-        }]
+        test: /\.s?(a|c)ss$/,
+        use: [
+          require.resolve("style-loader"),
+          require.resolve("css-loader"),
+          require.resolve("sass-loader"),
+        ],
       }
     ]
   }
