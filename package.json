@@ -6,7 +6,6 @@
   "license": "Vulcan Closed-Source",
   "repository": "github:chris-calo/pepper-player",
   "description": "A JavaScript-based MPEG-DASH player, but more specialer.",
-  "main": "lib/pepper.js",
   "scripts": {
     "dev": "webpack --mode development --module-bind js=babel-loader --w",
     "build": "webpack --mode production --module-bind js=babel-loader",
