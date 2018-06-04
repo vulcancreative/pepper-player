@@ -14,6 +14,9 @@ module.exports = {
   output: {
     path: `${__dirname}/lib`,
     filename: output,
+    library: libName,
+    libraryTarget: 'var',
+    libraryExport: 'default',
   },
   module: {
     rules: [

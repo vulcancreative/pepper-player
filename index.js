@@ -1,7 +1,6 @@
+// export * from './src/player';
+// export * from './src/constants';
+
 import Player from './src/player';
-
-const pepper = {
-  Player: Player,
-};
-
-export default pepper;
+console.log(Player);
+export default { Player };
