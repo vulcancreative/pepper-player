@@ -1,14 +1,22 @@
 var os = {}; os = (function() {
 
-  // Holds the browser's navigator object.
-  var N_ = navigator,
+  var N_, U_;
 
-  // Holds the browser's userAgent and oscpu strings for querying.
-  U_ = (N_.userAgent + ' ' + N_.oscpu).toLowerCase();
+  if (navigator !== null && typeof navigator !== 'undefined') {
+    // Holds the browser's navigator object.
+    N_ = navigator,
+
+    // Holds the browser's userAgent and oscpu strings for querying.
+    U_ = (N_.userAgent + ' ' + N_.oscpu).toLowerCase();
+  }
 
 
   // is takes an OS/browser string (Mac/IE), returning validity (bool).
   var is = function(a, b) {
+    if (navigator === null || typeof navigator === 'undefined') {
+      return false;
+    }
+
     b = /bot|spider|crawl|seeker/;
 
     // Cycle through possible checks.
@@ -25,7 +33,7 @@ var os = {}; os = (function() {
   };
 
   return {
-    is:   is,
+    is: is,
   }
 })();
 

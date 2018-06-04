@@ -1,4 +1,4 @@
-import { os } from './os';
+// import { os } from './os';
 
 function hlsSupported() {
   const kHLSType = "application/vnd.apple.mpegURL";
@@ -7,11 +7,11 @@ function hlsSupported() {
   return video.canPlayType && !!video.canPlayType(kHLSType);
 }
 
-function hlsPreferred(config) {
-  if (os.is('chrome')) { return false; }
+function hlsPreferred() {
+  // if (os.is('chrome')) { return false; }
   if (!hlsSupported()) { return false; }
 
-  const item = config.playlist[config.index];
+  // const item = config.playlist[config.index];
 
   return false;
 }

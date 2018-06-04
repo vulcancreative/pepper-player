@@ -1,4 +1,3 @@
-// import { os } from './os';
 import { assert } from './assert';
 import { strings } from './strings';
 import { mergeDicts, isInt } from './helpers';
