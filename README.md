@@ -18,5 +18,5 @@ Features include:
 λ git clone https://github.com/chris-calo/pepper-player.git
 λ cd pepper-player
 λ npm i
-λ npm run build && open lib/index.html
+λ npm run build && python -m http.server
 ```

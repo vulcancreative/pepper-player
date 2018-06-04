@@ -1,5 +1,5 @@
 import { os } from './os';
-import { UI } from './ui';
+import { TestUI } from './ui';
 import { State } from './state';
 import { h, render } from 'preact';
 import { mergeDicts } from './helpers';
@@ -24,6 +24,7 @@ class Player {
       auto:   true,
       adapt:  true,
       base:   1000,
+      debug:  false,
       lead:   5000,
       loop:   false,
       query:  "video.pepper",
@@ -161,6 +162,9 @@ class Player {
   }
 
   renderUI() {
+    const UI = this.debug ? TestUI : null;
+    if (!UI) { return; }
+
     const id = this.state.videoStream().id;
 
     const videoQualities = () => {

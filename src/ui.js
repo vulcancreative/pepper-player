@@ -100,7 +100,7 @@ class QualityControl extends Component {
   }
 }
 
-class UI extends Component {
+class TestUI extends Component {
   render() {
     return (
       <div className="pepper-ui">
@@ -111,4 +111,4 @@ class UI extends Component {
   }
 }
 
-export { render, UI };
+export { render, TestUI };
