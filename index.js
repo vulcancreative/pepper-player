@@ -1,5 +1,7 @@
 import Player from './src/player';
 
-module.exports = {
-  Player,
+const pepper = {
+  Player: Player,
 };
+
+export default pepper;
