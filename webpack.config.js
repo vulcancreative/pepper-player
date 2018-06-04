@@ -16,7 +16,6 @@ module.exports = {
     filename: output,
     library: libName,
     libraryTarget: 'var',
-    libraryExport: 'default',
   },
   module: {
     rules: [

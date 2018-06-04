@@ -3,4 +3,4 @@
 
 import Player from './src/player';
 console.log(Player);
-export default { Player };
+export default Player;
