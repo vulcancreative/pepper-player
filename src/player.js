@@ -1,7 +1,8 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 import { os } from './os';
 import { TestUI } from './ui';
 import { State } from './state';
-import { h, render } from 'preact';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
 
@@ -206,7 +207,7 @@ class Player {
       return qualities;
     };
 
-    render(
+    ReactDOM.render(
       <UI id={id} qualities={videoQualities()}
       guts={this.state} config={this.config.ui} />,
       document.querySelectorAll('.root')[0],

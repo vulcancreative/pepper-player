@@ -1,4 +1,4 @@
-import { h, render, Component } from 'preact';
+import React from 'react';
 import classNames from 'classnames/bind';
 
 import './styles/debug.scss';
@@ -44,7 +44,7 @@ function scrubberClick(e) {
 //////////
 //////////
 //////////
-class QualityControl extends Component {
+class QualityControl extends React.Component {
   /*
   componentDidUpdate(prevProps, prevState) {
     if (prevState.qualities[0].id !== this.props.id) {
@@ -100,7 +100,7 @@ class QualityControl extends Component {
   }
 }
 
-class TestUI extends Component {
+class TestUI extends React.Component {
   render() {
     return (
       <div className="pepper-ui">
@@ -111,4 +111,4 @@ class TestUI extends Component {
   }
 }
 
-export { render, TestUI };
+export { TestUI };

@@ -25,11 +25,6 @@ module.exports = {
     "plugins": [
         "react"
     ],
-    "settings": {
-      "react": {
-        "pragma": "h"
-      }
-    },
     "rules": {
         "accessor-pairs": "error",
         "array-bracket-newline": "off",

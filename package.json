@@ -17,7 +17,7 @@
       "preact"
     ],
     "plugins": [
-      ["transform-react-jsx", { "pragma":"h" }]
+      ["transform-react-jsx"]
     ]
   },
   "devDependencies": {

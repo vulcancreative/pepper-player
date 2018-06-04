@@ -1,8 +1,16 @@
 const libName = 'pepper';
 const output = `${libName}.js`;
 
+const aliases = {
+  'react': 'preact-compat',
+  'react-dom': 'preact-compat',
+};
+
 module.exports = {
   entry: `${__dirname}/index.js`,
+  resolve: {
+    alias: aliases,
+  },
   output: {
     path: `${__dirname}/lib`,
     filename: output,
