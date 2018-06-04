@@ -1,6 +1,7 @@
 # pepper
 
-An JavaScript-based MPEG-DASH player, for use in modern browsers.
+A JavaScript-based MPEG-DASH player, for use in modern desktop and mobile
+browsers.
 
 Features include:
 
