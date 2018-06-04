@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-// import { os } from './os';
+import { os } from './os';
 import { TestUI } from './ui';
 import { State } from './state';
 import { mergeDicts } from './helpers';
@@ -61,14 +61,12 @@ class Player {
                         return this.state.adjustQuality(speed);
                       })
                       .then(() => {
-                        // const type = this.state.mpd.type;
+                        const type = this.state.mpd.type;
                         if (this.config.auto) {
-                          /*
                           if (type === 'dynamic' && os.is('safari')) {
                             const start = this.safariStartTime;
                             this.state.video.currentTime = start;
                           }
-                          */
 
                           this.play();
                         }
