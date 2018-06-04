@@ -14,8 +14,9 @@ module.exports = {
   output: {
     path: `${__dirname}/lib`,
     filename: output,
-    // library: libName,
-    // libraryTarget: 'var',
+    library: libName,
+    libraryTarget: 'umd',
+    umdNamedDefine: true
   },
   module: {
     rules: [
