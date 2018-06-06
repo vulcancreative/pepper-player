@@ -6,8 +6,9 @@ import { kStreamType } from './constants';
 class Rep {
   constructor(adp, rep, url, override) {
     let id, codecs, width, height, bandwidth, baseURL,
-    initialization, mediaTemplate, segmentTemplate, startNumber,
-    timescale, mimeType, segmentDuration, type;
+    initialization, mediaTemplate, segmentTimeline, segmentTemplate,
+    timelineParts, startNumber, timescale, mimeType,
+    segmentDuration, type;
 
     // source id from rep attribute
     id = rep.getAttribute('id');
@@ -56,6 +57,11 @@ class Rep {
       baseURLFallback();
     }
 
+    segmentTimeline = adp.querySelectorAll('SegmentTimeline')[0];
+    if (segmentTimeline!==null && typeof segmentTimeline!=='undefined') {
+      timelineParts = [...segmentTimeline.children];
+    }
+
     // find segment template
     segmentTemplate = adp.querySelectorAll('SegmentTemplate')[0];
     if (!segmentTemplate || typeof segmentTemplate === 'undefined') {
@@ -91,6 +97,7 @@ class Rep {
     this.height = height;
     this.bandwidth = bandwidth;
     this.baseURL = baseURL;
+    this.timeline = timelineParts;
     this.mediaTemplate = mediaTemplate;
     this.initialization = initialization;
     this.startNumber = startNumber;

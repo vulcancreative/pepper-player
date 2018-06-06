@@ -143,33 +143,7 @@ class Stream {
   fillBuffer(next) {
     return new Promise((resolve) => {
       const rep = this.rep;
-
-      const nVarN = /\$Number\$/g,      //e.g "...$Number$.m4s"
-      nVarD = /(\$Number%(\d+)d\$)/g,   //e.g "...$Number%05d$.m4s"
-      rVarN = /\$RepresentationID\$/g;  //e.g "stream$RepresentationID$..."
-
-      /*
-       * TODO: solidfy as trace-level debug text
-      console.log(`Filling buffer for rep "${rep.id}"`);
-      console.log(`Current : ${current}, target : ${target}, ` +
-                  `segment length : ${this.segmentLength()}, ` +
-                  `steps : ${steps}`);
-      */
-
-      let mediaName = rep.mediaTemplate.replace(rVarN, `${rep.id}`);
-
-      if (nVarD.test(mediaName)) {
-        const nVarDC = /(\$Number%(\d+)d\$)/g;
-
-        const matches = nVarDC.exec(mediaName);
-        const amount = parseInt(matches[matches.length - 1]) + 1;
-        const segmentNumberExt = strings.pad(next, amount);
-
-        mediaName = mediaName.replace(matches[0], segmentNumberExt);
-        mediaName = mediaName.replace(nVarN, `${next}`);
-      } else {
-        mediaName = mediaName.replace(nVarN, `${next}`);
-      }
+      const mediaName = this.buildMediaName_(rep, next);
 
       const baseURL = this.rep.baseURL;
       const mediaURL = baseURL ? `${baseURL}${mediaName}` : mediaName;
@@ -234,9 +208,15 @@ class Stream {
     return duplicates;
   }
 
-  makePoints(current, target, now) {
+  makePoints(current, target, now, rep = null) {
+    if (rep !== null && typeof rep !== 'undefined') {
+      if (rep.timeline.length > 0) {
+        // build upcoming points
+      }
+    }
+
     if (this.mpd.type === 'static') {
-      const delta = (target < current ? current+1000 : target) - current;
+      const delta = (target < current ? current + 1000 : target) - current;
       const steps = parseInt(
         Math.ceil(parseFloat(delta) / parseFloat(this.segmentLength()))
       );
@@ -293,6 +273,57 @@ class Stream {
         }
       }
     });
+  }
+
+  buildMediaName_(rep, next) {
+    const
+
+    //e.g "...$Time$.m4s"
+    nVarT = /\$Time\$/g,
+
+    //e.g "...$Number$.m4s"
+    nVarN = /\$Number\$/g,
+
+    //e.g "...$Number%05d$.m4s"
+    nVarD = /(\$Number%(\d+)d\$)/g,
+
+    //e.g "stream$RepresentationID$..."
+    rVarN = /\$RepresentationID\$/g;
+
+    /*
+     * TODO: solidfy as trace-level debug text
+    console.log(`Filling buffer for rep "${rep.id}"`);
+    console.log(`Current : ${current}, target : ${target}, ` +
+                `segment length : ${this.segmentLength()}, ` +
+                `steps : ${steps}`);
+    */
+
+    let mediaName = rep.mediaTemplate.replace(rVarN, `${rep.id}`);
+
+    if (nVarT.test(mediaName) && rep.timeline.length > 0) {
+      /*
+      const part = rep.timeline[0];
+
+      const t = parseInt(part.getAttribute('t'));
+      const r = parseInt(part.getAttribute('r'));
+      const d = parseInt(part.getAttribute('d'));
+      */
+
+      mediaName = mediaName.replace(nVarT, `${next}`);
+    } else if (nVarD.test(mediaName)) {
+      const nVarDC = /(\$Number%(\d+)d\$)/g;
+
+      const matches = nVarDC.exec(mediaName);
+      const amount = parseInt(matches[matches.length - 1]) + 1;
+      const segmentNumberExt = strings.pad(next, amount);
+
+      mediaName = mediaName.replace(matches[0], segmentNumberExt);
+      mediaName = mediaName.replace(nVarN, `${next}`);
+    } else {
+      mediaName = mediaName.replace(nVarN, `${next}`);
+    }
+
+    return mediaName;
   }
 }
 

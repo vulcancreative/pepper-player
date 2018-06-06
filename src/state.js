@@ -238,7 +238,8 @@ class State {
     return new Promise((resolve) => {
       // times measured against current and desired state
       const start = this.bufferTime;
-      const lead = defer ? defer :
+      const lead = defer ?
+                   defer :
                    (this.started ? this.config.lead : this.config.base);
       const end = Math.min(this.mpd.duration, start + lead);
 
