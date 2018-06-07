@@ -278,6 +278,25 @@ class Stream {
     const rep = this.rep;
 
     if (rep !== null && typeof rep !== 'undefined') {
+      // average size if timeline-based
+      if (rep.timeline.length > 0) {
+        const points = [];
+
+        for (let i = 0; i < rep.timeline.length; i++) {
+          const point = rep.timeline[i];
+          const scale = rep.timescale;
+          const d = parseInt(point.getAttribute('d'));
+          
+          points.push(d / scale);
+        }
+
+        if (points.length > 0) {
+          const sum = points.reduce((a, c) => a + c);
+          return sum / points.length * 1000;
+        }
+      }
+
+      // direct size if template-based
       const timescale = parseFloat(rep.timescale);
       const duration = parseFloat(rep.segmentDuration);
 

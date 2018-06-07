@@ -138,6 +138,8 @@ class Player {
       const waitTime = this.lastSpeed ?
                        minTime - minTime * this.lastSpeed : minTime;
 
+      console.log(`waitTime : ${waitTime}`);
+
       setInterval(() => {
         // console.log("ATTEMPTING LIVE BUFFER");
 
