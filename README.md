@@ -7,6 +7,7 @@ browsers.
 
 Features include:
 
+* Only 15kb – and shrinking!
 * Ultra low-latency start times
 * Automatic or manual adaptive quality
 * Lazy loading of media segments (reduces serving bandwidth)
