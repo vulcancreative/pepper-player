@@ -136,7 +136,7 @@ class Player {
       const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
       const maxTime = lens.reduce((a,b) => Math.max(a,b));
       const waitTime = this.lastSpeed ?
-                      minTime - minTime * this.lastSpeed : minTime;
+                       minTime - minTime * this.lastSpeed : minTime;
 
       setInterval(() => {
         // console.log("ATTEMPTING LIVE BUFFER");
@@ -152,7 +152,7 @@ class Player {
             if (adjusted) { this.renderUI(); }
           });
         });
-      }, waitTime);
+      }, waitTime || 1000);
     }
 
     return null;

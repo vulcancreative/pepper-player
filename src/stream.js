@@ -85,9 +85,26 @@ class Stream {
   fetchSegment_(url = "") {
     return new Promise((resolve, reject) => {
       const id = this.rep.id;
+      const type = this.mpd.type;
       const xhr = new XMLHttpRequest;
 
       xhr.onload = function() {
+        if (xhr.status >= 400) {
+          if (type === 'dynamic') {
+            console.log(
+              "Playing bleeding edge in dynamic mode; " +
+              "waiting for more viable segments"
+            );
+
+            resolve(null);
+            return;
+          } else {
+            console.error(
+              `Unable to fetch segment at "${url}" for rep "${id}"`
+            );
+          }
+        }
+
         if (xhr.status >= 200 && xhr.status < 400) {
           const data = xhr.response;
 
@@ -148,7 +165,21 @@ class Stream {
       const baseURL = this.rep.baseURL;
       const mediaURL = baseURL ? `${baseURL}${mediaName}` : mediaName;
 
-      this.fetchSegment_(mediaURL).then((data) => {
+      this.fetchSegment_(mediaURL).catch((err) => {
+        if (this.mpd.type === 'dynamic') {
+          console.log(
+            "Playing bleeding edge in dynamic mode; " +
+            "waiting for more viable segments"
+          );
+        } else {
+          console.log(`Unable to fetch segment "${mediaURL}" : ${err}`);
+        }
+      }).then((data) => {
+        if (data === null || typeof data === 'undefined') {
+          resolve(null);
+          return;
+        }
+
         this.cache.push({
           type: kSegmentType.segment,
           point: next,
@@ -209,12 +240,21 @@ class Stream {
   }
 
   makePoints(current, target, now, rep = null) {
+    // handle timeline-based mechanism
     if (rep !== null && typeof rep !== 'undefined') {
       if (rep.timeline.length > 0) {
-        // build upcoming points
+        const init = rep.timeline[0];
+        const t = parseInt(init.getAttribute('t'));
+        const d = parseInt(init.getAttribute('d'));
+
+        const result = this.lastPoint ? this.lastPoint + d : t;
+        this.lastPoint = result;
+
+        return [result];
       }
     }
 
+    // handle template-based mechanism
     if (this.mpd.type === 'static') {
       const delta = (target < current ? current + 1000 : target) - current;
       const steps = parseInt(

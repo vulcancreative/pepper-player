@@ -215,8 +215,6 @@ class State {
   }
 
   fillBuffers(defer = null) {
-    console.log(this.mpd);
-
     const dynamic = this.mpd.type === 'dynamic';
 
     // fail if actively buffering
@@ -238,9 +236,11 @@ class State {
     return new Promise((resolve) => {
       // times measured against current and desired state
       const start = this.bufferTime;
+
       const lead = defer ?
                    defer :
                    (this.started ? this.config.lead : this.config.base);
+
       const end = Math.min(this.mpd.duration, start + lead);
 
       // used for measuring speed (in bytes over time delta)
@@ -258,18 +258,23 @@ class State {
           let points = stream.makePoints(
             dynamic ? null : start,
             dynamic ? null : end,
-            now
+            now,
+            dynamic ? stream.rep : null
           );
 
           let duplicates = stream.inCache(points);
 
           // remove already cached point; prevents toe-stepping
           points = points.filter(p => !duplicates.includes(p));
-          // console.log(points);
 
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
               return stream.fillBuffer(point).then((dataSize) => {
+                if (dataSize===null || typeof dataSize==='undefined') {
+                  resolve(0);
+                  return;
+                }
+
                 const lastStream = streamIndex === this.streams.length - 1;
                 const lastPoint = pointIndex === points.length - 1;
 
