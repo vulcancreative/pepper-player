@@ -157,6 +157,13 @@ class Stream {
     });
   }
 
+  bufferedLength() {
+    const cachedAmt = this.cache.length;
+
+    if (cachedAmt < 2) { return 0; }
+    return Math.round((cachedAmt - 1) * this.segmentLength());
+  }
+
   fillBuffer(next) {
     return new Promise((resolve) => {
       const rep = this.rep;
@@ -281,6 +288,33 @@ class Stream {
     } else {
       throw(`Unable to decipher source type ("${this.mpd.type}")`);
     }
+  }
+
+  popCache(amt = 1) {
+    return new Promise((resolve, reject) => {
+      let breakIndex = 0;
+
+      if (this.cache.length < amt + 1) { resolve(); }
+      for (let i = 1; i < this.cache.length; i++) {
+        if (this.cache[i].type === kSegmentType.init) {
+          continue;
+        }
+
+        if (
+          this.cache[i - 1].type === kSegmentType.init &&
+          this.cache[i].type === kSegmentType.segment
+        ) {
+          breakIndex = i;
+          break;
+        }
+      }
+
+      if (breakIndex === 0) { reject(); }
+      if (breakIndex + 1 + amt > this.cache.length) { reject(); }
+
+      this.cache.splice(breakIndex, amt);
+      resolve();
+    });
   }
 
   segmentLength() {

@@ -286,6 +286,7 @@ class State {
                 if (lastStream && lastPoint) {
                   payloadEnd = (new Date()).getTime();
 
+                  // const bufferLength = stream.bufferLength();
                   const delta = (payloadEnd - payloadStart) / 1000;
                   const speed = kbps(payloadSize, delta);
                   const factor = speedFactor(speed, payloadSize, lead);
@@ -299,6 +300,14 @@ class State {
 
                   console.log(`Buffers filled; download speed: ` +
                               `${speed}kbps, speedFactor: ${factor}`);
+
+                  /*
+                  if (this.mpd.dvr && bufferLength > this.mpd.dvr) {
+                    stream.popCache(1).then(() => resolve(factor, now));
+                  } else {
+                    resolve(factor, now);
+                  }
+                  */
 
                   resolve(factor, now);
                 }

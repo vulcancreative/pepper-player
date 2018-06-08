@@ -321,6 +321,7 @@ class MPD {
 
     this.adps = this.adps_(this.mpd, this.config.url, this.baseURL);
     this.duration = this.duration_(this.mpd);
+    this.dvr = this.dvr_(this.mpd);
     this.muxed = this.muxed_(this.mpd);
     this.type = this.type_(this.mpd);
     this.startTime = this.startTime_(this.mpd);
@@ -339,8 +340,8 @@ class MPD {
   // source adaptations and populate with critical data and metadata
   // mpd === parsed MPD XML
   adps_(mpd, url, override) {
-    const period = mpd.querySelectorAll("Period")[0];
-    const adaptations = period.querySelectorAll("AdaptationSet");
+    const period = mpd.querySelectorAll('Period')[0];
+    const adaptations = period.querySelectorAll('AdaptationSet');
 
     if (adaptations && adaptations.length > 0) {
       const adps = [];
@@ -365,7 +366,7 @@ class MPD {
       }
     }
 
-    let url = mpd.querySelectorAll("MPD BaseURL")[0];
+    let url = mpd.querySelectorAll('MPD BaseURL')[0];
     url = url && url.textContent ? url.textContent.trim() : '/';
     url += url.charAt(url.length - 1) !== '/' ? '/' : '';
 
@@ -375,10 +376,10 @@ class MPD {
   // acquires overall duration, if possible (VoD)
   // mpd === parsed MPD XML
   duration_(mpd) {
-    const root = mpd.querySelectorAll("MPD")[0];
+    const root = mpd.querySelectorAll('MPD')[0];
 
     if (root !== null && typeof root !== 'undefined') {
-      const durationAttr = root.getAttribute("mediaPresentationDuration");
+      const durationAttr = root.getAttribute('mediaPresentationDuration');
 
       if (durationAttr===null ||
           typeof durationAttr==='undefined' ||
@@ -391,18 +392,38 @@ class MPD {
     }
   }
 
+  // gets max buffer depth, if possible (live)
+  // basically, determines how much time is cached, and how
+  // far back someone can rewind a live video
+  dvr_(mpd) {
+    const root = mpd.querySelectorAll('MPD')[0];
+
+    if (root !== null && typeof root !== 'undefined') {
+      const dvrAttr = root.getAttribute('timeShiftBufferDepth');
+     
+      if (dvrAttr===null ||
+          typeof dvrAttr==='undefined' ||
+          !dvrAttr.hasOwnProperty('length') ||
+          dvrAttr.length < 1) { return -1; }
+
+      return toDuration(dvrAttr);
+    } else {
+      throw("MPD is invalid; unable to source time shift buffer depth.");
+    }
+  }
+
   // samples a representations codecs
   // if both avc1 and mp4a codecs detected in same rep, true is returned
   // mpd === parsed MPD XML
   muxed_(mpd) {
-    const rep = mpd.querySelectorAll("Representation")[0];
+    const rep = mpd.querySelectorAll('Representation')[0];
 
     if (rep && typeof rep !== 'undefined') {
       const codecs = rep.getAttribute('codecs');
       if (codecs.includes(',')) {
-        let vid = false, aud = false, vID = "avc", aID = "mp4";
+        let vid = false, aud = false, vID = 'avc', aID = 'mp4';
 
-        const s = codecs.split(",");
+        const s = codecs.split(',');
 
         if ((s[0].substring(0,3)==vID) || (s[1].substring(0,3)==vID)) {
           vid = true;
@@ -423,7 +444,7 @@ class MPD {
 
   // determined if we have a live ("dynamic") or vod ("static") stream
   type_(mpd) {
-    const root = mpd.querySelectorAll("MPD")[0];
+    const root = mpd.querySelectorAll('MPD')[0];
 
     if (root && typeof root !== 'undefined') {
       let type = root.getAttribute('type');
@@ -437,7 +458,7 @@ class MPD {
 
   // acquires availability start time from MPD, if possible (live)
   startTime_(mpd) {
-    const root = mpd.querySelectorAll("MPD")[0];
+    const root = mpd.querySelectorAll('MPD')[0];
     if (root !== null && typeof root !== 'undefined') {
       const startAttr = root.getAttribute('availabilityStartTime');
 
@@ -455,7 +476,7 @@ class MPD {
   // acquires MPD update period, if possible (live)
   //) mpd === parsed MPD XML
   updatePeriod_(mpd) {
-    const root = mpd.querySelectorAll("MPD")[0];
+    const root = mpd.querySelectorAll('MPD')[0];
     if (root !== null && typeof root !== 'undefined') {
       const periodAttr = root.getAttribute('minimumUpdatePeriod');
 
@@ -474,7 +495,7 @@ class MPD {
   xml_(mpd) {
     let hasDOM = mpd.querySelectorAll ? true : false;
 
-    if (!hasDOM || !mpd.querySelectorAll("Period")[0]) {
+    if (!hasDOM || !mpd.querySelectorAll('Period')[0]) {
       const parser = new DOMParser();
       const xml = parser.parseFromString(mpd, 'text/xml', 0);
       return xml;

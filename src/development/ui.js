@@ -47,7 +47,38 @@ function scrubberClick(e) {
 class Video extends React.Component {
   render() {
     return (
-      <video width="640" height="480"></video>
+      <video width="640" height="480" controls></video>
+    );
+  }
+}
+
+class BufferDepth extends React.Component {
+  render() {
+    const guts = this.props.guts;
+    if (guts === null || typeof guts === 'undefined') { return null; }
+
+    const streams = guts.streams;
+    if (streams===null || typeof streams==='undefined') { return null; }
+
+    const depth = guts.mpd.dvr ? 
+      streams.map((stream) => {
+        return (
+          <div key={stream.id} className="depth">
+            <span className="buffered-time">
+              {stream.bufferedLength()}
+            </span>
+            <span className="divider">/</span>
+            <span className="total-depth">
+              {guts.mpd.dvr}
+            </span>
+          </div>
+        );
+      }) : null;
+
+    return (
+      <div className="buffer-depth">
+        {depth}
+      </div>
     );
   }
 }
@@ -101,6 +132,7 @@ class TestUI extends React.Component {
       <div>
         <Video/>
         <div className="pepper-ui">
+          <BufferDepth guts={this.props.guts} />
           <QualityControl id={this.props.id} guts={this.props.guts}
           qualities={this.props.qualities} />
         </div>
