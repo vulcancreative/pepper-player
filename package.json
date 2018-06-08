@@ -9,8 +9,8 @@
   "repository": "github:chris-calo/pepper-player",
   "description": "A JavaScript-based MPEG-DASH player, but more specialer.",
   "scripts": {
-    "dev": "webpack --mode development --module-bind js=babel-loader --w",
-    "build": "webpack --mode production --module-bind js=babel-loader",
+    "dev": "NODE_ENV=development webpack --module-bind js=babel-loader --w",
+    "build": "NODE_ENV=production webpack --module-bind js=babel-loader",
     "test": "mocha --require babel-register ./src/**/*.test.js"
   },
   "babel": {
@@ -42,6 +42,7 @@
     "eslint-plugin-prettier": "^2.6.0",
     "eslint-plugin-react": "^7.7.0",
     "gzip-size": "^4.1.0",
+    "ifdef-loader": "^2.0.3",
     "log-update": "^2.3.0",
     "mocha": "^5.1.1",
     "node-sass": "^4.9.0",
@@ -49,6 +50,7 @@
     "preact-compat": "^3.18.0",
     "prettier": "^1.12.1",
     "pretty-bytes": "^5.0.0",
+    "querystring": "^0.2.0",
     "sass-loader": "^7.0.1",
     "style-loader": "^0.21.0",
     "time-stamp": "^2.0.0",

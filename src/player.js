@@ -1,10 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
 import { os } from './os';
-import { TestUI } from './ui';
+import React from 'react';
 import { State } from './state';
+import ReactDOM from 'react-dom';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
+import LiveUI from './production/ui';
+import TestUI from './development/ui';
 
 class Player {
   constructor(config = {}) {
@@ -28,12 +29,10 @@ class Player {
       debug:  false,
       lead:   5000,
       loop:   false,
-      query:  "video.pepper",
+      query:  ".pepper video",
       start:  0,
       track:  0,
-      ui:     {
-        qualityControl:  true,
-      }
+      ui:     true,
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
@@ -48,6 +47,7 @@ class Player {
     if (this.config.base < 100) { this.config.base = 100; }
     if (this.config.lead < 1000) { this.config.lead = 1000; }
 
+    this.renderUI();
     this.state = new State(this.config);
     this.state.setup().then(() => console.log("State ready"))
                       .then(() => this.renderUI())
@@ -136,9 +136,7 @@ class Player {
       const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
       const maxTime = lens.reduce((a,b) => Math.max(a,b));
       const waitTime = this.lastSpeed ?
-                       minTime - minTime * this.lastSpeed : minTime;
-
-      console.log(`waitTime : ${waitTime}`);
+                      minTime - minTime * this.lastSpeed : minTime;
 
       setInterval(() => {
         // console.log("ATTEMPTING LIVE BUFFER");
@@ -154,7 +152,7 @@ class Player {
             if (adjusted) { this.renderUI(); }
           });
         });
-      }, waitTime || 1000);
+      }, waitTime);
     }
 
     return null;
@@ -165,55 +163,60 @@ class Player {
   }
 
   renderUI() {
-    const UI = this.debug ? TestUI : null;
-    if (!UI) { return; }
+    let id = 0;
+    let videoQualities = () => { return null; };
 
-    const id = this.state.videoStream().id;
+    const UI = process.env.NODE_ENV === 'development' ? TestUI : LiveUI;
+    // if (!UI || !this.state.video.controls) { return; }
 
-    const videoQualities = () => {
-      const mpd = this.state.mpd;
-      const adps = mpd.adps;
-      
-      let qualities = [];
+    if (this.state && this.state.video) {
+      id = this.state.videoStream().id;
 
-      for (let i = 0; i != adps.length; i++) {
-        const adp = adps[i];
+      videoQualities = () => {
+        const mpd = this.state.mpd;
+        const adps = mpd.adps;
+        
+        let qualities = [];
 
-        if (adp.reps.length < 1) { continue; }
+        for (let i = 0; i != adps.length; i++) {
+          const adp = adps[i];
 
-        for (let j = 0; j != adp.reps.length; j++) {
-          const rep = adp.reps[j];
+          if (adp.reps.length < 1) { continue; }
 
-          if (rep.type === kStreamType.video) {
-            const width = rep.width;
-            const height = rep.height;
+          for (let j = 0; j != adp.reps.length; j++) {
+            const rep = adp.reps[j];
 
-            qualities.push({
-              name: `${width}:${height}`,
-              repID: rep.id,
-              selected: !this.state.qualityAuto && id === rep.id,
-              weight: adp.reps[j].weight(),
-            });
+            if (rep.type === kStreamType.video) {
+              const width = rep.width;
+              const height = rep.height;
+
+              qualities.push({
+                name: `${width}:${height}`,
+                repID: rep.id,
+                selected: !this.state.qualityAuto && id === rep.id,
+                weight: adp.reps[j].weight(),
+              });
+            }
           }
         }
-      }
 
-      qualities.sort((a, b) => a.weight > b.weight);
-      qualities.unshift({
-        name: "auto",
-        repID: id,
-        selected: this.state.qualityAuto,
-        weight: -1,
-      });
+        qualities.sort((a, b) => a.weight > b.weight);
+        qualities.unshift({
+          name: "auto",
+          repID: id,
+          selected: this.state.qualityAuto,
+          weight: -1,
+        });
 
-      return qualities;
-    };
+        return qualities;
+      };
+    }
 
     ReactDOM.render(
       <UI id={id} qualities={videoQualities()}
       guts={this.state} config={this.config.ui} />,
-      document.querySelectorAll('.root')[0],
-      document.querySelectorAll('.pepper-ui')[0]
+      document.querySelectorAll('div.pepper')[0],
+      document.querySelectorAll('div.pepper')[0]
     );
   }
 

@@ -50,6 +50,7 @@ class State {
         console.error(e.target.error.message);
       };
 
+      /*
       root.addEventListener('waiting', () => {
         console.error("VIDEO FIRED WAITING EVENT");
       });
@@ -57,6 +58,7 @@ class State {
       root.addEventListener('readystatechange', () => {
         console.log(`VIDEO NOW IN READYSTATE : ${root.readyState}`);
       });
+      */
 
       this.video = root;
       this.loading = false;
@@ -256,7 +258,7 @@ class State {
       return this.streams.reduce((promise, stream, streamIndex) => {
         return promise.then(() => {
           let points = stream.makePoints(
-            dynamic ? null : start,
+            start,
             dynamic ? null : end,
             now,
             dynamic ? stream.rep : null

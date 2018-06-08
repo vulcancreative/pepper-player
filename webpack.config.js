@@ -2,11 +2,15 @@ const fs = require('fs');
 const copy = require('copy');
 const path = require('path');
 const colors = require('colors');
+const process = require('process');
+const webpack = require('webpack');
 const gzipSize = require('gzip-size');
 const logUpdate = require('log-update');
 const timestamp = require('time-stamp');
 const prettyBytes = require('pretty-bytes');
 const consoleTable = require('console.table');
+
+const mode = process.env.NODE_ENV || 'development';
 
 const libName = 'pepper';
 const output = `${libName}.js`;
@@ -96,6 +100,7 @@ const aliases = {
 };
 
 module.exports = {
+  mode: mode,
   stats: 'errors-only',
   entry: `${__dirname}/index.js`,
   resolve: {
@@ -113,22 +118,26 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        use: {
-          loader: require.resolve("babel-loader"),
-        },
+        use: [
+          require.resolve('babel-loader'),
+        ],
         exclude: /node_modules/,
       },
       {
         test: /\.s?(a|c)ss$/,
         use: [
-          require.resolve("style-loader"),
-          require.resolve("css-loader"),
-          require.resolve("sass-loader"),
+          require.resolve('style-loader'),
+          require.resolve('css-loader'),
+          require.resolve('sass-loader'),
         ],
       }
     ]
   },
   plugins: [
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': JSON.stringify(mode),
+      __isBrowser__: 'true',
+    }),
     new SuccessPlugin(),
   ],
 };

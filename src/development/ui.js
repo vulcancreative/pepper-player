@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames/bind';
 
-import './styles/debug.scss';
+import './ui.scss';
 
 /*
 function mouseWatch(e) {
@@ -44,28 +44,15 @@ function scrubberClick(e) {
 //////////
 //////////
 //////////
-class QualityControl extends React.Component {
-  /*
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.qualities[0].id !== this.props.id) {
-      console.log("SHOULD BE REDRAWING");
-      const prev = prevState.qualities;
-
-      let qualities = prev.slice(1, prev.length - 1);
-      qualities.unshift({
-        name: prev[0].name,
-        repID: this.props.id,
-        selected: prev[0].selected,
-        weight: prev[0].weight,
-      });
-
-      this.setState({
-        qualities: qualities,
-      });
-    }
+class Video extends React.Component {
+  render() {
+    return (
+      <video width="640" height="480"></video>
+    );
   }
-  */
+}
 
+class QualityControl extends React.Component {
   handleClick(index) {
     this.props.qualities.map((quality, i) => {
       if (i === index) { this.props.guts.queueQuality(quality); }
@@ -74,6 +61,10 @@ class QualityControl extends React.Component {
   }
 
   render() {
+    if (!this.props.qualities || this.props.qualities.length < 1) {
+      return null;
+    }
+
     const auto = this.props.qualities[0].selected;
     const autoRep = this.props.qualities[0].repID;
 
@@ -101,14 +92,21 @@ class QualityControl extends React.Component {
 }
 
 class TestUI extends React.Component {
+  componentDidMount() {
+    console.warn("Using development UI");
+  }
+
   render() {
     return (
-      <div className="pepper-ui">
-        <QualityControl id={this.props.id} guts={this.props.guts}
-        qualities={this.props.qualities} />
+      <div>
+        <Video/>
+        <div className="pepper-ui">
+          <QualityControl id={this.props.id} guts={this.props.guts}
+          qualities={this.props.qualities} />
+        </div>
       </div>
     );
   }
 }
 
-export { TestUI };
+export default TestUI;

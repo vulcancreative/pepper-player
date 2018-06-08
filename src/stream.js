@@ -243,14 +243,23 @@ class Stream {
     // handle timeline-based mechanism
     if (rep !== null && typeof rep !== 'undefined') {
       if (rep.timeline.length > 0) {
+        let result = [];
         const init = rep.timeline[0];
         const t = parseInt(init.getAttribute('t'));
         const d = parseInt(init.getAttribute('d'));
 
-        const result = this.lastPoint ? this.lastPoint + d : t;
-        this.lastPoint = result;
+        /*
+        if (current === 0 && rep.timeline.length >= 5) {
+          result = (new Array(5).fill(t).map((v, i) => v + d * i));
+        } else {
+          result = [this.lastPoint ? this.lastPoint + d : t];
+        }
+        */
 
-        return [result];
+        result = [this.lastPoint ? this.lastPoint + d : t];
+
+        this.lastPoint = result[result.length - 1];
+        return result;
       }
     }
 
@@ -279,7 +288,7 @@ class Stream {
 
     if (rep !== null && typeof rep !== 'undefined') {
       // average size if timeline-based
-      if (rep.timeline.length > 0) {
+      if (rep.timeline && rep.timeline.length > 0) {
         const points = [];
 
         for (let i = 0; i < rep.timeline.length; i++) {

@@ -5,7 +5,7 @@
   </head>
   <body>
     <div class="root">
-      <video class="pepper" controls width="640" height="480"></video>
+      <div class="pepper"></div>
     </div>
     <script type="text/javascript">
       /*
@@ -31,7 +31,8 @@
         playlist: [
           {
             dash: {
-              url: "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd",
+              url: "https://dash.akamaized.net/akamai/" +
+              "bbb_30fps/bbb_30fps.mpd",
               // base: "https://dash.akamaized.net/akamai/bbb_30fps/",
             },
             hls: {
@@ -46,7 +47,8 @@
         playlist: [
           {
             dash: {
-              url: "http://vm2.dashif.org/livesim/segtimeline_1/testpic_2s/Manifest.mpd"
+              url: "http://vm2.dashif.org/livesim/" +
+              "segtimeline_1/testpic_2s/Manifest.mpd"
             },
             hls: {
               gen: true
