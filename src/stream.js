@@ -1,7 +1,8 @@
 import { assert } from './assert';
 import { strings } from './strings';
 import { mergeDicts, isInt } from './helpers';
-import { kSegmentType } from './constants';
+import { arrayBufferToBase64 } from './convert';
+import { kStreamType, kSegmentType } from './constants';
 
 class Stream {
   constructor(config = {}) {
@@ -22,8 +23,6 @@ class Stream {
     this.rep = this.config.rep;
     this.sources = this.config.sources;
     assert(this.rep !== null && typeof this.rep !== 'undefined');
-
-    console.log(this.rep);
   }
 
   setup() {
@@ -39,6 +38,12 @@ class Stream {
     return new Promise((resolve) => {
       this.type = this.rep.type;
       this.codecs = `${this.rep.mimeType}; codecs="${this.rep.codecs}"`;
+
+      // resolve setup immediately for non-audio/video adaptations
+      if (!MediaSource.isTypeSupported(this.codecs)) {
+        resolve(cache);
+        return;
+      }
 
       this.buffer = this.mediaSource.addSourceBuffer(this.codecs);
       this.buffer.mode = 'sequence';
@@ -187,6 +192,18 @@ class Stream {
           return;
         }
 
+        if (this.type === kStreamType.image) {
+          this.cache.push({
+            point: next,
+            mime: this.rep.mimeType,
+            data: arrayBufferToBase64(data),
+            info: rep.tileInfo,
+          });
+
+          resolve(data.byteLength);
+          return;
+        }
+
         this.cache.push({
           type: kSegmentType.segment,
           point: next,
@@ -197,8 +214,6 @@ class Stream {
         const i = this.cache.length - 1;
         this.appendBuffer(this.buffer, this.cache[i]).then((buffer) => {
           this.buffer = buffer;
-
-          // const newTime = parseInt(current + this.segmentLength());
           resolve(data.byteLength);
         });
       });
@@ -234,11 +249,11 @@ class Stream {
     if (points.constructor === Array) {
       for (let i = 0; i != points.length; i++) {
         const point = points[i];
-        if (binSearchCache(point) > 1) { duplicates.push(point); }
+        if (binSearchCache(point) > -1) { duplicates.push(point); }
       }
     } else if (isInt(points)) {
       const point = points;
-      if (binSearchCache(point) > 1) { duplicates.push(point); }
+      if (binSearchCache(point) > -1) { duplicates.push(point); }
     } else {
       throw(`Invalid argument value : "${points}"`);
     }
@@ -246,33 +261,32 @@ class Stream {
     return duplicates;
   }
 
-  makePoints(current, target, now, rep = null) {
+  makePoints(current, target, now, rep) {
     // handle timeline-based mechanism
     if (rep !== null && typeof rep !== 'undefined') {
-      if (rep.timeline.length > 0) {
-        let result = [];
-        const init = rep.timeline[0];
-        const t = parseInt(init.getAttribute('t'));
-        const d = parseInt(init.getAttribute('d'));
+      if (rep.timeline !== null && typeof rep.timeline !== 'undefined') {
+        if (rep.timeline.length > 0) {
+          let result = [];
+          const init = rep.timeline[0];
+          const t = parseInt(init.getAttribute('t'));
+          const d = parseInt(init.getAttribute('d'));
 
-        /*
-        if (current === 0 && rep.timeline.length >= 5) {
-          result = (new Array(5).fill(t).map((v, i) => v + d * i));
-        } else {
           result = [this.lastPoint ? this.lastPoint + d : t];
+          this.lastPoint = result[result.length - 1];
+
+          return result;
         }
-        */
-
-        result = [this.lastPoint ? this.lastPoint + d : t];
-
-        this.lastPoint = result[result.length - 1];
-        return result;
       }
     }
 
     // handle template-based mechanism
     if (this.mpd.type === 'static') {
-      const delta = (target < current ? current + 1000 : target) - current;
+      if (rep.type === kStreamType.image && rep.tileInfo !== null) {
+        const count = Math.ceil(this.mpd.duration / rep.tileInfo.duration);
+        return (new Array(count)).fill(0).map((s, i) => i + 1);
+      }
+
+      const delta = (target < current ? current+1000 : target)-current;
       const steps = parseInt(
         Math.ceil(parseFloat(delta) / parseFloat(this.segmentLength()))
       );

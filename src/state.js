@@ -1,6 +1,7 @@
 import { MPD } from './mpd';
 import { assert } from './assert';
 import { Stream } from './stream';
+import moment from 'moment-timezone';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
@@ -26,6 +27,7 @@ class State {
       base:   0,
       lead:   0,
       start:  0,
+      timed:  { start: -1, zone: 'America/Los_Angeles', diff: -1 },
       track:  0,
       query:  "",
     };
@@ -35,9 +37,18 @@ class State {
 
   setup() {
     return new Promise((resolve, reject) => {
-      const track = this.config.track;
-      const url = this.config.playlist[track].dash.url;
-      const base = this.config.playlist[track].dash.base;
+      if (this.config.timed.start !== -1) {
+        const zone = this.config.timed.zone;
+
+        const now = moment.tz((new Date()).toString(), zone);
+        const then = moment.tz(this.config.timed.start, zone);
+
+        const nowMs = now.format('x');
+        const thenMs = then.format('x');
+        const diff = thenMs - nowMs;
+
+        this.config.timed.diff = diff;
+      }
 
       const root = document.querySelectorAll(this.config.query)[0];
 
@@ -61,11 +72,28 @@ class State {
       */
 
       this.video = root;
+      this.paused = true;
       this.loading = false;
       this.started = false;
       this.qualityAuto = true;
       this.qualityQueued = null;
       this.bufferTime = this.config.start;
+
+      if (this.config.timed.diff > 0) { resolve(); return; }
+
+      this.init_().then(() => resolve());
+    });
+  }
+
+  init_() {
+    if (this.mpd !== null && typeof this.mpd !== 'undefined') {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      const track = this.config.track;
+      const url = this.config.playlist[track].dash.url;
+      const base = this.config.playlist[track].dash.base;
 
       this.mpd = new MPD({ url: url, base: base });
       this.mpd.setup().then(() => console.log("MPD parsed"))
@@ -203,6 +231,10 @@ class State {
   }
 
   audioStream() {
+    if (this.streams === null || typeof this.streams === 'undefined') {
+      return null;
+    }
+
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
       if (stream.type === kStreamType.audio ||
@@ -221,6 +253,7 @@ class State {
 
     // fail if actively buffering
     if (!dynamic && this.loading) { return Promise.resolve(); }
+    if (this.started && this.paused) { return Promise.resolve(); }
 
     // base line time used for live buffering
     const now = Date.now();
@@ -261,7 +294,7 @@ class State {
             start,
             dynamic ? null : end,
             now,
-            dynamic ? stream.rep : null
+            stream.rep
           );
 
           let duplicates = stream.inCache(points);
@@ -319,6 +352,29 @@ class State {
     });
   }
 
+  imageStream() {
+    if (this.streams === null || typeof this.streams === 'undefined') {
+      return null;
+    }
+
+    for (let i = 0; i != this.streams.length; i++) {
+      const stream = this.streams[i];
+      if (stream.type === kStreamType.image) { return stream.rep; }
+    }
+
+    return null;
+  }
+
+  pause() {
+    this.paused = true;
+    return this.video.pause();
+  }
+
+  play() {
+    this.paused = false;
+    return this.video.play();
+  }
+
   queueQuality(quality) {
     assert(quality !== null && typeof quality !== 'undefined');
 
@@ -363,6 +419,10 @@ class State {
   }
 
   videoStream() {
+    if (this.streams === null || typeof this.streams === 'undefined') {
+      return null;
+    }
+
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
       if (stream.type === kStreamType.video ||

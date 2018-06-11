@@ -1,5 +1,17 @@
 import { assert } from './assert';
 
+// convers an array buffer to Base64
+// dervived from : https://stackoverflow.com/a/9458996/4043446
+function arrayBufferToBase64(buffer) {
+  var binary = '';
+  var bytes = new Uint8Array(buffer);
+  var len = bytes.byteLength;
+
+  for (var i = 0; i < len; i++) { binary+=String.fromCharCode(bytes[i]); }
+
+  return btoa(binary);
+}
+
 // parses a string to an int, only if possible
 function toInt(i) {
   const remainder = (i % 1);
@@ -14,6 +26,29 @@ function toInt(i) {
   }
 
   return null;
+}
+
+// converts a ms value to a timestamp (e.g. – 300000 === 5:00)
+function msToStamp(ms) {
+  // ms cannot be negative
+  assert(ms >= 0);
+
+  // initialize
+  const sInHour = 3600;
+  const sInMinute = 60;
+
+  let result = '';
+  let working = Math.floor(ms / 1000) * 1000 / 1000;
+  let hours = 0, minutes = 0, seconds = 0;
+
+  // consume working ms
+  while (working >= sInHour) { working -= sInHour; hours++; }
+  while (working >= sInMinute) { working -= sInMinute; minutes++; }
+  seconds = working;
+
+  // assemble as a timestamp
+  if (hours > 0) { result += `${hours}:`; }
+  return result + `${minutes}:` + `${seconds.toFixed(0)}`.padStart(2, '0');
 }
 
 // parses an MPD-formatted duration
@@ -69,5 +104,7 @@ function toDuration(d) {
 
 export {
   toInt,
+  msToStamp,
   toDuration,
+  arrayBufferToBase64,
 };

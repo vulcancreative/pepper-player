@@ -4,8 +4,8 @@ import { State } from './state';
 import ReactDOM from 'react-dom';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
-import LiveUI from './production/ui';
-import TestUI from './development/ui';
+import { UI as LiveUI } from './production/ui';
+import { UI as TestUI } from './development/ui';
 
 class Player {
   constructor(config = {}) {
@@ -31,6 +31,7 @@ class Player {
       loop:   false,
       query:  ".pepper video",
       start:  0,
+      timed:  { start: -1, zone: 'America/Los_Angeles', diff: -1 },
       track:  0,
       ui:     true,
     };
@@ -50,27 +51,53 @@ class Player {
     this.renderUI();
     this.state = new State(this.config);
     this.state.setup().then(() => console.log("State ready"))
-                      .then(() => this.renderUI())
-                      .then(() => this.state.fillBuffers())
-                      .then((speed, now) => {
-                        const type = this.state.mpd.type;
-                        if (type === 'dynamic') {
-                          this.safariStartTime = now / 1000;
-                        }
-
-                        return this.state.adjustQuality(speed);
-                      })
                       .then(() => {
-                        const type = this.state.mpd.type;
-                        if (this.config.auto) {
-                          if (type === 'dynamic' && os.is('safari')) {
-                            const start = this.safariStartTime;
-                            this.state.video.currentTime = start;
-                          }
+                        this.renderUI();
 
-                          this.play();
+                        const diff = this.state.config.timed.diff;
+                        if (diff > 0) {
+                          this.startsInMs = diff;
+                          this.renderUI();
+
+                          setTimeout(() => {
+                            this.startsInMs = diff >= 1000 ?
+                              diff - 1000 : diff;
+
+                            this.renderUI();
+
+                            this.updateTimer_(
+                              diff >= 1000 ? diff - 1000 : diff
+                            );
+                          }, 1000);
+                          return;
                         }
+
+                        this.init_();
                       });
+  }
+
+  init_() {
+    this.state.init_().then(() => {
+      this.state.fillBuffers().then((speed, now) => {
+        const type = this.state.mpd.type;
+        if (type === 'dynamic') {
+          this.safariStartTime = now / 1000;
+        }
+
+        return this.state.adjustQuality(speed);
+      })
+      .then(() => {
+        const type = this.state.mpd.type;
+        if (this.config.auto) {
+          if (type === 'dynamic' && os.is('safari')) {
+            const start = this.safariStartTime;
+            this.state.video.currentTime = start;
+          }
+
+          this.play();
+        }
+      });
+    });
   }
 
   bufferTime() {
@@ -78,11 +105,19 @@ class Player {
   }
 
   currentTime() {
+    if (this.state===null || typeof this.state==='undefined') {
+      return 0;
+    }
+
+    if (this.state.video===null || typeof this.state.video==='undefined') {
+      return 0;
+    }
+
     return this.state.video.currentTime * 1000;
   }
 
   didEnd() {
-    return this.currentTime() >= this.duration();
+    return Math.round(this.currentTime() / 1000) * 1000 >= this.duration();
   }
 
   duration() {
@@ -90,9 +125,11 @@ class Player {
   }
 
   isPaused() {
-    // TODO
-    
-    return false;
+    if (this.state === null || typeof this.state === 'undefined') {
+      return true;
+    }
+
+    return this.state.paused;
   }
 
   makeActive() {
@@ -104,58 +141,54 @@ class Player {
   }
 
   pause() {
-    return this.state.video.pause();
+    return this.state.pause();
   }
 
   play() {
     const type = this.state.mpd.type;
 
-    if (type === 'static') {
-      return this.state.video.play().then(() => {
+    return this.state.play().then(() => {
+      if (type === 'static') {
         this.state.video.ontimeupdate = () => {
           const currentTime = this.currentTime();
           const bufferTime = this.bufferTime();
           const leadTime = this.config.lead;
 
+          this.renderUI();
+
           if (currentTime >= bufferTime - leadTime / 2) {
             this.state.fillBuffers().then((speed) => {
-              this.state.adjustQuality(speed).then((adjusted) => {
-                if (adjusted) { this.renderUI(); }
-              });
+              this.state.adjustQuality(speed);
             });
           }
 
-          if (this.currentTime() >= this.duration()) {
+          if (this.didEnd()) {
             this.state.video.currentTime = 0;
-            if (!this.config.loop) { this.state.video.pause(); }
+            if (!this.config.loop) { this.pause(); }
           }
         };
-      });
-    } else if (type === 'dynamic') {
-      const lens = this.state.segmentLengths();
-      const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
-      const maxTime = lens.reduce((a,b) => Math.max(a,b));
-      const waitTime = this.lastSpeed ?
-                      minTime - minTime * this.lastSpeed : minTime;
+      } else if (type === 'dynamic') {
+        const lens = this.state.segmentLengths();
+        const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
+        const maxTime = lens.reduce((a,b) => Math.max(a,b));
+        const waitTime = this.lastSpeed ?
+                        minTime - minTime * this.lastSpeed : minTime;
 
-      setInterval(() => {
-        // console.log("ATTEMPTING LIVE BUFFER");
+        this.state.video.ontimeupdate = () => this.renderUI();
 
-        this.state.fillBuffers(maxTime).then((speed) => {
-          this.lastSpeed = speed;
+        setInterval(() => {
+          this.state.fillBuffers(maxTime).then((speed) => {
+            this.lastSpeed = speed;
 
-          if (this.config.auto && !this.isPaused()) {
-            this.state.video.play();
-          }
+            if (this.config.auto && !this.isPaused()) {
+              this.state.play();
+            }
 
-          this.state.adjustQuality(speed).then((adjusted) => {
-            if (adjusted) { this.renderUI(); }
+            this.state.adjustQuality(speed);
           });
-        });
-      }, waitTime);
-    }
-
-    return null;
+        }, waitTime);
+      }
+    });
   }
 
   previous() {
@@ -170,58 +203,89 @@ class Player {
     // if (!UI || !this.state.video.controls) { return; }
 
     if (this.state && this.state.video) {
-      id = this.state.videoStream().id;
+      const stream = this.state.videoStream();
 
-      videoQualities = () => {
-        const mpd = this.state.mpd;
-        const adps = mpd.adps;
-        
-        let qualities = [];
+      if (stream) {
+        id = stream.id;
 
-        for (let i = 0; i != adps.length; i++) {
-          const adp = adps[i];
+        videoQualities = () => {
+          const mpd = this.state.mpd;
+          const adps = mpd.adps;
+          
+          let qualities = [];
 
-          if (adp.reps.length < 1) { continue; }
+          for (let i = 0; i != adps.length; i++) {
+            const adp = adps[i];
 
-          for (let j = 0; j != adp.reps.length; j++) {
-            const rep = adp.reps[j];
+            if (adp.reps.length < 1) { continue; }
 
-            if (rep.type === kStreamType.video) {
-              const width = rep.width;
-              const height = rep.height;
+            for (let j = 0; j != adp.reps.length; j++) {
+              const rep = adp.reps[j];
 
-              qualities.push({
-                name: `${width}:${height}`,
-                repID: rep.id,
-                selected: !this.state.qualityAuto && id === rep.id,
-                weight: adp.reps[j].weight(),
-              });
+              if (rep.type === kStreamType.video) {
+                const width = rep.width;
+                const height = rep.height;
+
+                qualities.push({
+                  name: `${width}:${height}`,
+                  repID: rep.id,
+                  selected: !this.state.qualityAuto && id === rep.id,
+                  weight: adp.reps[j].weight(),
+                });
+              }
             }
           }
-        }
 
-        qualities.sort((a, b) => a.weight > b.weight);
-        qualities.unshift({
-          name: "auto",
-          repID: id,
-          selected: this.state.qualityAuto,
-          weight: -1,
-        });
+          qualities.sort((a, b) => a.weight > b.weight);
+          qualities.unshift({
+            name: "auto",
+            repID: id,
+            selected: this.state.qualityAuto,
+            weight: -1,
+          });
 
-        return qualities;
-      };
+          return qualities;
+        };
+      }
     }
 
     ReactDOM.render(
-      <UI id={id} qualities={videoQualities()}
-      guts={this.state} config={this.config.ui} />,
+      <UI id={id}
+          startsInMs={this.startsInMs}
+          qualities={videoQualities()}
+          guts={this.state}
+          config={this.config.ui}
+          seek={(p) => this.seek(p)}
+          play={() => this.play()}
+          pause={() => this.pause()}
+          isPaused={() => this.isPaused()}
+          currentTime={() => this.currentTime()}
+      />,
       document.querySelectorAll('div.pepper')[0],
       document.querySelectorAll('div.pepper')[0]
     );
   }
 
-  seek() {
-    // TODO
+  seek(percentage) {
+    if (percentage === null || typeof percentage === 'undefined') {
+      return;
+    }
+
+    const time = this.state.mpd.duration * (percentage / 100);
+    this.config.start = time;
+
+    this.pause();
+    this.setup_();
+  }
+
+  updateTimer_(diff) {
+    if (diff <= 0) { this.init_(); return; }
+
+    setTimeout(() => {
+      this.startsInMs -= 1000;
+      this.renderUI();
+      this.updateTimer_(diff > 0 ? diff - 1000 : 0)
+    }, 1000);
   }
 }
 

@@ -5,10 +5,24 @@
   </head>
   <body>
     <div class="root">
-      <div class="pepper"></div>
+      <div class="pepper">
+        <div>
+            <video></video>
+            <div class="scrubber-container">
+                <div class="preview" style="background-color: black; width: 160px; height: 90px;"></div>
+                <div class="scrubber-activearea">
+                    <div class="scrubber-outer">
+                        <div class="scrubber-inner">
+                            <div class="scrubber-handle"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
     </div>
     <script type="text/javascript">
-      /*
+      // media test
       var player = new pepper.Player({
         playlist: [
           {
@@ -24,9 +38,9 @@
           }
         ]
       });
-      */
 
       /*
+      // 4k test
       var player = new pepper.Player({
         playlist: [
           {
@@ -43,6 +57,8 @@
       });
       */
 
+      /*
+      // live echo test
       var player = new pepper.Player({
         playlist: [
           {
@@ -56,6 +72,48 @@
           }
         ]
       });
+      */
+
+      /*
+      // deferred live echo test
+      var now = new Date();
+      now.setSeconds(now.getSeconds() + 5);
+
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://vm2.dashif.org/livesim/" +
+              "segtimeline_1/testpic_2s/Manifest.mpd"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ],
+        timed: {
+          start: now.toString(),
+          zone: 'America/Los_Angeles'
+        }
+      });
+      */
+
+      /*
+      // thumbnail test
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://dash.edgesuite.net/akamai/" +
+              "bbb_30fps/bbb_with_tiled_thumbnails.mpd"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
+      */
     </script>
   </body>
 </html>

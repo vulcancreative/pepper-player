@@ -44,7 +44,7 @@ class Video extends React.Component {
   }
 }
 
-class LiveUI extends React.Component {
+class UI extends React.Component {
   render() {
     return (
       <div>
@@ -56,4 +56,4 @@ class LiveUI extends React.Component {
   }
 }
 
-export default LiveUI;
+export { UI };

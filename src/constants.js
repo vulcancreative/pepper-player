@@ -7,6 +7,7 @@ const kStreamType = {
   audio: 'audio',
   video: 'video',
   muxed: 'muxed',
+  image: 'image',
 };
 
 const kSegmentType = {

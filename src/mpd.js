@@ -8,7 +8,7 @@ class Rep {
     let id, codecs, width, height, bandwidth, baseURL,
     initialization, mediaTemplate, segmentTimeline, segmentTemplate,
     timelineParts, startNumber, timescale, mimeType,
-    segmentDuration, type;
+    segmentDuration, type, tileInfo;
 
     // source id from rep attribute
     id = rep.getAttribute('id');
@@ -72,7 +72,10 @@ class Rep {
       mediaTemplate = segmentTemplate.getAttribute('media');
 
       initialization = segmentTemplate.getAttribute('initialization');
-      initialization = initialization.replace("$RepresentationID$", id);
+
+      if (initialization!==null && typeof initialization!=='undefined') {
+        initialization = initialization.replace("$RepresentationID$", id);
+      }
 
       const startNumAttr = segmentTemplate.getAttribute('startNumber');
       startNumber = toInt(startNumAttr);
@@ -84,10 +87,30 @@ class Rep {
       segmentDuration = toInt(segDurationAttr);
     }
 
-    if (mimeType && mimeType.includes("video") && width && height) {
+    if (mimeType && mimeType.includes('video') && width && height) {
       type = kStreamType.video;
-    } else if (mimeType && mimeType.includes("audio") && bandwidth) {
+    } else if (mimeType && mimeType.includes('audio') && bandwidth) {
       type = kStreamType.audio;
+    } else if (mimeType && mimeType.includes('image')) {
+      type = kStreamType.image;
+    }
+
+    if (type === kStreamType.image) {
+      let dimensionAttr = '1x1';
+
+      const durationAttr = segmentTemplate.getAttribute('duration');
+      const essential = rep.querySelectorAll('EssentialProperty')[0];
+
+      if (essential !== null && typeof essential !== 'undefined') {
+        dimensionAttr = essential.getAttribute('value');
+      }
+
+      tileInfo = {
+        duration: parseInt(durationAttr) * 1000,
+        count: parseInt(dimensionAttr.split('x')[0]),
+        width: width,
+        height: height,
+      };
     }
 
     this.id = id;
@@ -103,6 +126,7 @@ class Rep {
     this.startNumber = startNumber;
     this.timescale = timescale;
     this.segmentDuration = segmentDuration;
+    this.tileInfo = tileInfo;
     this.type = type;
   }
 
@@ -348,6 +372,14 @@ class MPD {
 
       for (let i = 0; i != adaptations.length; i++) {
         const adaptation = adaptations[i];
+        /*
+        const mimeType = adaptation.getAttribute('mimeType');
+
+        if (!mimeType.includes('audio') && !mimeType.includes('video')) {
+          continue;
+        }
+        */
+
         adps.push(new Adp(adaptation, i, url, override));
       }
 
@@ -395,6 +427,7 @@ class MPD {
   // gets max buffer depth, if possible (live)
   // basically, determines how much time is cached, and how
   // far back someone can rewind a live video
+  // for static videos, it's assumed one can rewind indefinitely
   dvr_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
 
