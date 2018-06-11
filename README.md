@@ -7,7 +7,7 @@ browsers.
 
 Features include:
 
-* Only 15kb – and shrinking!
+* 100kb – and shrinking!
 * Ultra low-latency start times
 * Automatic or manual adaptive quality
 * Lazy loading of media segments (reduces serving bandwidth)
@@ -21,5 +21,5 @@ Features include:
 λ git clone https://github.com/chris-calo/pepper-player.git
 λ cd pepper-player
 λ npm i
-λ npm run build && python -m http.server
+λ npm run build && cd lib && python -m http.server
 ```
