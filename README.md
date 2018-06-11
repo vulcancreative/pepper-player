@@ -1,6 +1,6 @@
 # pepper
 
-[![CircleCI](https://circleci.com/gh/chris-calo/pepper-player.svg?style=svg&circle-token=0c5dc10e0b028da9d6e882f19944f7fd21ae318c)](https://circleci.com/gh/chris-calo/pepper-player)
+[![CircleCI](https://circleci.com/gh/chris-calo/pepper-player.svg?style=shield&circle-token=0c5dc10e0b028da9d6e882f19944f7fd21ae318c)](https://circleci.com/gh/chris-calo/pepper-player)
 
 A JavaScript-based MPEG-DASH player, for use in modern desktop and mobile
 browsers.
