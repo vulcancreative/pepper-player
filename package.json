@@ -21,7 +21,18 @@
   ],
   "babel": {
     "presets": [
-      "env",
+      [
+        "env",
+        {
+          "targets": {
+            "browsers": [
+              "> 5% in US",
+              "IE 11",
+              "last 2 iOS versions"
+            ]
+          }
+        }
+      ],
       "preact"
     ],
     "plugins": [

@@ -117,7 +117,6 @@ const optimization = mode !== 'development' ? {
           'pure_getters': true,
           'collapse_vars': true,
           'warnings': false,
-          // 'screw_ie8': true,
           'sequences': true,
           'dead_code': true,
           'drop_debugger': true,
@@ -132,7 +131,6 @@ const optimization = mode !== 'development' ? {
           'if_return': true,
           'join_vars': true,
           'reduce_vars': true,
-          // 'cascade': true,
           'drop_console': true,
           'pure_funcs': [
             'classCallCheck',
@@ -147,12 +145,12 @@ const optimization = mode !== 'development' ? {
       sourceMap: true,
     }),
   ],
-} : null;
+} : {};
 
 module.exports = {
   mode: mode,
   stats: 'errors-only',
-  entry: `${__dirname}/index.js`,
+  entry: path.resolve(__dirname, 'src', 'player.js'),
   optimization: optimization,
   resolve: {
     alias: aliases,
