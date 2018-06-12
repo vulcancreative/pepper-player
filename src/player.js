@@ -31,7 +31,7 @@ class Player {
       loop:   false,
       query:  ".pepper video",
       start:  0,
-      timed:  { start: -1, zone: 'America/Los_Angeles', diff: -1 },
+      timed:  0,
       track:  0,
       ui:     true,
     };
@@ -54,7 +54,7 @@ class Player {
                       .then(() => {
                         this.renderUI();
 
-                        const diff = this.state.config.timed.diff;
+                        const diff = this.state.config.timed;
                         if (diff > 0) {
                           this.startsInMs = diff;
                           this.renderUI();

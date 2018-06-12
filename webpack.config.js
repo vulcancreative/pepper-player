@@ -9,6 +9,9 @@ const logUpdate = require('log-update');
 const timestamp = require('time-stamp');
 const prettyBytes = require('pretty-bytes');
 const consoleTable = require('console.table');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const BundleAnalyzerPlugin = require('webpack-bundle-size-analyzer')
+                             .WebpackBundleSizeAnalyzerPlugin;
 
 const mode = process.env.NODE_ENV || 'development';
 
@@ -99,10 +102,58 @@ const aliases = {
   'react-dom': 'preact-compat',
 };
 
+const optimization = mode !== 'development' ? {
+  minimizer: [
+    new UglifyJsPlugin({
+      'cache': true,
+      'parallel': true,
+      'uglifyOptions': {
+        'sourceMap': true,
+        'output': { comments: false },
+        'mangle': true,
+        'compress': {
+          'properties': true,
+          'keep_fargs': false,
+          'pure_getters': true,
+          'collapse_vars': true,
+          'warnings': false,
+          // 'screw_ie8': true,
+          'sequences': true,
+          'dead_code': true,
+          'drop_debugger': true,
+          'comparisons': true,
+          'conditionals': true,
+          'evaluate': true,
+          'booleans': true,
+          'loops': true,
+          'passes': 4,
+          'unused': true,
+          'hoist_funs': true,
+          'if_return': true,
+          'join_vars': true,
+          'reduce_vars': true,
+          // 'cascade': true,
+          'drop_console': true,
+          'pure_funcs': [
+            'classCallCheck',
+            '_classCallCheck',
+            '_possibleConstructorReturn',
+            'Object.freeze',
+            'invariant',
+            'warning'
+          ]
+        },
+      },
+      sourceMap: true,
+    }),
+  ],
+} : null;
+
 module.exports = {
   mode: mode,
   stats: 'errors-only',
   entry: `${__dirname}/index.js`,
+  optimization: optimization,
   resolve: {
     alias: aliases,
   },
@@ -138,6 +189,15 @@ module.exports = {
       'process.env.NODE_ENV': JSON.stringify(mode),
       __isBrowser__: 'true',
     }),
+    /*
+    new webpack.BannerPlugin({
+      banner: `Copyright (c) ${(new Date().getFullYear())} Vulcan, LLC.`,
+      entryOnly: true,
+    }),
+    */
+    new BundleAnalyzerPlugin(
+      path.resolve(__dirname, 'report.txt')
+    ),
     new SuccessPlugin(),
   ],
 };

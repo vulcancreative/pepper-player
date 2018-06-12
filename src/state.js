@@ -1,7 +1,6 @@
 import { MPD } from './mpd';
 import { assert } from './assert';
 import { Stream } from './stream';
-import moment from 'moment-timezone';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
@@ -27,7 +26,7 @@ class State {
       base:   0,
       lead:   0,
       start:  0,
-      timed:  { start: -1, zone: 'America/Los_Angeles', diff: -1 },
+      timed:  0,
       track:  0,
       query:  "",
     };
@@ -37,11 +36,12 @@ class State {
 
   setup() {
     return new Promise((resolve, reject) => {
+      /*
       if (this.config.timed.start !== -1) {
         const zone = this.config.timed.zone;
 
-        const now = moment.tz((new Date()).toString(), zone);
-        const then = moment.tz(this.config.timed.start, zone);
+        const now = tz((new Date()).toString(), zone);
+        const then = tz(this.config.timed.start, zone);
 
         const nowMs = now.format('x');
         const thenMs = then.format('x');
@@ -49,6 +49,7 @@ class State {
 
         this.config.timed.diff = diff;
       }
+      */
 
       const root = document.querySelectorAll(this.config.query)[0];
 
@@ -79,7 +80,7 @@ class State {
       this.qualityQueued = null;
       this.bufferTime = this.config.start;
 
-      if (this.config.timed.diff > 0) { resolve(); return; }
+      if (this.config.timed > 0) { resolve(); return; }
 
       this.init_().then(() => resolve());
     });
