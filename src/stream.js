@@ -1,5 +1,4 @@
 import { assert } from './assert';
-import { strings } from './strings';
 import { mergeDicts, isInt } from './helpers';
 import { arrayBufferToBase64 } from './convert';
 import { kStreamType, kSegmentType } from './constants';
@@ -431,7 +430,7 @@ class Stream {
 
       const matches = nVarDC.exec(mediaName);
       const amount = parseInt(matches[matches.length - 1]) + 1;
-      const segmentNumberExt = strings.pad(next, amount);
+      const segmentNumberExt = next.padLeft(amount, '0');
 
       mediaName = mediaName.replace(matches[0], segmentNumberExt);
       mediaName = mediaName.replace(nVarN, `${next}`);

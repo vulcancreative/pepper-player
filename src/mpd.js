@@ -1,292 +1,14 @@
+import Adp from './adp';
 import { assert } from './assert';
 import { mergeDicts } from './helpers';
-import { toInt, toDuration } from './convert';
-import { kStreamType } from './constants';
-
-class Rep {
-  constructor(adp, rep, url, override) {
-    let id, codecs, width, height, bandwidth, baseURL,
-    initialization, mediaTemplate, segmentTimeline, segmentTemplate,
-    timelineParts, startNumber, timescale, mimeType,
-    segmentDuration, type, tileInfo;
-
-    // source id from rep attribute
-    id = rep.getAttribute('id');
-
-    // mimeType can be on either the adp or the rep
-    mimeType = adp.getAttribute('mimeType');
-    if (!mimeType || typeof mimeType === 'undefined') {
-      mimeType = rep.getAttribute('mimeType');
-    }
-
-    // source codecs from rep attribute
-    codecs = rep.getAttribute('codecs');
-
-    // find dimensions and parse to integer
-    const widthAttr = rep.getAttribute('width');
-    const heightAttr = rep.getAttribute('height');
-
-    width = toInt(widthAttr);
-    height = toInt(heightAttr);
-
-    // find bandwidth and parse to integer
-    const bandwidthAttr = rep.getAttribute('bandwidth');
-    bandwidth = toInt(bandwidthAttr);
-
-    // get default baseURL, if available and no override
-    if (typeof override === 'string' || override instanceof String) {
-      baseURL = override || "";
-    }
-
-    const baseURLFallback = () => {
-      const srcParts = url.split('/');
-      const srcLen = srcParts.length;
-
-      baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
-      baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? '' : '/';
-    };
-
-    if (baseURL && baseURL.length < 1) {
-      const urlContainer = adp.querySelectorAll('BaseURL')[0];
-      if (urlContainer && urlContainer.textContent) {
-        baseURL = urlContainer.textContent.trim();
-      } else {
-        baseURLFallback();
-      }
-    } else {
-      baseURLFallback();
-    }
-
-    segmentTimeline = adp.querySelectorAll('SegmentTimeline')[0];
-    if (segmentTimeline!==null && typeof segmentTimeline!=='undefined') {
-      timelineParts = [...segmentTimeline.children];
-    }
-
-    // find segment template
-    segmentTemplate = adp.querySelectorAll('SegmentTemplate')[0];
-    if (!segmentTemplate || typeof segmentTemplate === 'undefined') {
-      segmentTemplate = rep.querySelectorAll('SegmentTemplate')[0];
-    }
-
-    if (segmentTemplate) {
-      mediaTemplate = segmentTemplate.getAttribute('media');
-
-      initialization = segmentTemplate.getAttribute('initialization');
-
-      if (initialization!==null && typeof initialization!=='undefined') {
-        initialization = initialization.replace("$RepresentationID$", id);
-      }
-
-      const startNumAttr = segmentTemplate.getAttribute('startNumber');
-      startNumber = toInt(startNumAttr);
-
-      const timescaleAttr = segmentTemplate.getAttribute('timescale');
-      timescale = toInt(timescaleAttr);
-
-      const segDurationAttr = segmentTemplate.getAttribute('duration');
-      segmentDuration = toInt(segDurationAttr);
-    }
-
-    if (mimeType && mimeType.includes('video') && width && height) {
-      type = kStreamType.video;
-    } else if (mimeType && mimeType.includes('audio') && bandwidth) {
-      type = kStreamType.audio;
-    } else if (mimeType && mimeType.includes('image')) {
-      type = kStreamType.image;
-    }
-
-    if (type === kStreamType.image) {
-      let dimensionAttr = '1x1';
-
-      const durationAttr = segmentTemplate.getAttribute('duration');
-      const essential = rep.querySelectorAll('EssentialProperty')[0];
-
-      if (essential !== null && typeof essential !== 'undefined') {
-        dimensionAttr = essential.getAttribute('value');
-      }
-
-      tileInfo = {
-        duration: parseInt(durationAttr) * 1000,
-        count: parseInt(dimensionAttr.split('x')[0]),
-        width: width,
-        height: height,
-      };
-    }
-
-    this.id = id;
-    this.mimeType = mimeType;
-    this.codecs = codecs;
-    this.width = width;
-    this.height = height;
-    this.bandwidth = bandwidth;
-    this.baseURL = baseURL;
-    this.timeline = timelineParts;
-    this.mediaTemplate = mediaTemplate;
-    this.initialization = initialization;
-    this.startNumber = startNumber;
-    this.timescale = timescale;
-    this.segmentDuration = segmentDuration;
-    this.tileInfo = tileInfo;
-    this.type = type;
-  }
-
-  weight() {
-    let weight = 0;
-
-    if (this.width && this.height) {
-      weight += this.width + this.height;
-    } else if (this.bandwidth) {
-      weight += this.bandwidth;
-    }
-
-    return weight < -1 ? 0 : weight;
-  }
-}
-
-class Adp {
-  constructor(adp, i, url, override) {
-    const maxWidthAttr = adp.getAttribute('maxWidth');
-    const maxHeightAttr = adp.getAttribute('maxHeight');
-
-    this.adp = adp;
-    this.index = i;
-    this.maxWidth = toInt(maxWidthAttr);
-    this.maxHeight = toInt(maxHeightAttr);
-    this.reps = this.reps_(adp, url, override);
-  }
-
-  reps_(adp, url, override) {
-    const representations = adp.querySelectorAll("Representation");
-
-    if (representations && representations.length > 0) {
-      const reps = [];
-
-      for (let i = 0; i != representations.length; i++) {
-        const rep = representations[i];
-
-        reps.push(new Rep(adp, rep, url, override));
-      }
-
-      return reps;
-    } else {
-      throw(`No representations present in adaptation[${this.index}]`);
-    }
-  }
-
-  // TODO: consolidate shared code with the following 3 methods
-  bestRep() {
-    let weight = 0;
-    let heaviestRep = 0;
-
-    if (this.reps.length < 1) {
-      return null;
-    } else if (this.reps.length === 1) {
-      return 0;
-    }
-
-    for (let i = 0; i < this.reps.length; i++) {
-      const rep = this.reps[i];
-
-      let currentWeight = rep.weight();
-
-      if (currentWeight > weight) {
-        weight = currentWeight;
-        heaviestRep = i;
-      }
-    }
-
-    return heaviestRep;
-  }
-
-  // TODO: consolidate shared code with the following method
-  strongerRep(repID) {
-    assert(repID !== null && typeof repID !== 'undefined',
-           `rep "${repID}" invalid in strongerRep before targeting`);
-
-    let rep;
-
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) { rep = this.reps[i]; break; }
-    }
-
-    assert(rep !== null && typeof rep !== 'undefined',
-           `rep "${rep.id}" invalid in strongerRep after targeting`);
-
-    let currentRep;
-    let currentWeight = rep.weight();
-
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) {
-        currentRep = this.reps[i];
-        continue;
-      }
-
-      const weight = this.reps[i].weight();
-      if (weight > currentWeight) { return this.reps[i]; }
-    }
-
-    return currentRep;
-  }
-
-  weakerRep(repID) {
-    assert(repID !== null && typeof repID !== 'undefined',
-           `rep "${repID}" invalid in weakerRep before targeting`);
-
-    let rep;
-
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) { rep = this.reps[i]; break; }
-    }
-
-    assert(rep !== null && typeof rep !== 'undefined',
-           `rep "${rep.id}" invalid in weakerRep after targeting`);
-
-    let currentRep;
-    let currentWeight = rep.weight();
-
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) {
-        currentRep = this.reps[i];
-        continue;
-      }
-
-      const weight = this.reps[i].weight();
-      if (weight < currentWeight) { return this.reps[i]; }
-    }
-
-    return currentRep;
-  }
-
-  worstRep() {
-    let weight = 0;
-    let lightestRep = 0;
-
-    if (this.reps.length < 1) {
-      return null;
-    } else if (this.reps.length === 1) {
-      return 0;
-    }
-
-    for (let i = 0; i < this.reps.length; i++) {
-      const rep = this.reps[i];
-
-      let currentWeight = rep.weight();
-
-      if (weight < 1 || currentWeight < weight) {
-        weight = currentWeight;
-        lightestRep = i;
-      }
-    }
-
-    return lightestRep;
-  }
-}
+import { toDuration } from './convert';
 
 class MPD {
   constructor(config = {}) {
     const kDefaultConfig = {
       url: "",
       base: "",
+      data: null,
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
@@ -294,15 +16,19 @@ class MPD {
 
   setup() {
     return new Promise((resolve) => {
-      this.fetch_(this.config.url).then((result) => {
+      this.fetch_(this.config.url, this.config.data).then((result) => {
         this.parse_(result);
-        resolve();
+        resolve(this);
       });
     });
   }
 
-  fetch_(url = '') {
+  fetch_(url = '', data) {
     return new Promise((resolve, reject) => {
+      if (data !== null && typeof data !== 'undefined') {
+        resolve(data, 'data');
+      }
+
       const xhr = new XMLHttpRequest;
 
       xhr.onload = function() {
@@ -319,7 +45,7 @@ class MPD {
           console.log(`Date header : ${dateHeader}`);
           console.log(`server vs. local delta : ${serverDate - now}`);
 
-          resolve(xhr.response);
+          resolve(xhr.response, 'xml');
         } else {
           reject("Attempt to fetch MPD failed");
         }
@@ -392,17 +118,20 @@ class MPD {
   // gets MPD-level base URL
   // mpd === parsed MPD XML
   baseURL_(mpd, override) {
+    let url = '';
+
     if (typeof override === 'string' || override instanceof String) {
       if (override.length > 0) {
-        return override;
+        url = override;
       }
     }
 
-    let url = mpd.querySelectorAll('MPD BaseURL')[0];
-    url = url && url.textContent ? url.textContent.trim() : '/';
-    url += url.charAt(url.length - 1) !== '/' ? '/' : '';
+    if (url.length < 1) {
+      url = mpd.querySelectorAll('MPD BaseURL')[0];
+      url = url && url.textContent ? url.textContent.trim() : '/';
+    }
 
-    return url;
+    return url + (url.charAt(url.length - 1) !== '/' ? '/' : '');
   }
 
   // acquires overall duration, if possible (VoD)
@@ -523,7 +252,7 @@ class MPD {
     }
   }
 
-    // converts to DOM-accessible XML, if not already in it
+  // converts to DOM-accessible XML, if not already in it
   // manifest === manifest string or implicitly parsed MPD XML
   xml_(mpd) {
     let hasDOM = mpd.querySelectorAll ? true : false;

@@ -42,7 +42,7 @@
       */
 
       /*
-      // 4k test
+      // bbb 4k test
       var player = new pepper.Player({
         playlist: [
           {
@@ -58,6 +58,21 @@
         ]
       });
       */
+
+     // bbb 4k thumbnail test
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://dash.edgesuite.net/akamai/" +
+              "bbb_30fps/bbb_with_tiled_thumbnails.mpd"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
 
       /*
       // live echo test
@@ -100,21 +115,6 @@
         // }
       });
       */
-
-      // thumbnail test
-      var player = new pepper.Player({
-        playlist: [
-          {
-            dash: {
-              url: "http://dash.edgesuite.net/akamai/" +
-              "bbb_30fps/bbb_with_tiled_thumbnails.mpd"
-            },
-            hls: {
-              gen: true
-            }
-          }
-        ]
-      });
     </script>
   </body>
 </html>
