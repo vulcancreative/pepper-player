@@ -2,15 +2,7 @@ import { assert } from './assert'
 
 // counts items in a dictionary and returns the size
 function sizeDict(d) {
-  let result = 0;
-
-  for (let i of Object.keys(d)) {
-    if (d.hasOwnProperty(i)) {
-      result++;
-    }
-  }
-
-  return result;
+  return Object.keys(d).length;
 }
 
 // merges two dictionaries, with the first one taking priority
