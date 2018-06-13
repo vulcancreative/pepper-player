@@ -46,14 +46,6 @@ function randInt(min, max) {
   return parseInt(Math.floor(Math.random() * (max - min + 1) + min));
 }
 
-// ensures n is of lower-case string type t: e.g. <video> === "video"
-function nodeOfType(n, t) {
-  if (!n) { return false; }
-  if (!n.nodeName) { return false; }
-
-  return n.nodeName.toLowerCase() == t;
-}
-
 // checks whether a variable is an integer or not
 function isInt(value) {
   if (isNaN(value)) { return false; }
@@ -66,6 +58,5 @@ export {
   mergeDicts,
   randStr,
   randInt,
-  nodeOfType,
   isInt,
 };

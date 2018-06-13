@@ -40,7 +40,7 @@ class Player {
     this.setup_();
   }
 
-  setup_() {
+  async setup_() {
     if (!this.config.query.length || this.config.query.length < 1) {
       throw("Invalid insertion query.");
     }
@@ -50,54 +50,57 @@ class Player {
 
     this.renderUI();
     this.state = new State(this.config);
-    this.state.setup().then(() => console.log("State ready"))
-                      .then(() => {
-                        this.renderUI();
 
-                        const diff = this.state.config.timed;
-                        if (diff > 0) {
-                          this.startsInMs = diff;
-                          this.renderUI();
+    await this.state.setup();
+    console.log("State ready");
 
-                          setTimeout(() => {
-                            this.startsInMs = diff >= 1000 ?
-                              diff - 1000 : diff;
+    this.renderUI();
 
-                            this.renderUI();
+    const diff = this.state.config.timed;
 
-                            this.updateTimer_(
-                              diff >= 1000 ? diff - 1000 : diff
-                            );
-                          }, 1000);
-                          return;
-                        }
+    if (diff > 0) {
+      this.startsInMs = diff;
+      this.renderUI();
 
-                        this.init_();
-                      });
+      setTimeout(() => {
+        this.startsInMs = diff >= 1000 ?
+          diff - 1000 : diff;
+
+        this.renderUI();
+
+        this.updateTimer_(
+          diff >= 1000 ? diff - 1000 : diff
+        );
+      }, 1000);
+
+      return;
+    }
+
+    this.init_();
   }
 
-  init_() {
-    this.state.init_().then(() => {
-      this.state.fillBuffers().then((speed, now) => {
-        const type = this.state.mpd.type;
-        if (type === 'dynamic') {
-          this.safariStartTime = now / 1000;
-        }
+  async init_() {
+    await this.state.init_();
 
-        return this.state.adjustQuality(speed);
-      })
-      .then(() => {
-        const type = this.state.mpd.type;
-        if (this.config.auto) {
-          if (type === 'dynamic' && os.is('safari')) {
-            const start = this.safariStartTime;
-            this.state.video.currentTime = start;
-          }
+    const [speed, now] = await this.state.fillBuffers();
+    const type = this.state.mpd.type;
 
-          this.play();
-        }
-      });
-    });
+    if (type === 'dynamic') {
+      this.safariStartTime = now / 1000;
+    }
+
+    await this.state.adjustQuality(speed);
+
+    if (this.config.auto) {
+      if (type === 'dynamic' && os.is('safari')) {
+        const start = this.safariStartTime;
+        this.state.video.currentTime = start;
+      }
+
+      this.play();
+    }
+
+    return Promise.resolve()
   }
 
   bufferTime() {
@@ -144,51 +147,52 @@ class Player {
     return this.state.pause();
   }
 
-  play() {
+  async play() {
     const type = this.state.mpd.type;
+    await this.state.play();
 
-    return this.state.play().then(() => {
-      if (type === 'static') {
-        this.state.video.ontimeupdate = () => {
-          const currentTime = this.currentTime();
-          const bufferTime = this.bufferTime();
-          const leadTime = this.config.lead;
+    if (type === 'static') {
+      this.state.video.ontimeupdate = async () => {
+        const currentTime = this.currentTime();
+        const bufferTime = this.bufferTime();
+        const leadTime = this.config.lead;
 
-          this.renderUI();
+        this.renderUI();
 
-          if (currentTime >= bufferTime - leadTime / 2) {
-            this.state.fillBuffers().then((speed) => {
-              this.state.adjustQuality(speed);
-            });
-          }
+        if (currentTime >= bufferTime - leadTime / 2) {
+          const speed = await this.state.fillBuffers();
+          this.state.adjustQuality(speed);
+        }
 
-          if (this.didEnd()) {
-            this.state.video.currentTime = 0;
-            if (!this.config.loop) { this.pause(); }
-          }
-        };
-      } else if (type === 'dynamic') {
-        const lens = this.state.segmentLengths();
-        const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
-        const maxTime = lens.reduce((a,b) => Math.max(a,b));
-        const waitTime = this.lastSpeed ?
-                        minTime - minTime * this.lastSpeed : minTime;
+        if (this.didEnd()) {
+          this.state.video.currentTime = 0;
+          if (!this.config.loop) { this.pause(); }
+        }
 
-        this.state.video.ontimeupdate = () => this.renderUI();
+        return Promise.resolve();
+      };
+    } else if (type === 'dynamic') {
+      const lens = this.state.segmentLengths();
+      const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
+      const maxTime = lens.reduce((a,b) => Math.max(a,b));
+      const waitTime = this.lastSpeed ?
+                       minTime - minTime * this.lastSpeed : minTime;
 
-        setInterval(() => {
-          this.state.fillBuffers(maxTime).then((speed) => {
-            this.lastSpeed = speed;
+      this.state.video.ontimeupdate = () => this.renderUI();
 
-            if (this.config.auto && !this.isPaused()) {
-              this.state.play();
-            }
+      setInterval(async () => {
+        const speed = await this.state.fillBuffers(maxTime);
+        this.lastSpeed = speed;
 
-            this.state.adjustQuality(speed);
-          });
-        }, waitTime);
-      }
-    });
+        if (this.config.auto && !this.isPaused()) {
+          this.state.play();
+        }
+
+        this.state.adjustQuality(speed);
+
+        return Promise.resolve();
+      }, waitTime);
+    }
   }
 
   previous() {

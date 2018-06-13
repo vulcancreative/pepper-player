@@ -1,14 +1,13 @@
-import { expect } from 'chai';
-
 import {
   sizeDict,
   mergeDicts,
   randStr,
   randInt,
+  isInt,
 } from './helpers';
 
 describe('sizeDict', () => {
-  it('should compare dictionary sizes', () => {
+  test('should compare dictionary sizes', () => {
     let dictOne = {
       a: 1,
       b: 2,
@@ -27,13 +26,13 @@ describe('sizeDict', () => {
       ],
     };
 
-    expect(sizeDict(dictOne)).to.equal(2);
-    expect(sizeDict(dictTwo)).to.equal(3);
+    expect(sizeDict(dictOne)).toBe(2);
+    expect(sizeDict(dictTwo)).toBe(3);
   });
 });
 
 describe('mergeDicts', () => {
-  it('should fill in blank strings in an object', () => {
+  test('should fill in blank strings in an object', () => {
     let defaultObj = {
       a: "alpha",
       b: "beta",
@@ -48,12 +47,12 @@ describe('mergeDicts', () => {
 
     const merge = mergeDicts(baseObj, defaultObj);
 
-    expect(merge.a).to.equal("alpha");
-    expect(merge.b).to.equal("override");
-    expect(merge.c).to.equal("gamma");
+    expect(merge.a).toBe("alpha");
+    expect(merge.b).toBe("override");
+    expect(merge.c).toBe("gamma");
   });
 
-  it('should fill in blank integers in an object', () => {
+  test('should fill in blank integers in an object', () => {
     let defaultObj = {
       one: 1,
       two: null,
@@ -68,9 +67,9 @@ describe('mergeDicts', () => {
 
     const merge = mergeDicts(baseObj, defaultObj);
 
-    expect(merge.one).to.equal(3);
-    expect(merge.two).to.equal(2);
-    expect(merge.three).to.equal(3);
+    expect(merge.one).toBe(3);
+    expect(merge.two).toBe(2);
+    expect(merge.three).toBe(3);
   });
 });
 
@@ -80,23 +79,23 @@ describe('randStr', () => {
         strThree = randStr(25),
         strFour = randStr(25);
 
-  it('should produce strings of deterministic length', () => {
-    expect(strOne.length).to.equal(strTwo.length);
-    expect(strThree.length).to.equal(strFour.length);
+  test('should produce strings of deterministic length', () => {
+    expect(strOne.length).toBe(strTwo.length);
+    expect(strThree.length).toBe(strFour.length);
 
-    expect(strOne.length).to.not.equal(strThree.length);
-    expect(strOne.length).to.not.equal(strFour.length);
-    expect(strTwo.length).to.not.equal(strThree.length);
-    expect(strTwo.length).to.not.equal(strFour.length);
+    expect(strOne.length).not.toBe(strThree.length);
+    expect(strOne.length).not.toBe(strFour.length);
+    expect(strTwo.length).not.toBe(strThree.length);
+    expect(strTwo.length).not.toBe(strFour.length);
   });
 
-  it('should produce sufficiently random output', () => {
-    expect(strOne).to.not.equal(strTwo);
-    expect(strOne).to.not.equal(strThree);
-    expect(strOne).to.not.equal(strFour);
-    expect(strTwo).to.not.equal(strThree);
-    expect(strTwo).to.not.equal(strFour);
-    expect(strThree).to.not.equal(strFour);
+  test('should produce sufficiently random output', () => {
+    expect(strOne).not.toBe(strTwo);
+    expect(strOne).not.toBe(strThree);
+    expect(strOne).not.toBe(strFour);
+    expect(strTwo).not.toBe(strThree);
+    expect(strTwo).not.toBe(strFour);
+    expect(strThree).not.toBe(strFour);
   })
 });
 
@@ -106,19 +105,44 @@ describe('randInt', () => {
         intThree = randInt(3, 7),
         intFour = randInt(97, 101);
 
-  it('should produce integers only within the provided range', () => {
-    expect(intOne >= 10 && intOne <= 35);
-    expect(intTwo >= 86 && intTwo <= 114);
-    expect(intThree >= 3 && intThree <= 7);
-    expect(intFour >= 97 && intFour <= 101);
+  test('should produce integers only within the provided range', () => {
+    expect(intOne >= 10 && intOne <= 35).toBeTruthy();
+    expect(intTwo >= 86 && intTwo <= 114).toBeTruthy();
+    expect(intThree >= 3 && intThree <= 7).toBeTruthy();
+    expect(intFour >= 97 && intFour <= 101).toBeTruthy();
   });
 
-  it('should produce sufficiently random output', () => {
-    expect(intOne).to.not.equal(intTwo);
-    expect(intOne).to.not.equal(intThree);
-    expect(intOne).to.not.equal(intFour);
-    expect(intTwo).to.not.equal(intThree);
-    expect(intTwo).to.not.equal(intFour);
-    expect(intThree).to.not.equal(intFour);
+  test('should produce sufficiently random output', () => {
+    expect(intOne).not.toBe(intTwo);
+    expect(intOne).not.toBe(intThree);
+    expect(intOne).not.toBe(intFour);
+    expect(intTwo).not.toBe(intThree);
+    expect(intTwo).not.toBe(intFour);
+    expect(intThree).not.toBe(intFour);
+  });
+});
+
+describe('isInt', () => {
+  const i = isInt(1),
+        s = isInt('1'),
+        f = isInt(() => 1),
+        o = isInt({
+          one: 1,
+        });
+
+  test('should return true for integers', () => {
+    expect(i).toBeTruthy();
+  });
+
+  test('should return convert strings to integers', () => {
+    expect(s).toBeTruthy();
+  });
+
+  test('should return false for non-integers (e.g. – functions)', () => {
+    expect(f).toBeFalsy();
+  });
+
+  test('should return false for non-integers (e.g. – objects)', () => {
+    expect(o).toBeFalsy();
   });
 });

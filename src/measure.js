@@ -3,7 +3,7 @@ function kbps(bytes, delta) {
   const speedBps = (bitsLoaded / delta).toFixed(2);
   const speedKbps = (speedBps / 1024).toFixed(2);
 
-  return speedKbps;
+  return parseFloat(speedKbps);
 }
 
 // take a speed (kbps), size (bytes), and a time (ms)
@@ -16,7 +16,8 @@ function speedFactor(speed, size, delta) {
 
   console.log(`ttl: ${ttl}, seconds: ${seconds}`);
   const contrast = (parseFloat(ttl) / parseFloat(seconds)).toFixed(2);
-  return contrast;
+
+  return parseFloat(contrast);
 }
 
 export { kbps, speedFactor };
