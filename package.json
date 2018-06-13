@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "NODE_ENV=development webpack --module-bind js=babel-loader --w",
     "build": "NODE_ENV=production webpack --module-bind js=babel-loader",
-    "test": "jest --silent && size-limit",
+    "test": "jest --silent",
     "size": "size-limit"
   },
   "size-limit": [

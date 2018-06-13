@@ -21,4 +21,4 @@ jobs:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
         
-      - run: COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN npm test
+      - run: npm test
