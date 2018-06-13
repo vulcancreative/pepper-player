@@ -59,14 +59,17 @@ describe('toInt', () => {
     const inputA = Infinity;
     const inputB = 'test' + 0;
     const inputC = null;
+    const inputD = '';
 
     const outputA = null;
     const outputB = null;
     const outputC = null;
+    const outputD = null;
 
     expect(toInt(inputA)).toBe(outputA);
     expect(toInt(inputB)).toBe(outputB);
     expect(toInt(inputC)).toBe(outputC);
+    expect(toInt(inputD)).toBe(outputD);
   });
 });
 

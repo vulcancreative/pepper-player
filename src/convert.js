@@ -15,15 +15,8 @@ const toInt = (i) => {
   const remainder = (i % 1);
   const forcedInt = parseInt(i);
 
-  if(remainder === 0 && !isNaN(forcedInt)) {
-    return forcedInt;
-  } else if (isNaN(remainder)) {
-    return null;
-  } else if (i && typeof i !== 'undefined' && i != '') {
-    return forcedInt;
-  }
-
-  return null;
+  if (isNaN(remainder) || isNaN(forcedInt)) { return null; }
+  return forcedInt;
 };
 
 // converts a ms value to a timestamp (e.g. – 300000 === 5:00)
