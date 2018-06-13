@@ -5,7 +5,9 @@ function sizeDict(d) {
   let result = 0;
 
   for (let i of Object.keys(d)) {
-    if (d.hasOwnProperty(i)) { result++; }
+    if (d.hasOwnProperty(i)) {
+      result++;
+    }
   }
 
   return result;
