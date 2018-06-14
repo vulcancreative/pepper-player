@@ -328,3 +328,13 @@ describe('MPD.updatePeriod_', () => {
     });
   });
 });
+
+describe('MPD.xml_', () => {
+  it('should not modify DOM objects', () => {
+    const base = document.createElement('div');
+    const input = base;
+    const output = base;
+
+    expect((new MPD()).xml_(input).isEqualNode(output)).toBeTruthy();
+  });
+});

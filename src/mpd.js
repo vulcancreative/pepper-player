@@ -78,13 +78,17 @@ class MPD {
     this.startTime = this.startTime_(this.mpd);
     this.updatePeriod = this.updatePeriod_(this.mpd);
 
-    if (this.adps === -1) { return -1; }
-    if (this.baseURL === -1) { return -1; }
-    if (this.duration === -1) { return -1; }
-    if (this.muxed === -1) { return -1; }
-    if (this.type === -1) { return -1; }
-    if (this.startTime === -1) { return -1; }
-    if (this.updatePeriod === -1) { return -1; }
+    if([
+      this.adps,
+      this.baseURL,
+      this.duration,
+      this.muxed,
+      this.type,
+      this.startTime,
+      this.updatePeriod,
+    ].includes(-1)) {
+      return -1;
+    }
 
     return 0;
   }
@@ -245,7 +249,7 @@ class MPD {
   xml_(mpd) {
     let hasDOM = mpd.querySelectorAll ? true : false;
 
-    if (!hasDOM || !mpd.querySelectorAll('Period')[0]) {
+    if (!hasDOM) {
       const parser = new DOMParser();
       const xml = parser.parseFromString(mpd, 'text/xml', 0);
       return xml;
