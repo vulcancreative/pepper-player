@@ -14,10 +14,11 @@ class MPD {
   }
 
   setup() {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       this.fetch_(this.config.url, this.config.data).then((result) => {
-        this.parse_(result);
-        // if (status < 0) { reject("Failed to parse MPD"); }
+        const err = this.parse_(result);
+        if (err) { reject(err); }
+
         resolve(this);
       });
     });
@@ -74,16 +75,31 @@ class MPD {
     if([
       this.adps,
       this.baseURL,
-      this.duration,
       this.muxed,
       this.type,
-      this.startTime,
-      this.updatePeriod,
     ].includes(-1)) {
-      return -1;
+      return "Unable to parse MPD";
     }
 
-    return 0;
+    if (this.adps < 0) { return "Invalid adaptations"; }
+    if (this.baseURL < 0) { return "Invalid BaseURL"; }
+
+    if (this.type == 'static' && this.duration == -1) {
+      return "Invalid duration";
+    }
+
+    if (this.muxed < 0) { return "Invalid multiplex info"; }
+    if (this.type < 0) { return "Invalid type"; }
+
+    if (this.type == 'dynamic' && this.startTime < 0) {
+      return "Invalid start time";
+    }
+
+    if (this.type == 'dynamic' && this.updatePeriod < 0) {
+      return "Invalid update period";
+    }
+
+    return null;
   }
 
   // source adaptations and populate with critical data and metadata
@@ -117,10 +133,8 @@ class MPD {
   baseURL_(mpd, override) {
     let url = '';
 
-    if (typeof override === 'string' || override instanceof String) {
-      if (override.length > 0) {
-        url = override;
-      }
+    if (override !== null && typeof override != 'undefined') {
+      url = `${override}`;
     }
 
     if (url.length < 1) {
@@ -135,9 +149,6 @@ class MPD {
   // mpd === parsed MPD XML
   duration_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
-
-    if (root === null || typeof root === 'undefined') { return -1; }
-
     const durationAttr = root.getAttribute('mediaPresentationDuration');
 
     if (durationAttr===null ||
@@ -154,9 +165,6 @@ class MPD {
   // for static videos, it's assumed one can rewind indefinitely
   dvr_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
-
-    if (root === null || typeof root === 'undefined') { return -1; }
-
     const dvrAttr = root.getAttribute('timeShiftBufferDepth');
    
     if (dvrAttr===null ||
@@ -172,10 +180,10 @@ class MPD {
   // mpd === parsed MPD XML
   muxed_(mpd) {
     const rep = mpd.querySelectorAll('Representation')[0];
-
-    if (rep === null || typeof rep === 'undefined') { return -1; }
+    if (!rep) { return -1; }
 
     const codecs = rep.getAttribute('codecs');
+
     if (codecs.includes(',')) {
       let vid = false, aud = false, vID = 'avc', aID = 'mp4';
 
@@ -199,8 +207,6 @@ class MPD {
   type_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
 
-    if (root === null || typeof root === 'undefined') { return -1; }
-
     let type = root.getAttribute('type');
 
     if (!type || type.trim() === '') { return -1; }
@@ -210,8 +216,6 @@ class MPD {
   // acquires availability start time from MPD, if possible (live)
   startTime_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
-    if (root === null || typeof root === 'undefined') { return -1; }
-
     const startAttr = root.getAttribute('availabilityStartTime');
 
     if (startAttr === null || typeof startAttr === 'undefined') {
@@ -226,8 +230,6 @@ class MPD {
   //) mpd === parsed MPD XML
   updatePeriod_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
-    if (root === null || typeof root === 'undefined') { return -1; }
-
     const periodAttr = root.getAttribute('minimumUpdatePeriod');
 
     if (periodAttr === null || typeof periodAttr === 'undefined') {

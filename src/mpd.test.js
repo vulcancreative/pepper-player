@@ -5,6 +5,8 @@ import {
   bbb4kVodMpd as caseB,
   bbb4kThumbnailsVodMpd as caseC,
   echoLiveMpd as caseD,
+  muxed as caseE,
+  noAdps as caseF,
 } from './testdata/mpd.testdata.js';
 
 describe('MPD.fetch', () => {
@@ -134,6 +136,15 @@ describe('MPD.adps_', () => {
 
     return Promise.all(promises);
   });
+
+  it('should throw an error if no adaptations exist', () => {
+    const input = caseF.data;
+    const output = "Unable to parse MPD";
+
+    expect.assertions(1);
+    return expect((new MPD({ data: input })).setup())
+    .rejects.toMatch(output);
+  });
 });
 
 describe('MPD.baseURL_', () => {
@@ -200,6 +211,16 @@ describe('MPD.baseURL_', () => {
     ];
 
     return Promise.all(promises);
+  });
+
+  it('should allow for bizarre overrides (numbers, etc)', () => {
+    const override = 1;
+    const input = caseA.data;
+    const output = "1/";
+
+    expect.assertions(1);
+    return (new MPD({ data: input, base: override })).setup()
+    .then((mpd) => { expect(mpd.baseURL).toBe(output); });
   });
 });
 
@@ -275,13 +296,15 @@ describe('MPD.muxed_', () => {
     const inputB = caseB.data;
     const inputC = caseC.data;
     const inputD = caseD.data;
+    const inputE = caseE.data;
 
     const outputA = false;
     const outputB = false;
     const outputC = false;
     const outputD = false;
+    const outputE = true;
 
-    expect.assertions(4);
+    expect.assertions(5);
 
     const promises = [
       (new MPD({ data: inputA })).setup().then((mpd) => {
@@ -295,6 +318,9 @@ describe('MPD.muxed_', () => {
       }),
       (new MPD({ data: inputD })).setup().then((mpd) => {
         expect(mpd.muxed).toBe(outputD);
+      }),
+      (new MPD({ data: inputE })).setup().then((mpd) => {
+        expect(mpd.muxed).toBe(outputE);
       }),
     ];
 
