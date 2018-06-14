@@ -17,13 +17,37 @@ class Adp {
     const representations = adp.querySelectorAll("Representation");
 
     if (representations && representations.length > 0) {
-      const reps = [];
+      let reps = [];
 
       for (let i = 0; i != representations.length; i++) {
         const rep = representations[i];
 
         reps.push(new Rep(adp, rep, url, override));
       }
+
+      // ensure all elements have bandwidth
+      const bandwidths = reps.map(r => {
+        if (r.bandwidth === null || typeof r.bandwidth === 'undefined') {
+          return null;
+        }
+
+        return r.bandwidth;
+      });
+
+      // if missing bandwidth, ensure even depth
+      if (bandwidths.includes(null)) {
+        const notNull = bandwidths.findIndex(r => r !== null);
+        const bandwidth = notNull > -1 ? bandwidths[notNull] : 0;
+
+        reps = reps.map(r => { r.bandwidth = bandwidth; return r; });
+      }
+
+      // sort by weight
+      reps.sort((a, b) => {
+        if (a.weight() < b.weight()) { return -1; }
+        if (a.weight() > b.weight()) { return 1; }
+        return 0;
+      });
 
       return reps;
     } else {
@@ -33,48 +57,24 @@ class Adp {
 
   // TODO: consolidate shared code with the following 3 methods
   bestRep() {
-    let weight = 0;
-    let heaviestRep = 0;
-
-    if (this.reps.length < 1) {
-      return null;
-    } else if (this.reps.length === 1) {
-      return 0;
-    }
-
-    for (let i = 0; i < this.reps.length; i++) {
-      const rep = this.reps[i];
-
-      let currentWeight = rep.weight();
-
-      if (currentWeight > weight) {
-        weight = currentWeight;
-        heaviestRep = i;
-      }
-    }
-
-    return heaviestRep;
+    return this.reps.length - 1;
   }
 
   // TODO: consolidate shared code with the following method
   strongerRep(repID) {
     let rep;
+    const sortedReps = this.reps;
 
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) { rep = this.reps[i]; break; }
+    for (let i = 0; i != sortedReps.length; i++) {
+      if (sortedReps[i].id === repID) { rep = sortedReps[i]; break; }
     }
 
-    let currentRep;
+    let currentRep = rep;
     let currentWeight = rep.weight();
 
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) {
-        currentRep = this.reps[i];
-        continue;
-      }
-
-      const weight = this.reps[i].weight();
-      if (weight > currentWeight) { return this.reps[i]; }
+    for (let i = 0; i != sortedReps.length; i++) {
+      const weight = sortedReps[i].weight();
+      if (weight > currentWeight) { currentRep = sortedReps[i]; break; }
     }
 
     return currentRep;
@@ -82,49 +82,25 @@ class Adp {
 
   weakerRep(repID) {
     let rep;
+    const sortedReps = this.reps.slice().reverse();
 
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) { rep = this.reps[i]; break; }
+    for (let i = 0; i != sortedReps.length; i++) {
+      if (sortedReps[i].id === repID) { rep = sortedReps[i]; break; }
     }
 
-    let currentRep;
+    let currentRep = rep;
     let currentWeight = rep.weight();
 
-    for (let i = 0; i != this.reps.length; i++) {
-      if (this.reps[i].id === repID) {
-        currentRep = this.reps[i];
-        continue;
-      }
-
-      const weight = this.reps[i].weight();
-      if (weight < currentWeight) { return this.reps[i]; }
+    for (let i = 0; i != sortedReps.length; i++) {
+      const weight = sortedReps[i].weight();
+      if (weight < currentWeight) { currentRep = sortedReps[i]; break; }
     }
 
     return currentRep;
   }
 
   worstRep() {
-    let weight = 0;
-    let lightestRep = 0;
-
-    if (this.reps.length < 1) {
-      return null;
-    } else if (this.reps.length === 1) {
-      return 0;
-    }
-
-    for (let i = 0; i < this.reps.length; i++) {
-      const rep = this.reps[i];
-
-      let currentWeight = rep.weight();
-
-      if (weight < 1 || currentWeight < weight) {
-        weight = currentWeight;
-        lightestRep = i;
-      }
-    }
-
-    return lightestRep;
+    return 0;
   }
 }
 

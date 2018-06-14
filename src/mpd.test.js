@@ -13,19 +13,25 @@ describe('MPD.fetch', () => {
     const inputB = caseB.url;
     const inputC = caseC.url;
 
-    const outputA = caseA.data;
-    const outputB = caseB.data;
-    const outputC = caseC.data;
+    const outputA = /.*<MPD/gm;
+    const outputB = /.*<MPD/gm;
+    const outputC = /.*<MPD/gm;
 
-    (new MPD()).fetch_(inputA).then((result) => {
-      expect(result).toBe(outputA);
-    });
-    (new MPD()).fetch_(inputB).then((result) => {
-      expect(result).toBe(outputB);
-    });
-    (new MPD()).fetch_(inputC).then((result) => {
-      expect(result).toBe(outputC);
-    });
+    expect.assertions(3);
+
+    const promises = [
+      (new MPD()).fetch_(inputA).then((result) => {
+        expect(result).toMatch(outputA);
+      }),
+      (new MPD()).fetch_(inputB).then((result) => {
+        expect(result).toMatch(outputB);
+      }),
+      (new MPD()).fetch_(inputC).then((result) => {
+        expect(result).toMatch(outputC);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 
   it('should fail loudly on invalid URLs', () => {
@@ -44,15 +50,21 @@ describe('MPD.fetch', () => {
     const outputB = caseB.data;
     const outputC = caseC.data;
 
-    (new MPD()).fetch_(null, inputA).then((result) => {
-      expect(result).toBe(outputA);
-    });
-    (new MPD()).fetch_(null, inputB).then((result) => {
-      expect(result).toBe(outputB);
-    });
-    (new MPD()).fetch_(null, inputC).then((result) => {
-      expect(result).toBe(outputC);
-    });
+    expect.assertions(3);
+
+    const promises = [
+      (new MPD()).fetch_(null, inputA).then((result) => {
+        expect(result).toBe(outputA);
+      }),
+      (new MPD()).fetch_(null, inputB).then((result) => {
+        expect(result).toBe(outputB);
+      }),
+      (new MPD()).fetch_(null, inputC).then((result) => {
+        expect(result).toBe(outputC);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 
   it('should prefer existing data to URL fetches', () => {
@@ -64,15 +76,21 @@ describe('MPD.fetch', () => {
     const outputB = caseB.data;
     const outputC = caseC.data;
 
-    (new MPD()).fetch_(...inputA).then(result => {
-      expect(result).toBe(outputA);
-    });
-    (new MPD()).fetch_(...inputB).then(result => {
-      expect(result).toBe(outputB);
-    });
-    (new MPD()).fetch_(...inputC).then(result => {
-      expect(result).toBe(outputC);
-    });
+    expect.assertions(3);
+
+    const promises = [
+      (new MPD()).fetch_(...inputA).then(result => {
+        expect(result).toBe(outputA);
+      }),
+      (new MPD()).fetch_(...inputB).then(result => {
+        expect(result).toBe(outputB);
+      }),
+      (new MPD()).fetch_(...inputC).then(result => {
+        expect(result).toBe(outputC);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -93,22 +111,28 @@ describe('MPD.adps_', () => {
     const outputC = [3, true];
     const outputD = [2, true];
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.adps.length).toBe(outputA[0]);
-      expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputA[1]);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.adps.length).toBe(outputB[0]);
-      expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputB[1]);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.adps.length).toBe(outputC[0]);
-      expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputC[1]);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.adps.length).toBe(outputD[0]);
-      expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputD[1]);
-    });
+    expect.assertions(8);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.adps.length).toBe(outputA[0]);
+        expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputA[1]);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.adps.length).toBe(outputB[0]);
+        expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputB[1]);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.adps.length).toBe(outputC[0]);
+        expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputC[1]);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.adps.length).toBe(outputD[0]);
+        expect(mpd.adps.every(a => a instanceof Adp)).toBe(outputD[1]);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -125,18 +149,24 @@ describe('MPD.baseURL_', () => {
     const outputD = 'http://vm2.dashif.org/livesim/' +
                     'segtimeline_1/testpic_2s/';
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputA);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputB);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputC);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputB);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputC);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 
   it('should allow for the default BaseURL to be overridden', () => {
@@ -152,18 +182,24 @@ describe('MPD.baseURL_', () => {
     const outputC = `${override}/`;
     const outputD = `${override}/`;
 
-    (new MPD({ data: inputA, base: override })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputA);
-    });
-    (new MPD({ data: inputB, base: override })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputB);
-    });
-    (new MPD({ data: inputC, base: override })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputC);
-    });
-    (new MPD({ data: inputD, base: override })).setup().then((mpd) => {
-      expect(mpd.baseURL).toBe(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA, base: override })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputA);
+      }),
+      (new MPD({ data: inputB, base: override })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputB);
+      }),
+      (new MPD({ data: inputC, base: override })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputC);
+      }),
+      (new MPD({ data: inputD, base: override })).setup().then((mpd) => {
+        expect(mpd.baseURL).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -179,18 +215,24 @@ describe('MPD.duration_', () => {
     const outputC = 634566;
     const outputD = -1;
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.duration).toBe(outputA);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.duration).toBe(outputB);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.duration).toBe(outputC);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.duration).toBe(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.duration).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.duration).toBe(outputB);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.duration).toBe(outputC);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.duration).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -206,18 +248,24 @@ describe('MPD.dvr_', () => {
     const outputC = -1;
     const outputD = 300000;
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.dvr).toBe(outputA);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.dvr).toBe(outputB);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.dvr).toBe(outputC);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.dvr).toBe(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.dvr).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.dvr).toBe(outputB);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.dvr).toBe(outputC);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.dvr).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -233,18 +281,24 @@ describe('MPD.muxed_', () => {
     const outputC = false;
     const outputD = false;
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.muxed).toBe(outputA);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.muxed).toBe(outputB);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.muxed).toBe(outputC);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.muxed).toBe(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.muxed).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.muxed).toBe(outputB);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.muxed).toBe(outputC);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.muxed).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -260,18 +314,24 @@ describe('MPD.type_', () => {
     const outputC = 'static';
     const outputD = 'dynamic';
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.type).toBe(outputA);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.type).toBe(outputB);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.type).toBe(outputC);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.type).toBe(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.type).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.type).toBe(outputB);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.type).toBe(outputC);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.type).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -287,18 +347,24 @@ describe('MPD.startTime_', () => {
     const outputC = -1;
     const outputD = new Date('1970-01-01T00:00:00Z');
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.startTime).toBe(outputA);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.startTime).toBe(outputB);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.startTime).toBe(outputC);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.startTime).toEqual(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.startTime).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.startTime).toBe(outputB);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.startTime).toBe(outputC);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.startTime).toEqual(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
@@ -314,18 +380,24 @@ describe('MPD.updatePeriod_', () => {
     const outputC = -1;
     const outputD = 0;
 
-    (new MPD({ data: inputA })).setup().then((mpd) => {
-      expect(mpd.updatePeriod).toBe(outputA);
-    });
-    (new MPD({ data: inputB })).setup().then((mpd) => {
-      expect(mpd.updatePeriod).toBe(outputB);
-    });
-    (new MPD({ data: inputC })).setup().then((mpd) => {
-      expect(mpd.updatePeriod).toBe(outputC);
-    });
-    (new MPD({ data: inputD })).setup().then((mpd) => {
-      expect(mpd.updatePeriod).toBe(outputD);
-    });
+    expect.assertions(4);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then((mpd) => {
+        expect(mpd.updatePeriod).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then((mpd) => {
+        expect(mpd.updatePeriod).toBe(outputB);
+      }),
+      (new MPD({ data: inputC })).setup().then((mpd) => {
+        expect(mpd.updatePeriod).toBe(outputC);
+      }),
+      (new MPD({ data: inputD })).setup().then((mpd) => {
+        expect(mpd.updatePeriod).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 

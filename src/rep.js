@@ -132,7 +132,7 @@ class Rep {
     let weight = 0;
 
     if (this.width && this.height) {
-      weight += this.width + this.height;
+      weight += this.width + this.height + this.bandwidth;
     } else if (this.bandwidth) {
       weight += this.bandwidth;
     }
