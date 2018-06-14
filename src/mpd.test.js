@@ -28,6 +28,13 @@ describe('MPD.fetch', () => {
     });
   });
 
+  it('should fail loudly on invalid URLs', () => {
+    const input = 'http://vulcanca.balls/test.mpd';
+    expect((new MPD()).fetch_(input)).rejects.toMatch(
+      "Attempt to fetch MPD failed"
+    );
+  });
+
   it('should be able to handle data input', () => {
     const inputA = caseA.data;
     const inputB = caseB.data;
