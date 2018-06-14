@@ -1,3 +1,17 @@
+const noAdps = `<?xml version="1.0" encoding="utf-8"?>
+<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="urn:mpeg:dash:schema:mpd:2011"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+  profiles="urn:mpeg:dash:profile:isoff-live:2011"
+  type="static"
+  mediaPresentationDuration="PT2M3.5S"
+  minBufferTime="PT1.0S">
+  <ProgramInformation>
+  </ProgramInformation>
+  <Period start="PT0.0S"></Period>
+</MPD>`;
+
 const tfVodMpd = {
   url: "http://media.tfod.tomferry.com/" +
        "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
@@ -221,6 +235,7 @@ const echoLiveMpd = {
 };
 
 export {
+  noAdps,
   tfVodMpd,
   bbb4kVodMpd,
   bbb4kThumbnailsVodMpd,

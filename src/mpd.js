@@ -15,9 +15,10 @@ class MPD {
   }
 
   setup() {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.fetch_(this.config.url, this.config.data).then((result) => {
         this.parse_(result);
+        // if (status < 0) { reject("Failed to parse MPD"); }
         resolve(this);
       });
     });
@@ -77,14 +78,15 @@ class MPD {
     this.startTime = this.startTime_(this.mpd);
     this.updatePeriod = this.updatePeriod_(this.mpd);
 
-    assert(this.adps !== null && typeof this.adps !== 'undefined');
-    assert(typeof this.baseURL !== 'undefined');
-    assert(this.duration !== null && typeof this.duration !== 'undefined');
-    assert(this.muxed !== null && typeof this.muxed !== 'undefined');
-    assert(this.type !== null && typeof this.type !== 'undefined');
+    if (this.adps === -1) { return -1; }
+    if (this.baseURL === -1) { return -1; }
+    if (this.duration === -1) { return -1; }
+    if (this.muxed === -1) { return -1; }
+    if (this.type === -1) { return -1; }
+    if (this.startTime === -1) { return -1; }
+    if (this.updatePeriod === -1) { return -1; }
 
-    assert(typeof this.startTime !== 'undefined');
-    assert(typeof this.updatePeriod !== 'undefined');
+    return 0;
   }
 
   // source adaptations and populate with critical data and metadata
@@ -93,26 +95,24 @@ class MPD {
     const period = mpd.querySelectorAll('Period')[0];
     const adaptations = period.querySelectorAll('AdaptationSet');
 
-    if (adaptations && adaptations.length > 0) {
-      const adps = [];
+    if (!adaptations || adaptations.length < 1) { return -1; }
 
-      for (let i = 0; i != adaptations.length; i++) {
-        const adaptation = adaptations[i];
-        /*
-        const mimeType = adaptation.getAttribute('mimeType');
+    const adps = [];
 
-        if (!mimeType.includes('audio') && !mimeType.includes('video')) {
-          continue;
-        }
-        */
+    for (let i = 0; i != adaptations.length; i++) {
+      const adaptation = adaptations[i];
+      /*
+      const mimeType = adaptation.getAttribute('mimeType');
 
-        adps.push(new Adp(adaptation, i, url, override));
+      if (!mimeType.includes('audio') && !mimeType.includes('video')) {
+        continue;
       }
+      */
 
-      return adps;
-    } else {
-      throw("No AdaptationSet present in manifest.");
+      adps.push(new Adp(adaptation, i, url, override));
     }
+
+    return adps;
   }
 
   // gets MPD-level base URL
@@ -139,18 +139,16 @@ class MPD {
   duration_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
 
-    if (root !== null && typeof root !== 'undefined') {
-      const durationAttr = root.getAttribute('mediaPresentationDuration');
+    if (root === null || typeof root === 'undefined') { return -1; }
 
-      if (durationAttr===null ||
-          typeof durationAttr==='undefined' ||
-          !durationAttr.hasOwnProperty('length') ||
-          durationAttr.length < 1) { return -1; }
+    const durationAttr = root.getAttribute('mediaPresentationDuration');
 
-      return toDuration(durationAttr);
-    } else {
-      throw("MPD is invalid; unable to source overall duration.");
-    }
+    if (durationAttr===null ||
+        typeof durationAttr==='undefined' ||
+        !durationAttr.hasOwnProperty('length') ||
+        durationAttr.length < 1) { return -1; }
+
+    return toDuration(durationAttr);
   }
 
   // gets max buffer depth, if possible (live)
@@ -160,18 +158,16 @@ class MPD {
   dvr_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
 
-    if (root !== null && typeof root !== 'undefined') {
-      const dvrAttr = root.getAttribute('timeShiftBufferDepth');
-     
-      if (dvrAttr===null ||
-          typeof dvrAttr==='undefined' ||
-          !dvrAttr.hasOwnProperty('length') ||
-          dvrAttr.length < 1) { return -1; }
+    if (root === null || typeof root === 'undefined') { return -1; }
 
-      return toDuration(dvrAttr);
-    } else {
-      throw("MPD is invalid; unable to source time shift buffer depth.");
-    }
+    const dvrAttr = root.getAttribute('timeShiftBufferDepth');
+   
+    if (dvrAttr===null ||
+        typeof dvrAttr==='undefined' ||
+        !dvrAttr.hasOwnProperty('length') ||
+        dvrAttr.length < 1) { return -1; }
+
+    return toDuration(dvrAttr);
   }
 
   // samples a representations codecs
@@ -180,76 +176,68 @@ class MPD {
   muxed_(mpd) {
     const rep = mpd.querySelectorAll('Representation')[0];
 
-    if (rep && typeof rep !== 'undefined') {
-      const codecs = rep.getAttribute('codecs');
-      if (codecs.includes(',')) {
-        let vid = false, aud = false, vID = 'avc', aID = 'mp4';
+    if (rep === null || typeof rep === 'undefined') { return -1; }
 
-        const s = codecs.split(',');
+    const codecs = rep.getAttribute('codecs');
+    if (codecs.includes(',')) {
+      let vid = false, aud = false, vID = 'avc', aID = 'mp4';
 
-        if ((s[0].substring(0,3)==vID) || (s[1].substring(0,3)==vID)) {
-          vid = true;
-        }
+      const s = codecs.split(',');
 
-        if ((s[0].substring(0,3)==aID) || (s[1].substring(0,3)==aID)) {
-          aud = true;
-        }
-
-        if (vid && aud) { return true; }
+      if ((s[0].substring(0,3)==vID) || (s[1].substring(0,3)==vID)) {
+        vid = true;
       }
 
-      return false;
-    } else {
-      throw("Unable to find Representation within MPD.");
+      if ((s[0].substring(0,3)==aID) || (s[1].substring(0,3)==aID)) {
+        aud = true;
+      }
+
+      if (vid && aud) { return true; }
     }
+
+    return false;
   }
 
   // determined if we have a live ("dynamic") or vod ("static") stream
   type_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
 
-    if (root && typeof root !== 'undefined') {
-      let type = root.getAttribute('type');
+    if (root === null || typeof root === 'undefined') { return -1; }
 
-      if (!type || type.trim() === '') { return null; }
-      return type.trim();
-    } else {
-      throw("MPD is invalid; unable to source type.");
-    }
+    let type = root.getAttribute('type');
+
+    if (!type || type.trim() === '') { return -1; }
+    return type.trim();
   }
 
   // acquires availability start time from MPD, if possible (live)
   startTime_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
-    if (root !== null && typeof root !== 'undefined') {
-      const startAttr = root.getAttribute('availabilityStartTime');
+    if (root === null || typeof root === 'undefined') { return -1; }
 
-      if (startAttr === null || typeof startAttr === 'undefined') {
-        return null;
-      }
+    const startAttr = root.getAttribute('availabilityStartTime');
 
-      // WARNING: converting ISO 8601 to Date may not work in old browsers
-      return new Date(startAttr);
-    } else {
-      throw("MPD is invalid; unable to source availabilityStartTime.");
+    if (startAttr === null || typeof startAttr === 'undefined') {
+      return -1;
     }
+
+    // WARNING: converting ISO 8601 to Date may not work in old browsers
+    return new Date(startAttr);
   }
 
   // acquires MPD update period, if possible (live)
   //) mpd === parsed MPD XML
   updatePeriod_(mpd) {
     const root = mpd.querySelectorAll('MPD')[0];
-    if (root !== null && typeof root !== 'undefined') {
-      const periodAttr = root.getAttribute('minimumUpdatePeriod');
+    if (root === null || typeof root === 'undefined') { return -1; }
 
-      if (periodAttr === null || typeof periodAttr === 'undefined') {
-        return null;
-      }
+    const periodAttr = root.getAttribute('minimumUpdatePeriod');
 
-      return toDuration(periodAttr);
-    } else {
-      throw("MPD is invalid; unable to source minimumUpdatePeriod.");
+    if (periodAttr === null || typeof periodAttr === 'undefined') {
+      return -1;
     }
+
+    return toDuration(periodAttr);
   }
 
   // converts to DOM-accessible XML, if not already in it
@@ -261,11 +249,9 @@ class MPD {
       const parser = new DOMParser();
       const xml = parser.parseFromString(mpd, 'text/xml', 0);
       return xml;
-    } else if (hasDOM) {
-      return mpd;
-    } else {
-      throw("MPD undefined or unable to be parsed.");
     }
+
+    return mpd;
   }
 }
 

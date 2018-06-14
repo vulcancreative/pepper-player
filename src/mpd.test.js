@@ -275,9 +275,9 @@ describe('MPD.startTime_', () => {
     const inputC = caseC.data;
     const inputD = caseD.data;
 
-    const outputA = null;
-    const outputB = null;
-    const outputC = null;
+    const outputA = -1;
+    const outputB = -1;
+    const outputC = -1;
     const outputD = new Date('1970-01-01T00:00:00Z');
 
     (new MPD({ data: inputA })).setup().then((mpd) => {
@@ -302,9 +302,9 @@ describe('MPD.updatePeriod_', () => {
     const inputC = caseC.data;
     const inputD = caseD.data;
 
-    const outputA = null;
-    const outputB = null;
-    const outputC = null;
+    const outputA = -1;
+    const outputB = -1;
+    const outputC = -1;
     const outputD = 0;
 
     (new MPD({ data: inputA })).setup().then((mpd) => {
