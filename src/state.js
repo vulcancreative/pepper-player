@@ -329,7 +329,7 @@ class State {
                   }
                   */
 
-                  resolve(factor, now);
+                  resolve([factor, now]);
                 }
               });
             });

@@ -73,32 +73,6 @@ describe('mergeDicts', () => {
   });
 });
 
-describe('randStr', () => {
-  const strOne = randStr(10),
-        strTwo = randStr(10),
-        strThree = randStr(25),
-        strFour = randStr(25);
-
-  test('should produce strings of deterministic length', () => {
-    expect(strOne.length).toBe(strTwo.length);
-    expect(strThree.length).toBe(strFour.length);
-
-    expect(strOne.length).not.toBe(strThree.length);
-    expect(strOne.length).not.toBe(strFour.length);
-    expect(strTwo.length).not.toBe(strThree.length);
-    expect(strTwo.length).not.toBe(strFour.length);
-  });
-
-  test('should produce sufficiently random output', () => {
-    expect(strOne).not.toBe(strTwo);
-    expect(strOne).not.toBe(strThree);
-    expect(strOne).not.toBe(strFour);
-    expect(strTwo).not.toBe(strThree);
-    expect(strTwo).not.toBe(strFour);
-    expect(strThree).not.toBe(strFour);
-  })
-});
-
 describe('randInt', () => {
   const intOne = randInt(10, 35),
         intTwo = randInt(86, 114),

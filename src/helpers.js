@@ -13,20 +13,6 @@ function mergeDicts(a, b) {
   return result;
 }
 
-// generates a random alpha-numeric string of "len" length
-function randStr(len = 8) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-  "abcdefghijklmnopqrstuvwxyz0123456789";
-
-  let result = [];
-
-  for (let i = 0; i < len; i++) {
-    result.push(chars.charAt(Math.floor(Math.random() * chars.length)));
-  }
-
-  return result.join("");
-}
-
 // generates a random integer between a provided range
 function randInt(min, max) {
   return parseInt(Math.floor(Math.random() * (max - min + 1) + min));
@@ -42,7 +28,6 @@ function isInt(value) {
 export {
   sizeDict,
   mergeDicts,
-  randStr,
   randInt,
   isInt,
 };
