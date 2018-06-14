@@ -1,7 +1,6 @@
 import {
   sizeDict,
   mergeDicts,
-  randStr,
   randInt,
   isInt,
 } from './helpers';

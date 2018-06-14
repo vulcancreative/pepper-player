@@ -39,7 +39,7 @@ function scrubberClick(e) {
 class Video extends React.Component {
   render() {
     return (
-      <video width="640" height="480"></video>
+      <video></video>
     );
   }
 }
