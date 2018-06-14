@@ -1,4 +1,3 @@
-import { assert } from './assert';
 import { mergeDicts, isInt } from './helpers';
 import { arrayBufferToBase64 } from './convert';
 import { kStreamType, kSegmentType } from './constants';
@@ -21,7 +20,6 @@ class Stream {
     this.adp = this.config.adp;
     this.rep = this.config.rep;
     this.sources = this.config.sources;
-    assert(this.rep !== null && typeof this.rep !== 'undefined');
   }
 
   setup() {
@@ -111,9 +109,6 @@ class Stream {
 
         if (xhr.status >= 200 && xhr.status < 400) {
           const data = xhr.response;
-
-          assert(data !== null && typeof data !== 'undefined');
-          assert(data.byteLength && data.byteLength > 0);
 
           console.log(`Fetched segment at "${url}" for rep "${id}"`);
           resolve(data);
@@ -221,8 +216,6 @@ class Stream {
 
   // checks if a point (or array of points) has been cached
   inCache(points = []) {
-    assert(points !== null && typeof points !== 'undefined');
-
     let binSearchCache = (point) => {
       let min = 0;
       let max = this.cache.length - 1;

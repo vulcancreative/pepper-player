@@ -1,5 +1,4 @@
 import Rep from './rep';
-import { assert } from './assert';
 import { toInt } from './convert';
 
 class Adp {
@@ -59,17 +58,11 @@ class Adp {
 
   // TODO: consolidate shared code with the following method
   strongerRep(repID) {
-    assert(repID !== null && typeof repID !== 'undefined',
-           `rep "${repID}" invalid in strongerRep before targeting`);
-
     let rep;
 
     for (let i = 0; i != this.reps.length; i++) {
       if (this.reps[i].id === repID) { rep = this.reps[i]; break; }
     }
-
-    assert(rep !== null && typeof rep !== 'undefined',
-           `rep "${rep.id}" invalid in strongerRep after targeting`);
 
     let currentRep;
     let currentWeight = rep.weight();
@@ -88,17 +81,11 @@ class Adp {
   }
 
   weakerRep(repID) {
-    assert(repID !== null && typeof repID !== 'undefined',
-           `rep "${repID}" invalid in weakerRep before targeting`);
-
     let rep;
 
     for (let i = 0; i != this.reps.length; i++) {
       if (this.reps[i].id === repID) { rep = this.reps[i]; break; }
     }
-
-    assert(rep !== null && typeof rep !== 'undefined',
-           `rep "${rep.id}" invalid in weakerRep after targeting`);
 
     let currentRep;
     let currentWeight = rep.weight();

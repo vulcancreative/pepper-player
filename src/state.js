@@ -1,5 +1,4 @@
 import { MPD } from './mpd';
-import { assert } from './assert';
 import { Stream } from './stream';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
@@ -9,9 +8,6 @@ import { kbps, speedFactor } from './measure';
 // TODO: move within class structure
 // merge passed config with default config; returning assembled config
 function configure(config, kDefaultConfig) {
-  assert(config);
-  assert(kDefaultConfig);
-
   mergedConfig = mergeDicts(config, kDefaultConfig);
   mergedConfig.playlist = validatePlaylist(mergedConfig.playlist);
 
@@ -121,7 +117,6 @@ class State {
       for (let i = 0; i < mpd.adps.length; i++) {
         const adp = mpd.adps[i];
         const rep = adp.reps[adp.bestRep()];
-        assert(rep !== null && typeof rep !== 'undefined');
 
         const stream = new Stream({
           mediaSource: mediaSource,
@@ -147,9 +142,6 @@ class State {
     return new Promise((resolve, reject) => {
       const mediaSource = new MediaSource();
 
-      assert(mediaSource !== null);
-      assert(typeof mediaSource !== 'undefined');
-
       mediaSource.addEventListener('sourceopen', () => {
         if (mediaSource.readyState === 'open') {
           console.log("Media source successfully opened");
@@ -160,9 +152,6 @@ class State {
       });
 
       const src = this.url_(mediaSource);
-
-      assert(src !== null && typeof src !== 'undefined');
-      assert(src.length > 0);
 
       this.video.src = src;
       console.log(this.video);
@@ -213,9 +202,6 @@ class State {
             resolve(false);
             return;
           }
-
-          assert(rep !== null && typeof rep !== 'undefined',
-                 "rep invalid within adjustQuality");
 
           stream.switchToRep(rep.id).then(() => {
             if (i === this.streams.length - 1) {
@@ -377,13 +363,8 @@ class State {
   }
 
   queueQuality(quality) {
-    assert(quality !== null && typeof quality !== 'undefined');
-
     const name = quality.name;
     const repID = quality.repID;
-
-    assert(name !== null && typeof name !== 'undefined');
-    assert(repID !== null && typeof repID !== 'undefined');
 
     console.log(`name: ${name}, repID: ${repID}`);
 
@@ -398,9 +379,6 @@ class State {
 
       for (let j = 0; j != stream.sources.length; j++) {
         const source = stream.sources[j];
-
-        assert(source !== null && typeof source !== 'undefined');
-        assert(source.id !== null && typeof source.id !== 'undefined');
 
         if (source.id === repID) {
           this.qualityAuto = false;

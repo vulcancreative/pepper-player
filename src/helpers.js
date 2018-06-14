@@ -1,5 +1,3 @@
-import { assert } from './assert'
-
 // counts items in a dictionary and returns the size
 function sizeDict(d) {
   return Object.keys(d).length;
@@ -7,9 +5,6 @@ function sizeDict(d) {
 
 // merges two dictionaries, with the first one taking priority
 function mergeDicts(a, b) {
-  assert(a);
-  assert(b);
-
   let result = {};
   for (let k of Object.keys(b)) {
     result[k] = (a[k]!==null && typeof a[k]!=='undefined') ? a[k] : b[k];
@@ -20,9 +15,6 @@ function mergeDicts(a, b) {
 
 // generates a random alpha-numeric string of "len" length
 function randStr(len = 8) {
-  assert(len);
-  assert(len > 0);
-
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
   "abcdefghijklmnopqrstuvwxyz0123456789";
 

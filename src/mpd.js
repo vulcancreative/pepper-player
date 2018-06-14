@@ -1,5 +1,4 @@
 import Adp from './adp';
-import { assert } from './assert';
 import { mergeDicts } from './helpers';
 import { toDuration } from './convert';
 
@@ -58,14 +57,8 @@ class MPD {
   }
 
   parse_(input = "") {
-    assert(input && typeof input !== 'undefined');
-    assert(input.length && input.length > 0);
-
     const baseOverride = this.config.base;
     this.mpd = this.xml_(input);
-
-    assert(this.mpd !== null && typeof this.mpd !== 'undefined');
-    assert(this.mpd.children.length > 0);
 
     // dependency for adp and rep sourcing
     this.baseURL = this.baseURL_(this.mpd, baseOverride);
