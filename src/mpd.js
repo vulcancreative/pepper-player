@@ -72,23 +72,12 @@ class MPD {
     this.startTime = this.startTime_(this.mpd);
     this.updatePeriod = this.updatePeriod_(this.mpd);
 
-    if([
-      this.adps,
-      this.baseURL,
-      this.muxed,
-      this.type,
-    ].includes(-1)) {
-      return "Unable to parse MPD";
-    }
-
     if (this.adps < 0) { return "Invalid adaptations"; }
-    if (this.baseURL < 0) { return "Invalid BaseURL"; }
 
     if (this.type == 'static' && this.duration == -1) {
       return "Invalid duration";
     }
 
-    if (this.muxed < 0) { return "Invalid multiplex info"; }
     if (this.type < 0) { return "Invalid type"; }
 
     if (this.type == 'dynamic' && this.startTime < 0) {

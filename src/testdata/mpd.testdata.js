@@ -58,6 +58,96 @@ const noReps = {
 </MPD>`
 };
 
+const noDuration = {
+  data: `<?xml version="1.0" encoding="utf-8"?>
+<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="urn:mpeg:dash:schema:mpd:2011"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+  profiles="urn:mpeg:dash:profile:isoff-live:2011"
+  type="static"
+  minBufferTime="PT1.0S">
+  <ProgramInformation>
+  </ProgramInformation>
+  <Period start="PT0.0S">
+    <AdaptationSet contentType="video" segmentAlignment="true" bitstreamSwitching="true" frameRate="30000/1001">
+      <Representation id="0" mimeType="video/mp4" codecs="avc1.64001e" bandwidth="3000000" width="640" height="360" frameRate="30000/1001">
+        <SegmentTemplate timescale="1000000" duration="1001000" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="1">
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>`
+};
+
+const noType = {
+  data: `<?xml version="1.0" encoding="utf-8"?>
+<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="urn:mpeg:dash:schema:mpd:2011"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+  profiles="urn:mpeg:dash:profile:isoff-live:2011"
+  mediaPresentationDuration="PT2M3.5S"
+  minBufferTime="PT1.0S">
+  <ProgramInformation>
+  </ProgramInformation>
+  <Period start="PT0.0S">
+    <AdaptationSet contentType="video" segmentAlignment="true" bitstreamSwitching="true" frameRate="30000/1001">
+      <Representation id="0" mimeType="video/mp4" codecs="avc1.64001e" bandwidth="3000000" width="640" height="360" frameRate="30000/1001">
+        <SegmentTemplate timescale="1000000" duration="1001000" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="1">
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>`
+};
+
+const noStartTime = {
+  data: `<?xml version="1.0" encoding="utf-8"?>
+<MPD id="Config part of url maybe?" minBufferTime="PT2S" minimumUpdatePeriod="PT0S" profiles="urn:mpeg:dash:profile:isoff-live:2011,http://dashif.org/guidelines/dash-if-simple" publishTime="2018-06-13T17:08:08Z" timeShiftBufferDepth="PT5M" type="dynamic" ns1:schemaLocation="urn:mpeg:dash:schema:mpd:2011 DASH-MPD.xsd" xmlns="urn:mpeg:dash:schema:mpd:2011" xmlns:ns1="http://www.w3.org/2001/XMLSchema-instance">
+   <ProgramInformation>
+      <Title>Media Presentation Description from DASHI-IF live simulator</Title>
+   </ProgramInformation>
+   <BaseURL>http://vm2.dashif.org/livesim/segtimeline_1/testpic_2s/</BaseURL>
+<Period id="p0" start="PT0S">
+      <AdaptationSet contentType="audio" lang="eng" mimeType="audio/mp4" segmentAlignment="true" startWithSAP="1">
+         <Role schemeIdUri="urn:mpeg:dash:role:2011" value="main" />
+         <SegmentTemplate initialization="$RepresentationID$/init.mp4" media="$RepresentationID$/t$Time$.m4s" timescale="48000">
+<SegmentTimeline>
+<S d="96256" r="1" t="73387650528256" />
+</SegmentTimeline>
+</SegmentTemplate>
+         <Representation audioSamplingRate="48000" bandwidth="48000" codecs="mp4a.40.2" id="A48">
+            <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2" />
+         </Representation>
+      </AdaptationSet>
+   </Period>
+</MPD>`
+};
+
+const noUpdatePeriod = {
+  data: `<?xml version="1.0" encoding="utf-8"?>
+<MPD availabilityStartTime="1970-01-01T00:00:00Z" id="Config part of url maybe?" minBufferTime="PT2S" profiles="urn:mpeg:dash:profile:isoff-live:2011,http://dashif.org/guidelines/dash-if-simple" publishTime="2018-06-13T17:08:08Z" timeShiftBufferDepth="PT5M" type="dynamic" ns1:schemaLocation="urn:mpeg:dash:schema:mpd:2011 DASH-MPD.xsd" xmlns="urn:mpeg:dash:schema:mpd:2011" xmlns:ns1="http://www.w3.org/2001/XMLSchema-instance">
+   <ProgramInformation>
+      <Title>Media Presentation Description from DASHI-IF live simulator</Title>
+   </ProgramInformation>
+   <BaseURL>http://vm2.dashif.org/livesim/segtimeline_1/testpic_2s/</BaseURL>
+<Period id="p0" start="PT0S">
+      <AdaptationSet contentType="audio" lang="eng" mimeType="audio/mp4" segmentAlignment="true" startWithSAP="1">
+         <Role schemeIdUri="urn:mpeg:dash:role:2011" value="main" />
+         <SegmentTemplate initialization="$RepresentationID$/init.mp4" media="$RepresentationID$/t$Time$.m4s" timescale="48000">
+<SegmentTimeline>
+<S d="96256" r="1" t="73387650528256" />
+</SegmentTimeline>
+</SegmentTemplate>
+         <Representation audioSamplingRate="48000" bandwidth="48000" codecs="mp4a.40.2" id="A48">
+            <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2" />
+         </Representation>
+      </AdaptationSet>
+   </Period>
+</MPD>`
+};
+
 const tfVodMpd = {
   url: "http://media.tfod.tomferry.com/" +
        "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
@@ -284,6 +374,10 @@ export {
   muxed,
   noAdps,
   noReps,
+  noDuration,
+  noType,
+  noStartTime,
+  noUpdatePeriod,
   tfVodMpd,
   bbb4kVodMpd,
   bbb4kThumbnailsVodMpd,

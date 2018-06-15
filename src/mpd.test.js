@@ -7,6 +7,10 @@ import {
   echoLiveMpd as caseD,
   muxed as caseE,
   noAdps as caseF,
+  noDuration as caseG,
+  noType as caseH,
+  noStartTime as caseI,
+  noUpdatePeriod as caseJ,
 } from './testdata/mpd.testdata.js';
 
 describe('MPD.fetch', () => {
@@ -139,7 +143,7 @@ describe('MPD.adps_', () => {
 
   it('should throw an error if no adaptations exist', () => {
     const input = caseF.data;
-    const output = "Unable to parse MPD";
+    const output = "Invalid adaptations";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())
@@ -272,6 +276,15 @@ describe('MPD.duration_', () => {
 
     return Promise.all(promises);
   });
+
+  it('should throw an error if no duration exists', () => {
+    const input = caseG.data;
+    const output = "Invalid duration";
+
+    expect.assertions(1);
+    return expect((new MPD({ data: input })).setup())
+    .rejects.toMatch(output);
+  });
 });
 
 describe('MPD.dvr_', () => {
@@ -376,6 +389,15 @@ describe('MPD.type_', () => {
 
     return Promise.all(promises);
   });
+
+  it('should throw an error if no type exists', () => {
+    const input = caseH.data;
+    const output = "Invalid type";
+
+    expect.assertions(1);
+    return expect((new MPD({ data: input })).setup())
+    .rejects.toMatch(output);
+  });
 });
 
 describe('MPD.startTime_', () => {
@@ -409,6 +431,15 @@ describe('MPD.startTime_', () => {
 
     return Promise.all(promises);
   });
+
+  it('should throw an error if no start time exists', () => {
+    const input = caseI.data;
+    const output = "Invalid start time";
+
+    expect.assertions(1);
+    return expect((new MPD({ data: input })).setup())
+    .rejects.toMatch(output);
+  });
 });
 
 describe('MPD.updatePeriod_', () => {
@@ -441,6 +472,15 @@ describe('MPD.updatePeriod_', () => {
     ];
 
     return Promise.all(promises);
+  });
+
+  it('should throw an error if no update period exists', () => {
+    const input = caseJ.data;
+    const output = "Invalid update period";
+
+    expect.assertions(1);
+    return expect((new MPD({ data: input })).setup())
+    .rejects.toMatch(output);
   });
 });
 
