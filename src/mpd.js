@@ -34,10 +34,6 @@ class MPD {
 
       xhr.onload = function() {
         if (xhr.status >= 200 && xhr.status < 400) {
-          if (!xhr.response || xhr.response.trim().length < 1) {
-            reject("Attempt to fetch MPD failed");
-          }
-
           const dateHeader = xhr.getResponseHeader("Date");
           const serverDate = new Date(dateHeader);
           const now = Date.now();
@@ -47,8 +43,6 @@ class MPD {
           console.log(`server vs. local delta : ${serverDate - now}`);
 
           resolve(xhr.response, 'xml');
-        } else {
-          reject("Attempt to fetch MPD failed");
         }
       }
 
