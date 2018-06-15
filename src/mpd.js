@@ -33,17 +33,15 @@ class MPD {
       const xhr = new XMLHttpRequest;
 
       xhr.onload = function() {
-        if (xhr.status >= 200 && xhr.status < 400) {
-          const dateHeader = xhr.getResponseHeader("Date");
-          const serverDate = new Date(dateHeader);
-          const now = Date.now();
+        const dateHeader = xhr.getResponseHeader("Date");
+        const serverDate = new Date(dateHeader);
+        const now = Date.now();
 
-          console.log(xhr.response);
-          console.log(`Date header : ${dateHeader}`);
-          console.log(`server vs. local delta : ${serverDate - now}`);
+        console.log(xhr.response);
+        console.log(`Date header : ${dateHeader}`);
+        console.log(`server vs. local delta : ${serverDate - now}`);
 
-          resolve(xhr.response, 'xml');
-        }
+        resolve(xhr.response, 'xml');
       }
 
       xhr.open('GET', url)
@@ -164,24 +162,7 @@ class MPD {
     if (!rep) { return -1; }
 
     const codecs = rep.getAttribute('codecs');
-
-    if (codecs.includes(',')) {
-      let vid = false, aud = false, vID = 'avc', aID = 'mp4';
-
-      const s = codecs.split(',');
-
-      if ((s[0].substring(0,3)==vID) || (s[1].substring(0,3)==vID)) {
-        vid = true;
-      }
-
-      if ((s[0].substring(0,3)==aID) || (s[1].substring(0,3)==aID)) {
-        aud = true;
-      }
-
-      if (vid && aud) { return true; }
-    }
-
-    return false;
+    return codecs.includes('avc') && codecs.includes('mp4');
   }
 
   // determined if we have a live ("dynamic") or vod ("static") stream

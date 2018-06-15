@@ -93,11 +93,6 @@ describe('MPD.fetch', () => {
   });
 });
 
-describe('MPD.parse_', () => {
-  it('should assemble reasonable outputs', () => {
-  });
-});
-
 describe('MPD.adps_', () => {
   it('should identify all adaptations and their child elements', () => {
     const inputA = caseA.data;
