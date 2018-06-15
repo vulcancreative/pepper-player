@@ -1,10 +1,11 @@
+import jr from './jr';
 import Rep from './rep';
 import { toInt } from './convert';
 
 class Adp {
   constructor(adp, i, url, override) {
-    const maxWidthAttr = adp.getAttribute('maxWidth');
-    const maxHeightAttr = adp.getAttribute('maxHeight');
+    const maxWidthAttr = jr.a('maxWidth', adp);
+    const maxHeightAttr = jr.a('maxHeight', adp);
 
     this.adp = adp;
     this.index = i;
@@ -14,7 +15,7 @@ class Adp {
   }
 
   reps_(adp, url, override) {
-    const representations = adp.querySelectorAll("Representation");
+    const representations = jr.q('Representation', adp);
 
     if (representations && representations.length > 0) {
       let reps = [];

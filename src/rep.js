@@ -1,3 +1,4 @@
+import jr from './jr';
 import { toInt } from './convert';
 import { kStreamType } from './constants';
 
@@ -9,26 +10,26 @@ class Rep {
     segmentDuration, type, tileInfo;
 
     // source id from rep attribute
-    id = rep.getAttribute('id');
+    id = jr.a('id', rep);
 
     // mimeType can be on either the adp or the rep
-    mimeType = adp.getAttribute('mimeType');
+    mimeType = jr.a('mimeType', adp);
     if (!mimeType || typeof mimeType === 'undefined') {
-      mimeType = rep.getAttribute('mimeType');
+      mimeType = jr.a('mimeType', rep);
     }
 
     // source codecs from rep attribute
-    codecs = rep.getAttribute('codecs');
+    codecs = jr.a('codecs', rep);
 
     // find dimensions and parse to integer
-    const widthAttr = rep.getAttribute('width');
-    const heightAttr = rep.getAttribute('height');
+    const widthAttr = jr.a('width', rep);
+    const heightAttr = jr.a('height', rep);
 
     width = toInt(widthAttr) || 0;
     height = toInt(heightAttr) || 0;
 
     // find bandwidth and parse to integer
-    const bandwidthAttr = rep.getAttribute('bandwidth');
+    const bandwidthAttr = jr.a('bandwidth', rep);
     bandwidth = toInt(bandwidthAttr);
 
     // get default baseURL, if available and no override
@@ -40,33 +41,33 @@ class Rep {
     baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
     baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? '' : '/';
 
-    segmentTimeline = adp.querySelectorAll('SegmentTimeline')[0];
+    segmentTimeline = jr.q('SegmentTimeline', adp)[0];
     if (segmentTimeline!==null && typeof segmentTimeline!=='undefined') {
       timelineParts = [...segmentTimeline.children];
     }
 
     // find segment template
-    segmentTemplate = adp.querySelectorAll('SegmentTemplate')[0];
+    segmentTemplate = jr.q('SegmentTemplate', adp)[0];
     if (!segmentTemplate) {
-      segmentTemplate = rep.querySelectorAll('SegmentTemplate')[0];
+      segmentTemplate = jr.q('SegmentTemplate', rep)[0];
     }
 
     if (segmentTemplate) {
-      mediaTemplate = segmentTemplate.getAttribute('media');
+      mediaTemplate = jr.a('media', segmentTemplate);
 
-      initialization = segmentTemplate.getAttribute('initialization');
+      initialization = jr.a('initialization', segmentTemplate);
 
       if (initialization!==null && typeof initialization!=='undefined') {
         initialization = initialization.replace("$RepresentationID$", id);
       }
 
-      const startNumAttr = segmentTemplate.getAttribute('startNumber');
+      const startNumAttr = jr.a('startNumber', segmentTemplate);
       startNumber = toInt(startNumAttr);
 
-      const timescaleAttr = segmentTemplate.getAttribute('timescale');
+      const timescaleAttr = jr.a('timescale', segmentTemplate);
       timescale = toInt(timescaleAttr);
 
-      const segDurationAttr = segmentTemplate.getAttribute('duration');
+      const segDurationAttr = jr.a('duration', segmentTemplate);
       segmentDuration = toInt(segDurationAttr);
     }
 
@@ -81,11 +82,11 @@ class Rep {
     if (type === kStreamType.image) {
       let dimensionAttr = '1x1';
 
-      const durationAttr = segmentTemplate.getAttribute('duration');
-      const essential = rep.querySelectorAll('EssentialProperty')[0];
+      const durationAttr = jr.a('duration', segmentTemplate);
+      const essential = jr.q('EssentialProperty', rep)[0];
 
       if (essential) {
-        dimensionAttr = essential.getAttribute('value');
+        dimensionAttr = jr.a('value', essential);
       }
 
       tileInfo = {

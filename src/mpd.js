@@ -1,3 +1,4 @@
+import jr from './jr';
 import Adp from './adp';
 import { mergeDicts } from './helpers';
 import { toDuration } from './convert';
@@ -13,15 +14,12 @@ class MPD {
     this.config = mergeDicts(config, kDefaultConfig);
   }
 
-  setup() {
-    return new Promise((resolve, reject) => {
-      this.fetch_(this.config.url, this.config.data).then((result) => {
-        const err = this.parse_(result);
-        if (err) { reject(err); }
+  async setup() {
+    const result = await this.fetch_(this.config.url, this.config.data);
+    const err = this.parse_(result);
+    if (err) { throw(err); }
 
-        resolve(this);
-      });
-    });
+    return this;
   }
 
   fetch_(url = '', data) {
@@ -64,20 +62,20 @@ class MPD {
     this.startTime = this.startTime_(this.mpd);
     this.updatePeriod = this.updatePeriod_(this.mpd);
 
-    if (this.adps < 0) { return "Invalid adaptations"; }
+    if (this.adps < 0) { return "Bad adps"; }
 
     if (this.type == 'static' && this.duration == -1) {
-      return "Invalid duration";
+      return "Bad duration";
     }
 
-    if (this.type < 0) { return "Invalid type"; }
+    if (this.type < 0) { return "Bad type"; }
 
     if (this.type == 'dynamic' && this.startTime < 0) {
-      return "Invalid start time";
+      return "Bad start time";
     }
 
     if (this.type == 'dynamic' && this.updatePeriod < 0) {
-      return "Invalid update period";
+      return "Bad update period";
     }
 
     return null;
@@ -86,8 +84,8 @@ class MPD {
   // source adaptations and populate with critical data and metadata
   // mpd === parsed MPD XML
   adps_(mpd, url, override) {
-    const period = mpd.querySelectorAll('Period')[0];
-    const adaptations = period.querySelectorAll('AdaptationSet');
+    const period = jr.q('Period', mpd)[0];
+    const adaptations = jr.q('AdaptationSet', period);
 
     if (!adaptations || adaptations.length < 1) { return -1; }
 
@@ -117,7 +115,7 @@ class MPD {
     if (override) { url = `${override}`; }
 
     if (url.length < 1) {
-      url = mpd.querySelectorAll('MPD BaseURL')[0];
+      url = jr.q('MPD BaseURL', mpd)[0];
       url = url && url.textContent ? url.textContent.trim() : '/';
     }
 
@@ -127,8 +125,8 @@ class MPD {
   // acquires overall duration, if possible (VoD)
   // mpd === parsed MPD XML
   duration_(mpd) {
-    const root = mpd.querySelectorAll('MPD')[0];
-    const durationAttr = root.getAttribute('mediaPresentationDuration');
+    const root = jr.q('MPD', mpd)[0];
+    const durationAttr = jr.a('mediaPresentationDuration', root);
 
     if (durationAttr===null ||
         typeof durationAttr==='undefined' ||
@@ -143,8 +141,8 @@ class MPD {
   // far back someone can rewind a live video
   // for static videos, it's assumed one can rewind indefinitely
   dvr_(mpd) {
-    const root = mpd.querySelectorAll('MPD')[0];
-    const dvrAttr = root.getAttribute('timeShiftBufferDepth');
+    const root = jr.q('MPD', mpd)[0];
+    const dvrAttr = jr.a('timeShiftBufferDepth', root);
    
     if (dvrAttr===null ||
         typeof dvrAttr==='undefined' ||
@@ -158,18 +156,18 @@ class MPD {
   // if both avc1 and mp4a codecs detected in same rep, true is returned
   // mpd === parsed MPD XML
   muxed_(mpd) {
-    const rep = mpd.querySelectorAll('Representation')[0];
+    const rep = jr.q('Representation', mpd)[0];
     if (!rep) { return -1; }
 
-    const codecs = rep.getAttribute('codecs');
+    const codecs = jr.a('codecs', rep);
     return codecs.includes('avc') && codecs.includes('mp4');
   }
 
   // determined if we have a live ("dynamic") or vod ("static") stream
   type_(mpd) {
-    const root = mpd.querySelectorAll('MPD')[0];
+    const root = jr.q('MPD', mpd)[0];
 
-    let type = root.getAttribute('type');
+    let type = jr.a('type', root);
 
     if (!type || type.trim() === '') { return -1; }
     return type.trim();
@@ -177,8 +175,8 @@ class MPD {
 
   // acquires availability start time from MPD, if possible (live)
   startTime_(mpd) {
-    const root = mpd.querySelectorAll('MPD')[0];
-    const startAttr = root.getAttribute('availabilityStartTime');
+    const root = jr.q('MPD', mpd)[0];
+    const startAttr = jr.a('availabilityStartTime', root);
 
     if (startAttr === null || typeof startAttr === 'undefined') {
       return -1;
@@ -191,8 +189,8 @@ class MPD {
   // acquires MPD update period, if possible (live)
   //) mpd === parsed MPD XML
   updatePeriod_(mpd) {
-    const root = mpd.querySelectorAll('MPD')[0];
-    const periodAttr = root.getAttribute('minimumUpdatePeriod');
+    const root = jr.q('MPD', mpd)[0];
+    const periodAttr = jr.a('minimumUpdatePeriod', root);
 
     if (periodAttr === null || typeof periodAttr === 'undefined') {
       return -1;

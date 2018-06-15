@@ -131,7 +131,7 @@ describe('MPD.adps_', () => {
 
   it('should throw an error if no adaptations exist', () => {
     const input = caseF.data;
-    const output = "Invalid adaptations";
+    const output = "Bad adps";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())
@@ -267,7 +267,7 @@ describe('MPD.duration_', () => {
 
   it('should throw an error if no duration exists', () => {
     const input = caseG.data;
-    const output = "Invalid duration";
+    const output = "Bad duration";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())
@@ -380,7 +380,7 @@ describe('MPD.type_', () => {
 
   it('should throw an error if no type exists', () => {
     const input = caseH.data;
-    const output = "Invalid type";
+    const output = "Bad type";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())
@@ -422,7 +422,7 @@ describe('MPD.startTime_', () => {
 
   it('should throw an error if no start time exists', () => {
     const input = caseI.data;
-    const output = "Invalid start time";
+    const output = "Bad start time";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())
@@ -464,7 +464,7 @@ describe('MPD.updatePeriod_', () => {
 
   it('should throw an error if no update period exists', () => {
     const input = caseJ.data;
-    const output = "Invalid update period";
+    const output = "Bad update period";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())
