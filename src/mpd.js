@@ -122,9 +122,7 @@ class MPD {
   baseURL_(mpd, override) {
     let url = '';
 
-    if (override !== null && typeof override != 'undefined') {
-      url = `${override}`;
-    }
+    if (override) { url = `${override}`; }
 
     if (url.length < 1) {
       url = mpd.querySelectorAll('MPD BaseURL')[0];
