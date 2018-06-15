@@ -406,6 +406,7 @@ class Stream {
                 `steps : ${steps}`);
     */
 
+    const nStr = `${next}`;
     let mediaName = rep.mediaTemplate.replace(rVarN, `${rep.id}`);
 
     if (nVarT.test(mediaName) && rep.timeline.length > 0) {
@@ -417,18 +418,18 @@ class Stream {
       const d = parseInt(part.getAttribute('d'));
       */
 
-      mediaName = mediaName.replace(nVarT, `${next}`);
+      mediaName = mediaName.replace(nVarT, nStr);
     } else if (nVarD.test(mediaName)) {
       const nVarDC = /(\$Number%(\d+)d\$)/g;
 
       const matches = nVarDC.exec(mediaName);
       const amount = parseInt(matches[matches.length - 1]) + 1;
-      const segmentNumberExt = next.padLeft(amount, '0');
+      const segmentNumberExt = nStr.padStart(amount - 1, '0');
 
       mediaName = mediaName.replace(matches[0], segmentNumberExt);
-      mediaName = mediaName.replace(nVarN, `${next}`);
+      mediaName = mediaName.replace(nVarN, nStr);
     } else {
-      mediaName = mediaName.replace(nVarN, `${next}`);
+      mediaName = mediaName.replace(nVarN, nStr);
     }
 
     return mediaName;

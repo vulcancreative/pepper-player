@@ -24,36 +24,21 @@ class Rep {
     const widthAttr = rep.getAttribute('width');
     const heightAttr = rep.getAttribute('height');
 
-    width = toInt(widthAttr);
-    height = toInt(heightAttr);
+    width = toInt(widthAttr) || 0;
+    height = toInt(heightAttr) || 0;
 
     // find bandwidth and parse to integer
     const bandwidthAttr = rep.getAttribute('bandwidth');
     bandwidth = toInt(bandwidthAttr);
 
     // get default baseURL, if available and no override
-    if (typeof override === 'string' || override instanceof String) {
-      baseURL = override || "";
-    }
+    baseURL = override || "";
 
-    const baseURLFallback = () => {
-      const srcParts = url.split('/');
-      const srcLen = srcParts.length;
+    const srcParts = url.split('/');
+    const srcLen = srcParts.length;
 
-      baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
-      baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? '' : '/';
-    };
-
-    if (baseURL && baseURL.length < 1) {
-      const urlContainer = adp.querySelectorAll('BaseURL')[0];
-      if (urlContainer && urlContainer.textContent) {
-        baseURL = urlContainer.textContent.trim();
-      } else {
-        baseURLFallback();
-      }
-    } else {
-      baseURLFallback();
-    }
+    baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
+    baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? '' : '/';
 
     segmentTimeline = adp.querySelectorAll('SegmentTimeline')[0];
     if (segmentTimeline!==null && typeof segmentTimeline!=='undefined') {
@@ -62,7 +47,7 @@ class Rep {
 
     // find segment template
     segmentTemplate = adp.querySelectorAll('SegmentTemplate')[0];
-    if (!segmentTemplate || typeof segmentTemplate === 'undefined') {
+    if (!segmentTemplate) {
       segmentTemplate = rep.querySelectorAll('SegmentTemplate')[0];
     }
 
@@ -99,7 +84,7 @@ class Rep {
       const durationAttr = segmentTemplate.getAttribute('duration');
       const essential = rep.querySelectorAll('EssentialProperty')[0];
 
-      if (essential !== null && typeof essential !== 'undefined') {
+      if (essential) {
         dimensionAttr = essential.getAttribute('value');
       }
 
@@ -129,15 +114,7 @@ class Rep {
   }
 
   weight() {
-    let weight = 0;
-
-    if (this.width && this.height) {
-      weight += this.width + this.height + this.bandwidth;
-    } else if (this.bandwidth) {
-      weight += this.bandwidth;
-    }
-
-    return weight < -1 ? 0 : weight;
+    return this.width + this.height + this.bandwidth;
   }
 }
 
