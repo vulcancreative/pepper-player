@@ -8,7 +8,7 @@ browsers.
 
 Features include:
 
-- [x] 20 KB – and shrinking!
+- [x] 18 KB – and shrinking (target of 10 KB or less)!
 - [x] No external runtime dependencies
 - [x] Ultra low-latency start times
 - [x] Automatic or manual adaptive quality
