@@ -214,13 +214,30 @@ describe('MPD.baseURL_', () => {
   });
 
   it('should allow for bizarre overrides (numbers, etc)', () => {
-    const override = 1;
-    const input = caseA.data;
-    const output = "1/";
+    const overrideA = 1;
+    const overrideB = 4444;
+    const overrideC = 444444;
 
-    expect.assertions(1);
-    return (new MPD({ data: input, base: override })).setup()
-    .then((mpd) => { expect(mpd.baseURL).toBe(output); });
+    const inputA = caseA.data;
+    const inputB = caseA.data;
+    const inputC = caseA.data;
+
+    const outputA = "1/";
+    const outputB = "4444/";
+    const outputC = "444444/";
+
+    expect.assertions(3);
+
+    const promises = [
+      (new MPD({ data: inputA, base: overrideA })).setup()
+      .then((mpd) => { expect(mpd.baseURL).toBe(outputA); }),
+      (new MPD({ data: inputB, base: overrideB })).setup()
+      .then((mpd) => { expect(mpd.baseURL).toBe(outputB); }),
+      (new MPD({ data: inputC, base: overrideC })).setup()
+      .then((mpd) => { expect(mpd.baseURL).toBe(outputC); }),
+    ];
+
+    return Promise.all(promises);
   });
 });
 
