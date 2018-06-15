@@ -25,7 +25,7 @@ class MPD {
   }
 
   fetch_(url = '', data) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       if (data !== null && typeof data !== 'undefined') {
         resolve(data, 'data');
       }
