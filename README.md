@@ -10,7 +10,7 @@ browsers.
 Features include:
 
 - [x] Always less than 10 KB in size
-- [x] No external runtime dependencies
+- [x] No runtime dependencies
 - [x] Ultra low-latency start times (even up to 4K)
 - [x] Automatic or manual adaptive quality
 - [x] Lazy loading of media segments (reduces serving bandwidth)
