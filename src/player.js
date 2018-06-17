@@ -193,12 +193,16 @@ class Player {
   }
 
   renderUI() {
-    if (!this.injected) {
+    if (!this.injectedUI) {
       const injectPoint = jr.q(this.config.query)[0];
-      const video = document.createElement('video');
-      injectPoint.innerHTML = video.outerHTML;
+      const vidExists = jr.q('video', injectPoint)[0];
 
-      this.injected = true;
+      if (!vidExists) {
+        const video = document.createElement('video');
+        injectPoint.innerHTML = video.outerHTML;
+      }
+
+      this.injectedUI = true;
     }
   }
 

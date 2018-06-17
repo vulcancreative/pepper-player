@@ -29,8 +29,8 @@ class State {
 
     this.config = mergeDicts(config, kDefaultConfig);
 
-    this.config.query +=
-      this.config.query.includes(/(^|\s)video(\s|\.|$)/) ? '' : `video`;
+    this.config.query += this.config.query.match(/(^|\s)video(\s|\.|$)/) ?
+      '' : ' video';
   }
 
   setup() {
@@ -50,6 +50,7 @@ class State {
       }
       */
 
+      console.log(this.config.query);
       const root = document.querySelectorAll(this.config.query)[0];
 
       if (root === null || typeof root === 'undefined') {
