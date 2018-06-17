@@ -1,11 +1,7 @@
+import jr from './jr';
 import { os } from './os';
-import React from 'react';
 import { State } from './state';
-import ReactDOM from 'react-dom';
 import { mergeDicts } from './helpers';
-import { kStreamType } from './constants';
-import { UI as LiveUI } from './production/ui';
-import { UI as TestUI } from './development/ui';
 
 class Player {
   constructor(config = {}) {
@@ -29,7 +25,7 @@ class Player {
       debug:  false,
       lead:   5000,
       loop:   false,
-      query:  ".pepper video",
+      query:  ".pepper",
       start:  0,
       timed:  0,
       track:  0,
@@ -54,13 +50,10 @@ class Player {
     await this.state.setup();
     console.log("State ready");
 
-    this.renderUI();
-
     const diff = this.state.config.timed;
 
     if (diff > 0) {
       this.startsInMs = diff;
-      this.renderUI();
 
       setTimeout(() => {
         this.startsInMs = diff >= 1000 ?
@@ -200,74 +193,13 @@ class Player {
   }
 
   renderUI() {
-    let id = 0;
-    let videoQualities = () => { return null; };
+    if (!this.injected) {
+      const injectPoint = jr.q(this.config.query)[0];
+      const video = document.createElement('video');
+      injectPoint.innerHTML = video.outerHTML;
 
-    const UI = process.env.NODE_ENV === 'development' ? TestUI : LiveUI;
-    // if (!UI || !this.state.video.controls) { return; }
-
-    if (this.state && this.state.video) {
-      const stream = this.state.videoStream();
-
-      if (stream) {
-        id = stream.id;
-
-        videoQualities = () => {
-          const mpd = this.state.mpd;
-          const adps = mpd.adps;
-          
-          let qualities = [];
-
-          for (let i = 0; i != adps.length; i++) {
-            const adp = adps[i];
-
-            if (adp.reps.length < 1) { continue; }
-
-            for (let j = 0; j != adp.reps.length; j++) {
-              const rep = adp.reps[j];
-
-              if (rep.type === kStreamType.video) {
-                const width = rep.width;
-                const height = rep.height;
-
-                qualities.push({
-                  name: `${width}:${height}`,
-                  repID: rep.id,
-                  selected: !this.state.qualityAuto && id === rep.id,
-                  weight: adp.reps[j].weight(),
-                });
-              }
-            }
-          }
-
-          qualities.sort((a, b) => a.weight > b.weight);
-          qualities.unshift({
-            name: "auto",
-            repID: id,
-            selected: this.state.qualityAuto,
-            weight: -1,
-          });
-
-          return qualities;
-        };
-      }
+      this.injected = true;
     }
-
-    ReactDOM.render(
-      <UI id={id}
-          startsInMs={this.startsInMs}
-          qualities={videoQualities()}
-          guts={this.state}
-          config={this.config.ui}
-          seek={(p) => this.seek(p)}
-          play={() => this.play()}
-          pause={() => this.pause()}
-          isPaused={() => this.isPaused()}
-          currentTime={() => this.currentTime()}
-      />,
-      document.querySelectorAll('div.pepper')[0],
-      document.querySelectorAll('div.pepper')[0]
-    );
   }
 
   seek(percentage) {
