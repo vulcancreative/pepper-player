@@ -9,7 +9,7 @@ browsers.
 
 Features include:
 
-- [x] Always less than 10 KB in size
+- [x] Less than 10 KB in size
 - [x] No runtime dependencies
 - [x] Ultra low-latency start times (even up to 4K)
 - [x] Automatic or manual adaptive quality
@@ -23,6 +23,8 @@ Being incorporated from working prototype now:
 - [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 - [ ] Client-side, on-the-fly HLS conversion
 - [ ] Mobile compatible
+- [ ] Usage documentation
+- [ ] Contribution info
 
 ## dev installation
 ```
