@@ -8,15 +8,17 @@ browsers.
 
 Features include:
 
-- [x] 18 KB – and shrinking (target of 10 KB or less)!
+- [x] Only 6.5 KB (will never be more than 10 KB)
 - [x] No external runtime dependencies
-- [x] Ultra low-latency start times
+- [x] Ultra low-latency start times (even up to 4K)
 - [x] Automatic or manual adaptive quality
 - [x] Lazy loading of media segments (reduces serving bandwidth)
 - [x] Cross-browser compatible (<= ES7)
+- [x] Fully tested, ~100% coverage
 
 Being incorporated from working prototype now:
 
+- [ ] Hooks for custom user-interface
 - [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 - [ ] Client-side, on-the-fly HLS conversion
 - [ ] Mobile compatible
