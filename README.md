@@ -1,8 +1,8 @@
 # pepper
 
-![Github file size](http://shields.git.vulcanca.com/github/size/chris-calo/pepper-player/lib/pepper.js.gz.svg)
 [![CircleCI](https://circleci.com/gh/chris-calo/pepper-player.svg?style=shield&circle-token=0c5dc10e0b028da9d6e882f19944f7fd21ae318c)](https://circleci.com/gh/chris-calo/pepper-player)
 [![Coverage Status](https://coveralls.io/repos/github/chris-calo/pepper-player/badge.svg?branch=master&t=dP79wl)](https://coveralls.io/github/chris-calo/pepper-player?branch=master)
+![Github file size](http://shields.git.vulcanca.com/github/size/chris-calo/pepper-player/lib/pepper.js.gz.svg)
 
 A JavaScript-based MPEG-DASH player, for use in modern desktop and mobile
 browsers.
