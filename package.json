@@ -9,10 +9,11 @@
   "description": "A JavaScript-based MPEG-DASH player, but more specialer.",
   "scripts": {
     "dev": "NODE_ENV=development webpack --module-bind js=babel-loader --w",
-    "build": "NODE_ENV=production webpack --module-bind js=babel-loader",
+    "build": "NODE_ENV=production webpack --module-bind js=babel-loader && npm run gzip",
     "test": "npm run build && jest --silent && size-limit",
     "test:coverage": "jest --silent --coverage --coverageReporters=text-lcov | coveralls && size-limit",
-    "size": "size-limit"
+    "size": "size-limit",
+    "gzip": "gzip -k -9 -- lib/pepper.js"
   },
   "size-limit": [
     {

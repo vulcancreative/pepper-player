@@ -59,7 +59,7 @@ class Player {
         this.startsInMs = diff >= 1000 ?
           diff - 1000 : diff;
 
-        this.renderUI();
+        // this.renderUI();
 
         this.updateTimer_(
           diff >= 1000 ? diff - 1000 : diff
@@ -150,7 +150,7 @@ class Player {
         const bufferTime = this.bufferTime();
         const leadTime = this.config.lead;
 
-        this.renderUI();
+        // this.renderUI();
 
         if (currentTime >= bufferTime - leadTime / 2) {
           const speed = await this.state.fillBuffers();
@@ -171,7 +171,7 @@ class Player {
       const waitTime = this.lastSpeed ?
                        minTime - minTime * this.lastSpeed : minTime;
 
-      this.state.video.ontimeupdate = () => this.renderUI();
+      // this.state.video.ontimeupdate = () => this.renderUI();
 
       setInterval(async () => {
         const speed = await this.state.fillBuffers(maxTime);
@@ -223,7 +223,7 @@ class Player {
 
     setTimeout(() => {
       this.startsInMs -= 1000;
-      this.renderUI();
+      // this.renderUI();
       this.updateTimer_(diff > 0 ? diff - 1000 : 0)
     }, 1000);
   }
