@@ -1,11 +1,14 @@
+// shortcut for null
+var N_ = null,
+
 // shortcut for 'undefined'
-var U_ = 'undefined',
+U_ = 'undefined',
 
 // def is a shortcut for checking if something is defined.
-def = (a => typeof a !== U_),
+def = (a => a !== N_ && typeof a !== U_),
 
 // ndef is a shortcut for checking if something is undefined.
-ndef = (a => typeof a === U_),
+ndef = (a => a === N_ || typeof a === U_),
 
 // a aliases getAttribute; b is a node.
 a = ((a, b) => b.getAttribute(a)),

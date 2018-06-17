@@ -24,7 +24,7 @@ class MPD {
 
   fetch_(url = '', data) {
     return new Promise(resolve => {
-      if (data !== null && typeof data !== 'undefined') {
+      if (jr.def(data)) {
         resolve(data, 'data');
       }
 
@@ -128,8 +128,7 @@ class MPD {
     const root = jr.q('MPD', mpd)[0];
     const durationAttr = jr.a('mediaPresentationDuration', root);
 
-    if (durationAttr===null ||
-        typeof durationAttr==='undefined' ||
+    if (jr.ndef(durationAttr) ||
         !durationAttr.hasOwnProperty('length') ||
         durationAttr.length < 1) { return -1; }
 
@@ -144,8 +143,7 @@ class MPD {
     const root = jr.q('MPD', mpd)[0];
     const dvrAttr = jr.a('timeShiftBufferDepth', root);
    
-    if (dvrAttr===null ||
-        typeof dvrAttr==='undefined' ||
+    if (jr.ndef(dvrAttr) ||
         !dvrAttr.hasOwnProperty('length') ||
         dvrAttr.length < 1) { return -1; }
 
@@ -178,7 +176,7 @@ class MPD {
     const root = jr.q('MPD', mpd)[0];
     const startAttr = jr.a('availabilityStartTime', root);
 
-    if (startAttr === null || typeof startAttr === 'undefined') {
+    if (jr.ndef(startAttr)) {
       return -1;
     }
 
@@ -192,7 +190,7 @@ class MPD {
     const root = jr.q('MPD', mpd)[0];
     const periodAttr = jr.a('minimumUpdatePeriod', root);
 
-    if (periodAttr === null || typeof periodAttr === 'undefined') {
+    if (jr.ndef(periodAttr)) {
       return -1;
     }
 

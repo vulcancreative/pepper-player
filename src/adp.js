@@ -28,7 +28,7 @@ class Adp {
 
       // ensure all elements have bandwidth
       const bandwidths = reps.map(r => {
-        if (r.bandwidth === null || typeof r.bandwidth === 'undefined') {
+        if (jr.ndef(r.bandwidth)) {
           return null;
         }
 

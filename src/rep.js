@@ -14,7 +14,7 @@ class Rep {
 
     // mimeType can be on either the adp or the rep
     mimeType = jr.a('mimeType', adp);
-    if (!mimeType || typeof mimeType === 'undefined') {
+    if (jr.ndef(mimeType)) {
       mimeType = jr.a('mimeType', rep);
     }
 
@@ -42,7 +42,7 @@ class Rep {
     baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? '' : '/';
 
     segmentTimeline = jr.q('SegmentTimeline', adp)[0];
-    if (segmentTimeline!==null && typeof segmentTimeline!=='undefined') {
+    if (jr.def(segmentTimeline)) {
       timelineParts = [...segmentTimeline.children];
     }
 
@@ -57,7 +57,7 @@ class Rep {
 
       initialization = jr.a('initialization', segmentTemplate);
 
-      if (initialization!==null && typeof initialization!=='undefined') {
+      if (jr.def(initialization)) {
         initialization = initialization.replace("$RepresentationID$", id);
       }
 
