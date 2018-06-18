@@ -114,6 +114,91 @@ class Rep {
     this.type = type;
   }
 
+  initURL() {
+    const initName = this.initialization;
+    const baseURL = this.baseURL;
+
+    let initURL = baseURL ? `${baseURL}${initName}` : initName;
+    return initURL.replace(/\$RepresentationID\$/g, `${this.id}`);
+  }
+
+  mediaURL(next) {
+    const
+
+    //e.g "...$Time$.m4s"
+    nVarT = /\$Time\$/g,
+
+    //e.g "...$Number$.m4s"
+    nVarN = /\$Number\$/g,
+
+    //e.g "...$Number%05d$.m4s"
+    nVarD = /(\$Number%(\d+)d\$)/g,
+
+    //e.g "stream$RepresentationID$..."
+    rVarN = /\$RepresentationID\$/g;
+
+    /*
+     * TODO: solidfy as trace-level debug text
+    console.log(`Filling buffer for rep "${rep.id}"`);
+    console.log(`Current : ${current}, target : ${target}, ` +
+                `segment length : ${this.segmentLength()}, ` +
+                `steps : ${steps}`);
+    */
+
+    const nStr = `${next}`;
+    let mediaName = this.mediaTemplate.replace(rVarN, `${this.id}`);
+
+    if (nVarT.test(mediaName) && this.timeline.length > 0) {
+      mediaName = mediaName.replace(nVarT, nStr);
+    } else if (nVarD.test(mediaName)) {
+      const nVarDC = /(\$Number%(\d+)d\$)/g;
+
+      const matches = nVarDC.exec(mediaName);
+      const amount = parseInt(matches[matches.length - 1]) + 1;
+      const segmentNumberExt = nStr.padStart(amount - 1, '0');
+
+      mediaName = mediaName.replace(matches[0], segmentNumberExt);
+      mediaName = mediaName.replace(nVarN, nStr);
+    } else {
+      mediaName = mediaName.replace(nVarN, nStr);
+    }
+
+    const baseURL = this.baseURL;
+    return baseURL ? `${baseURL}${mediaName}` : mediaName;
+  }
+
+  segmentLength() {
+    // average size if timeline-based
+    if (this.timeline && this.timeline.length > 0) {
+      const points = [];
+
+      for (let i = 0; i < this.timeline.length; i++) {
+        const point = this.timeline[i];
+        const scale = this.timescale;
+        const d = parseInt(point.getAttribute('d'));
+        
+        points.push(d / scale);
+      }
+
+      if (points.length > 0) {
+        const sum = points.reduce((a, c) => a + c);
+        return sum / points.length * 1000;
+      }
+    }
+
+    // direct size if template-based
+    const timescale = parseFloat(this.timescale);
+    const duration = parseFloat(this.segmentDuration);
+
+    if ((timescale===null && typeof timescale==='undefined') ||
+         isNaN(timescale)) { return duration * 1000; }
+
+    const ticks = Math.floor(duration / timescale);
+    const size = parseInt(ticks) * 1000;
+
+    return size;
+  }
+
   weight() {
     return this.width + this.height + this.bandwidth;
   }

@@ -1,5 +1,6 @@
 import { MPD } from './mpd';
 import { Stream } from './stream';
+import { mpdToM3U8 } from './hls';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
@@ -28,7 +29,6 @@ class State {
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
-
     this.config.query += this.config.query.match(/(^|\s)video(\s|\.|$)/) ?
       '' : ' video';
   }
@@ -91,13 +91,16 @@ class State {
       return Promise.resolve();
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const track = this.config.track;
       const url = this.config.playlist[track].dash.url;
       const base = this.config.playlist[track].dash.base;
 
       this.mpd = new MPD({ url: url, base: base });
-      this.mpd.setup().then(() => console.log("MPD parsed"))
+      this.mpd.setup().then(() => {
+                        console.log("MPD parsed");
+                        console.log(mpdToM3U8(this));
+                      })
                       .then(() => this.mediaSource_())
                       .then((mediaSource) => {
                         this.mediaSource = mediaSource;
@@ -114,7 +117,7 @@ class State {
   }
 
   buildStreams_(mpd, mediaSource) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       let counter = 0;
       let streams = [];
 
@@ -176,7 +179,7 @@ class State {
 
     this.loading = true;
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       // handle queued, fixed quality
       if (!this.qualityAuto && this.qualityQueued !== null) {
         const stream = this.qualityQueued.stream;
@@ -259,7 +262,7 @@ class State {
       // console.log(`time delta (ms) : ${now - this.lastTime}`);
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       // times measured against current and desired state
       const start = this.bufferTime;
 

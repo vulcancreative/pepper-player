@@ -51,13 +51,7 @@ class Stream {
 
       for (let i = 0; i != this.sources.length; i++) {
         const source = this.sources[i];
-
-        const id = source.id;
-        const initName = source.initialization;
-        const baseURL = source.baseURL;
-
-        let initURL = baseURL ? `${baseURL}${initName}` : initName;
-        initURL = initURL.replace(/\$RepresentationID\$/g, `${id}`);
+        const initURL = source.initURL();
 
         this.fetchSegment_(initURL).then((data) => {
           cache.push({
@@ -166,10 +160,7 @@ class Stream {
   fillBuffer(next) {
     return new Promise((resolve) => {
       const rep = this.rep;
-      const mediaName = this.buildMediaName_(rep, next);
-
-      const baseURL = this.rep.baseURL;
-      const mediaURL = baseURL ? `${baseURL}${mediaName}` : mediaName;
+      const mediaURL = rep.mediaURL(next);
 
       this.fetchSegment_(mediaURL).catch((err) => {
         if (this.mpd.type === 'dynamic') {
@@ -326,39 +317,11 @@ class Stream {
   segmentLength() {
     const rep = this.rep;
 
-    if (rep !== null && typeof rep !== 'undefined') {
-      // average size if timeline-based
-      if (rep.timeline && rep.timeline.length > 0) {
-        const points = [];
-
-        for (let i = 0; i < rep.timeline.length; i++) {
-          const point = rep.timeline[i];
-          const scale = rep.timescale;
-          const d = parseInt(point.getAttribute('d'));
-          
-          points.push(d / scale);
-        }
-
-        if (points.length > 0) {
-          const sum = points.reduce((a, c) => a + c);
-          return sum / points.length * 1000;
-        }
-      }
-
-      // direct size if template-based
-      const timescale = parseFloat(rep.timescale);
-      const duration = parseFloat(rep.segmentDuration);
-
-      if ((timescale===null && typeof timescale==='undefined') ||
-           isNaN(timescale)) { return duration * 1000; }
-
-      const ticks = Math.floor(duration / timescale);
-      const size = parseInt(ticks) * 1000;
-
-      return size;
-    } else {
+    if (rep === null && typeof rep === 'undefined') {
       throw(`Unable to determine segment length of rep "${rep.id}"`);
     }
+
+    return rep.segmentLength();
   }
 
   switchToRep(repID) {
@@ -381,58 +344,6 @@ class Stream {
         }
       }
     });
-  }
-
-  buildMediaName_(rep, next) {
-    const
-
-    //e.g "...$Time$.m4s"
-    nVarT = /\$Time\$/g,
-
-    //e.g "...$Number$.m4s"
-    nVarN = /\$Number\$/g,
-
-    //e.g "...$Number%05d$.m4s"
-    nVarD = /(\$Number%(\d+)d\$)/g,
-
-    //e.g "stream$RepresentationID$..."
-    rVarN = /\$RepresentationID\$/g;
-
-    /*
-     * TODO: solidfy as trace-level debug text
-    console.log(`Filling buffer for rep "${rep.id}"`);
-    console.log(`Current : ${current}, target : ${target}, ` +
-                `segment length : ${this.segmentLength()}, ` +
-                `steps : ${steps}`);
-    */
-
-    const nStr = `${next}`;
-    let mediaName = rep.mediaTemplate.replace(rVarN, `${rep.id}`);
-
-    if (nVarT.test(mediaName) && rep.timeline.length > 0) {
-      /*
-      const part = rep.timeline[0];
-
-      const t = parseInt(part.getAttribute('t'));
-      const r = parseInt(part.getAttribute('r'));
-      const d = parseInt(part.getAttribute('d'));
-      */
-
-      mediaName = mediaName.replace(nVarT, nStr);
-    } else if (nVarD.test(mediaName)) {
-      const nVarDC = /(\$Number%(\d+)d\$)/g;
-
-      const matches = nVarDC.exec(mediaName);
-      const amount = parseInt(matches[matches.length - 1]) + 1;
-      const segmentNumberExt = nStr.padStart(amount - 1, '0');
-
-      mediaName = mediaName.replace(matches[0], segmentNumberExt);
-      mediaName = mediaName.replace(nVarN, nStr);
-    } else {
-      mediaName = mediaName.replace(nVarN, nStr);
-    }
-
-    return mediaName;
   }
 }
 
