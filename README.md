@@ -19,10 +19,12 @@ Features include:
 
 Being incorporated from working prototype now:
 
-- [ ] Hooks for custom user-interface
-- [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 - [ ] Client-side, on-the-fly HLS conversion
 - [ ] Mobile compatible
+
+Up next:
+- [ ] Hooks for custom user-interface
+- [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 - [ ] Usage documentation
 - [ ] Contribution info
 
