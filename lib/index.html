@@ -15,6 +15,7 @@
   <body>
     <div class="root">
       <div class="pepper">
+        <!--
         <div>
             <video></video>
             <div class="scrubber-container">
@@ -28,6 +29,7 @@
                 </div>
             </div>
         </div>
+        -->
       </div>
     </div>
     <script type="text/javascript">
@@ -50,6 +52,7 @@
       });
       */
 
+      /*
       // bbb 4k test
       var player = new pepper.Player({
         playlist: [
@@ -65,6 +68,7 @@
           }
         ]
       });
+      */
 
       /*
       // bbb 4k thumbnail test
@@ -124,6 +128,20 @@
         // }
       });
       */
+
+     // local test
+     var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://localhost:4000/stream.mpd",
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
     </script>
   </body>
 </html>

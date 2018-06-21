@@ -22,7 +22,7 @@ const hlsPreferred = () => {
 const repToM3U8 = (r) => {
   const len = r.segmentLength();
   const segments = [
-    `#EXTINF:${parseFloat(len / 1000).toFixed(5)},\n${r.mediaURL(1)}`,
+    `#EXTINF:${parseFloat(len / 100).toFixed(5)},\n${r.mediaURL(1)}`,
     `#EXTINF:${parseFloat(len / 1000).toFixed(5)},\n${r.mediaURL(2)}`,
     `#EXTINF:${parseFloat(len / 1000).toFixed(5)},\n${r.mediaURL(3)}`,
   ];
