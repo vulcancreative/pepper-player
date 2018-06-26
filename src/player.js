@@ -75,24 +75,28 @@ class Player {
   async init_() {
     await this.state.init_();
 
-    const [speed, now] = await this.state.fillBuffers();
-    const type = this.state.mpd.type;
+    if (!this.state.usingHLS()) {
+      const [speed, now] = await this.state.fillBuffers();
+      const type = this.state.mpd.type;
 
-    if (type === 'dynamic') {
-      this.safariStartTime = now / 1000;
-    }
-
-    await this.state.adjustQuality(speed);
-
-    if (this.config.auto) {
-      if (type === 'dynamic' && os.is('safari')) {
-        const start = this.safariStartTime;
-        this.state.video.currentTime = start;
+      if (type === 'dynamic') {
+        this.safariStartTime = now / 1000;
       }
 
+      await this.state.adjustQuality(speed)   
+
+      if (this.config.auto) {
+        if (type === 'dynamic' && os.is('safari')) {
+          const start = this.safariStartTime;
+          this.state.video.currentTime = start;
+        }
+
+        this.play();
+      }
+    } else if (this.config.auto) {
       this.play();
     }
-
+    
     return Promise.resolve()
   }
 
@@ -199,6 +203,8 @@ class Player {
 
       if (!vidExists) {
         const video = document.createElement('video');
+        video.autoplay = this.config.auto;
+
         injectPoint.innerHTML = video.outerHTML;
       }
 

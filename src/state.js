@@ -1,6 +1,7 @@
+import jr from './jr';
 import { MPD } from './mpd';
 import { Stream } from './stream';
-import { mpdToM3U8 } from './hls';
+import { mpdToM3U8, hlsSupported } from './hls';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
@@ -99,11 +100,11 @@ class State {
       this.mpd = new MPD({ url: url, base: base });
       this.mpd.setup().then(() => {
                         console.log("MPD parsed");
-                        console.log(mpdToM3U8(this));
                       })
                       .then(() => this.mediaSource_())
                       .then((mediaSource) => {
                         this.mediaSource = mediaSource;
+                        if (this.usingHLS()) { resolve(); }
                       })
                       .then(() => this.buildStreams_(
                           this.mpd,
@@ -147,18 +148,24 @@ class State {
 
   mediaSource_() {
     return new Promise((resolve, reject) => {
-      const mediaSource = new MediaSource();
+      let src;
 
-      mediaSource.addEventListener('sourceopen', () => {
-        if (mediaSource.readyState === 'open') {
-          console.log("Media source successfully opened");
-          resolve(mediaSource);
-        } else {
-          reject("Unable to open media source!");
-        }
-      });
+      if (this.usingHLS()) {
+        src = mpdToM3U8(this);
+      } else {
+        const mediaSource = new MediaSource();
 
-      const src = this.url_(mediaSource);
+        mediaSource.addEventListener('sourceopen', () => {
+          if (mediaSource.readyState === 'open') {
+            console.log("Media source successfully opened");
+            resolve(mediaSource);
+          } else {
+            reject("Unable to open media source!");
+          }
+        });
+
+        src = this.url_(mediaSource);
+      }
 
       this.video.src = src;
       console.log(this.video);
@@ -402,6 +409,16 @@ class State {
 
   segmentLengths() {
     return this.streams.map(stream => stream.segmentLength());
+  }
+
+  usingHLS() {
+    if (!hlsSupported()) { return false; }
+
+    const track = this.config.track;
+    const current = this.config.playlist[track];
+    const hls = current.hls;
+    
+    return jr.def(hls) && (hls.gen || hls.url) ? true : false;
   }
 
   videoStream() {

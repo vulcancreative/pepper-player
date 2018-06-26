@@ -14,18 +14,15 @@ const hlsPreferred = () => {
   if (os.is('chrome')) { return false; }
   if (!hlsSupported()) { return false; }
 
-  // const item = config.playlist[config.index];
-
   return false;
 }
 
-const repToM3U8 = (r) => {
+const repToM3U8 = (mpd, r) => {
   const len = r.segmentLength();
-  const segments = [
-    `#EXTINF:${parseFloat(len / 100).toFixed(5)},\n${r.mediaURL(1)}`,
-    `#EXTINF:${parseFloat(len / 1000).toFixed(5)},\n${r.mediaURL(2)}`,
-    `#EXTINF:${parseFloat(len / 1000).toFixed(5)},\n${r.mediaURL(3)}`,
-  ];
+  const count = Math.ceil(mpd.duration / len);
+  const segments = Array(count).fill().map((s, i) =>
+    `#EXTINF:${parseFloat(len / 1000).toFixed(5)},\n${r.mediaURL(i + 1)}`
+  );
 
   const m3u8 = `#EXTM3U\n` +
   `#EXT-X-TARGETDURATION:1\n` +
@@ -49,7 +46,7 @@ const mpdToM3U8 = (state) => {
   const video = reps.filter(r => r.type === kStreamType.video);
 
   const audioData = audio.map(r => {
-    const hlsRepURL = repToM3U8(r);
+    const hlsRepURL = repToM3U8(state.mpd, r);
 
     return (
       `#EXT-X-MEDIA:TYPE=AUDIO,` +
@@ -63,7 +60,7 @@ const mpdToM3U8 = (state) => {
   });
 
   const videoData = video.map(r => {
-    const hlsRepURL = repToM3U8(r);
+    const hlsRepURL = repToM3U8(state.mpd, r);
 
     return (
       `#EXT-X-STREAM-INF:` +
@@ -75,13 +72,17 @@ const mpdToM3U8 = (state) => {
     );
   });
 
+  console.log(audioData);
+  console.log(videoData);
+
   const result = "#EXTM3U\n" +
   "#EXT-X-VERSION:6\n" +
   "#EXT-X-INDEPENDENT-SEGMENTS\n" +
   audioData.join('\n') + '\n' +
   videoData.join('\n');
 
-  return result;
+  const blob = new Blob([result], { type: mimeType });
+  return URL.createObjectURL(blob);
 }
 
 export {
