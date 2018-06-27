@@ -1,10 +1,10 @@
 import jr from './jr';
 import { MPD } from './mpd';
 import { Stream } from './stream';
-import { mpdToM3U8, hlsSupported, hlsMimeType } from './hls';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
+import { mpdToM3U8, hlsSupported, hlsMimeType } from './hls';
 
 /*
 // TODO: move within class structure
@@ -102,20 +102,16 @@ class State {
       this.mpd.setup().then(() => {
                         console.log("MPD parsed");
                       })
-                      .then(() => {
-                        this.mediaSource_();
-                        if (this.usingHLS()) { resolve(); }
-                      })
+                      .then(() => this.mediaSource_())
                       .then((mediaSource) => {
                         this.mediaSource = mediaSource;
+                        if (this.usingHLS()) { resolve(); }
                       })
                       .then(() => {
-                        if (!this.usingHLS()) {
-                          this.buildStreams_(
-                            this.mpd,
-                            this.mediaSource
-                          );
-                        }
+                        return !this.usingHLS() ? this.buildStreams_(
+                          this.mpd,
+                          this.mediaSource
+                        ) : null;
                       })
                       .then((streams) => {
                         this.streams = streams;
@@ -161,7 +157,7 @@ class State {
         this.video.src =
           `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
 
-        resolve();
+        resolve(null);
       } else {
         const mediaSource = new MediaSource();
 

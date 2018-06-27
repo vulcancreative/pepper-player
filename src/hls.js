@@ -25,14 +25,13 @@ const repToM3U8 = (mpd, r) => {
   );
 
   const m3u8 = `#EXTM3U\n` +
-  `#EXT-X-TARGETDURATION:1\n` +
+  `#EXT-X-TARGETDURATION:${parseInt(Math.ceil(len / 1000))}\n` +
   `#EXT-X-VERSION:7\n` +
-  `#EXT-X-MEDIA-SEQUENCE:1\n` +
-  `#EXT-X-PLAYLIST-TYPE:VOD\n` +
+  `#EXT-X-PLAYLIST-TYPE:${mpd.type === 'static' ? 'VOD' : 'EVENT'}\n` +
   `#EXT-X-INDEPENDENT-SEGMENTS\n` +
   `#EXT-X-MAP:URI="${r.initURL()}"\n` +
   segments.join('\n') + '\n' +
-  `#EXT-X-ENDLIST`
+  `${mpd.type === 'static' ? '#EXT-X-ENDLIST' : ''}`
 
   console.log(m3u8);
 
@@ -76,6 +75,8 @@ const mpdToM3U8 = (state) => {
 
   console.log(audioData);
   console.log(videoData);
+
+  console.log("state.mpd.type : " + state.mpd.type);
 
   const result = "#EXTM3U\n" +
   "#EXT-X-VERSION:6\n" +
