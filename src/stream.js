@@ -245,46 +245,11 @@ class Stream {
   }
 
   makePoints(current, target, now, rep) {
-    // handle timeline-based mechanism
-    if (rep !== null && typeof rep !== 'undefined') {
-      if (rep.timeline !== null && typeof rep.timeline !== 'undefined') {
-        if (rep.timeline.length > 0) {
-          let result = [];
-          const init = rep.timeline[0];
-          const t = parseInt(init.getAttribute('t'));
-          const d = parseInt(init.getAttribute('d'));
+    const mpd = this.mpd;
+    const [result, last] = rep.makePoints(mpd, current, target, now);
 
-          result = [this.lastPoint ? this.lastPoint + d : t];
-          this.lastPoint = result[result.length - 1];
-
-          return result;
-        }
-      }
-    }
-
-    // handle template-based mechanism
-    if (this.mpd.type === 'static') {
-      if (rep.type === kStreamType.image && rep.tileInfo !== null) {
-        const count = Math.ceil(this.mpd.duration / rep.tileInfo.duration);
-        return (new Array(count)).fill(0).map((s, i) => i + 1);
-      }
-
-      const delta = (target < current ? current+1000 : target)-current;
-      const steps = parseInt(
-        Math.ceil(parseFloat(delta) / parseFloat(this.segmentLength()))
-      );
-
-      const last = parseInt(
-        Math.ceil(parseFloat(current) / parseFloat(this.segmentLength()))
-      );
-
-      return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
-    } else if (this.mpd.type === 'dynamic') {
-      const delta = Math.abs(now - this.mpd.startTime);
-      return [Math.ceil(delta / this.segmentLength() - 10)];
-    } else {
-      throw(`Unable to decipher source type ("${this.mpd.type}")`);
-    }
+    this.lastPoint = last;
+    return result;
   }
 
   popCache(amt = 1) {

@@ -122,6 +122,55 @@ class Rep {
     return initURL.replace(/\$RepresentationID\$/g, `${this.id}`);
   }
 
+  makePoints(mpd, current, target, now) {
+    if (jr.def(this.timeline)) {
+      return this.makeTimelinePoints(this.lastPoint);
+    }
+
+    return [this.makeTemplatePoints(mpd, current, target, now), null];
+  }
+
+  makeTimelinePoints(point) {
+    if (this.timeline.length < 1) { return null; }
+
+    let result = [];
+    const init = this.timeline[0];
+    const t = parseInt(init.getAttribute('t'));
+    const d = parseInt(init.getAttribute('d'));
+
+    result = [point ? point + d : t];
+    const current = result[result.length - 1];
+
+    return [result, current];
+  }
+
+  makeTemplatePoints(mpd, current, target, now) {
+    const len = this.segmentLength();
+
+    if (this.mpd.type === 'static') {
+      if (this.type === kStreamType.image && this.tileInfo !== null) {
+        const count = Math.ceil(mpd.duration / this.tileInfo.duration);
+        return (new Array(count)).fill(0).map((s, i) => i + 1);
+      }
+
+      const delta = (target < current ? current+1000 : target)-current;
+      const steps = parseInt(
+        Math.ceil(parseFloat(delta) / parseFloat(len))
+      );
+
+      const last = parseInt(
+        Math.ceil(parseFloat(current) / parseFloat(len))
+      );
+
+      return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
+    } else if (mpd.type === 'dynamic') {
+      const delta = Math.abs(now - mpd.startTime);
+      return [Math.ceil(delta / len - 10)];
+    }
+
+    throw(`Unable to decipher source type ("${mpd.type}")`);
+  }
+
   mediaURL(next) {
     const
 
