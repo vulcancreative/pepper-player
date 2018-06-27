@@ -1,7 +1,7 @@
 import jr from './jr';
 import { MPD } from './mpd';
 import { Stream } from './stream';
-import { mpdToM3U8, hlsSupported } from './hls';
+import { mpdToM3U8, hlsSupported, hlsMimeType } from './hls';
 import { mergeDicts } from './helpers';
 import { kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
@@ -60,7 +60,8 @@ class State {
 
       // Handle weird, browser-specific DOMExceptions
       root.onerror = (e) => {
-        console.error(e.target.error.message);
+        // console.error(e.target.error.message);
+        console.error(e);
       };
 
       /*
@@ -101,15 +102,21 @@ class State {
       this.mpd.setup().then(() => {
                         console.log("MPD parsed");
                       })
-                      .then(() => this.mediaSource_())
-                      .then((mediaSource) => {
-                        this.mediaSource = mediaSource;
+                      .then(() => {
+                        this.mediaSource_();
                         if (this.usingHLS()) { resolve(); }
                       })
-                      .then(() => this.buildStreams_(
-                          this.mpd,
-                          this.mediaSource
-                      ))
+                      .then((mediaSource) => {
+                        this.mediaSource = mediaSource;
+                      })
+                      .then(() => {
+                        if (!this.usingHLS()) {
+                          this.buildStreams_(
+                            this.mpd,
+                            this.mediaSource
+                          );
+                        }
+                      })
                       .then((streams) => {
                         this.streams = streams;
                         resolve();
@@ -148,10 +155,13 @@ class State {
 
   mediaSource_() {
     return new Promise((resolve, reject) => {
-      let src;
-
       if (this.usingHLS()) {
-        src = mpdToM3U8(this);
+        this.video.type = hlsMimeType;
+
+        this.video.src =
+          `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
+
+        resolve();
       } else {
         const mediaSource = new MediaSource();
 
@@ -164,10 +174,9 @@ class State {
           }
         });
 
-        src = this.url_(mediaSource);
+        this.video.src = this.url_(mediaSource);
       }
 
-      this.video.src = src;
       console.log(this.video);
     });
   }

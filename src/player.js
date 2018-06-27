@@ -1,5 +1,5 @@
 import jr from './jr';
-import { os } from './os';
+// import { os } from './os';
 import { State } from './state';
 import { mergeDicts } from './helpers';
 
@@ -75,6 +75,7 @@ class Player {
   async init_() {
     await this.state.init_();
 
+    /*
     if (!this.state.usingHLS()) {
       const [speed, now] = await this.state.fillBuffers();
       const type = this.state.mpd.type;
@@ -96,6 +97,7 @@ class Player {
     } else if (this.config.auto) {
       this.play();
     }
+    */
     
     return Promise.resolve()
   }
@@ -203,9 +205,16 @@ class Player {
 
       if (!vidExists) {
         const video = document.createElement('video');
-        video.autoplay = this.config.auto;
+        // video.autoplay = this.config.auto;
 
         injectPoint.innerHTML = video.outerHTML;
+
+        const playButton = document.createElement('div');
+        playButton.innerHTML = "play";
+        playButton.addEventListener('click', () => {
+          this.state.video.play().catch((e) => console.log(e));
+        });
+        injectPoint.appendChild(playButton);
       }
 
       this.injectedUI = true;

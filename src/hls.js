@@ -1,7 +1,7 @@
 import { os } from './os';
 import { kStreamType } from './constants';
 
-const mimeType = "application/vnd.apple.mpegURL";
+const mimeType = "application/vnd.apple.mpegurl";
 
 const hlsSupported = () => {
   const kHLSType = mimeType;
@@ -33,6 +33,8 @@ const repToM3U8 = (mpd, r) => {
   `#EXT-X-MAP:URI="${r.initURL()}"\n` +
   segments.join('\n') + '\n' +
   `#EXT-X-ENDLIST`
+
+  console.log(m3u8);
 
   const blob = new Blob([m3u8], { type: mimeType });
   return URL.createObjectURL(blob);
@@ -81,11 +83,18 @@ const mpdToM3U8 = (state) => {
   audioData.join('\n') + '\n' +
   videoData.join('\n');
 
+  console.log(result);
+
+  /*
   const blob = new Blob([result], { type: mimeType });
   return URL.createObjectURL(blob);
+  */
+
+  return result;
 }
 
 export {
+  mimeType as hlsMimeType,
   hlsSupported,
   hlsPreferred,
   mpdToM3U8,
