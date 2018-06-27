@@ -16,14 +16,15 @@ Features include:
 - [x] Lazy loading of media segments (reduces serving bandwidth)
 - [x] Cross-browser compatible (<= ES7)
 - [x] Fully tested, ~100% coverage
+- [x] Mobile compatible
 
 Being incorporated from working prototype now:
 
-- [ ] Client-side, on-the-fly HLS conversion
-- [ ] Mobile compatible
+- [x] Client-side, on-the-fly HLS conversion (static)
+- [ ] Client-side, on-the-fly HLS conversion (dynamic)
+- [ ] Hooks for custom user-interface
 
 Up next:
-- [ ] Hooks for custom user-interface
 - [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 - [ ] Usage documentation
 - [ ] Contribution info
