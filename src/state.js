@@ -51,7 +51,6 @@ class State {
       }
       */
 
-      console.log(this.config.query);
       const root = document.querySelectorAll(this.config.query)[0];
 
       if (root === null || typeof root === 'undefined') {
@@ -99,10 +98,7 @@ class State {
       const base = this.config.playlist[track].dash.base;
 
       this.mpd = new MPD({ url: url, base: base });
-      this.mpd.setup().then(() => {
-                        console.log("MPD parsed");
-                      })
-                      .then(() => this.mediaSource_())
+      this.mpd.setup().then(() => this.mediaSource_())
                       .then((mediaSource) => {
                         this.mediaSource = mediaSource;
                         if (this.usingHLS()) { resolve(); }
@@ -157,13 +153,15 @@ class State {
         this.video.src =
           `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
 
+        console.log("streaming via gen-hls");
         resolve(null);
       } else {
         const mediaSource = new MediaSource();
 
         mediaSource.addEventListener('sourceopen', () => {
           if (mediaSource.readyState === 'open') {
-            console.log("Media source successfully opened");
+            // console.log("Media source successfully opened");
+            console.log("streaming via mpeg-dash");
             resolve(mediaSource);
           } else {
             reject("Unable to open media source!");
@@ -172,8 +170,6 @@ class State {
 
         this.video.src = this.url_(mediaSource);
       }
-
-      console.log(this.video);
     });
   }
 
@@ -316,7 +312,7 @@ class State {
                   return;
                 }
 
-                const lastStream = streamIndex === this.streams.length - 1;
+                const lastStream = streamIndex === this.streams.length-1;
                 const lastPoint = pointIndex === points.length - 1;
 
                 // update payload weight

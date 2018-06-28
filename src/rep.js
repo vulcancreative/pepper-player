@@ -122,21 +122,24 @@ class Rep {
     return initURL.replace(/\$RepresentationID\$/g, `${this.id}`);
   }
 
-  makePoints(mpd, current, target, now) {
+  makePoints(mpd, current, target, now, timelineCount = 1) {
     if (jr.def(this.timeline)) {
-      return this.makeTimelinePoints(this.lastPoint);
+      return this.makeTimelinePoints(this.lastPoint, timelineCount);
     }
 
     return [this.makeTemplatePoints(mpd, current, target, now), null];
   }
 
-  makeTimelinePoints(point) {
-    if (this.timeline.length < 1) { return null; }
+  makeTimelinePoints(point) {//, count = 1) {
+    const len = this.timeline.length;
+    if (len < 1) { return null; }
 
     let result = [];
+
     const init = this.timeline[0];
-    const t = parseInt(init.getAttribute('t'));
-    const d = parseInt(init.getAttribute('d'));
+
+    const t = parseInt(jr.a('t', init));
+    const d = parseInt(jr.a('d', init));
 
     result = [point ? point + d : t];
     const current = result[result.length - 1];
@@ -165,6 +168,13 @@ class Rep {
       return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
     } else if (mpd.type === 'dynamic') {
       const delta = Math.abs(now - mpd.startTime);
+
+      if (target && target > now) {
+        return Array(1 + ((target - now) / len)).fill().map((a, i) => {
+          return (delta + len * i) / len - 10;
+        });
+      }
+
       return [Math.ceil(delta / len - 10)];
     }
 

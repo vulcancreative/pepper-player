@@ -1,6 +1,7 @@
 import { os } from './os';
 import { kStreamType } from './constants';
 
+// let lastPoint;
 const mimeType = "application/vnd.apple.mpegurl";
 
 const hlsSupported = () => {
@@ -17,23 +18,43 @@ const hlsPreferred = () => {
   return false;
 }
 
-const repToM3U8 = (mpd, r) => {
-  const len = r.segmentLength();
-  const count = Math.ceil(mpd.duration / len);
-  const segments = Array(count).fill().map((s, i) =>
-    `#EXTINF:${parseFloat(len / 1000).toFixed(5)},\n${r.mediaURL(i + 1)}`
-  );
+// TODO: group like-code in this function
+const hlsMakePoints = (state, r, len) => {
+  let result;
+  const mpd = state.mpd;
 
-  const m3u8 = `#EXTM3U\n` +
+  if (mpd.type === 'dynamic') {
+    const now = new Date();
+    const then = (new Date()).setSeconds(now.getSeconds() + 28800);
+    const [points] = r.makePoints(state.mpd, now, then, r, 80);
+    result = points.map(s =>
+      `#EXTINF:${parseFloat(len/1000).toFixed(5)},\n${r.mediaURL(s)}`
+    );
+  } else {
+    const count = Math.ceil(mpd.duration / len);
+    result = Array(count).fill().map((s, i) =>
+      `#EXTINF:${parseFloat(len/1000).toFixed(5)},\n${r.mediaURL(i+1)}`
+    );
+  }
+
+  return result;
+}
+
+const repToM3U8 = (state, r) => {
+  const mpd = state.mpd;
+
+  const len = r.segmentLength();
+  const points = hlsMakePoints(state, r, len);
+
+  const m3u8 =
+  `#EXTM3U\n` +
   `#EXT-X-TARGETDURATION:${parseInt(Math.ceil(len / 1000))}\n` +
   `#EXT-X-VERSION:7\n` +
   `#EXT-X-PLAYLIST-TYPE:${mpd.type === 'static' ? 'VOD' : 'EVENT'}\n` +
   `#EXT-X-INDEPENDENT-SEGMENTS\n` +
   `#EXT-X-MAP:URI="${r.initURL()}"\n` +
-  segments.join('\n') + '\n' +
+  points.join('\n') + '\n' +
   `${mpd.type === 'static' ? '#EXT-X-ENDLIST' : ''}`
-
-  console.log(m3u8);
 
   const blob = new Blob([m3u8], { type: mimeType });
   return URL.createObjectURL(blob);
@@ -47,7 +68,7 @@ const mpdToM3U8 = (state) => {
   const video = reps.filter(r => r.type === kStreamType.video);
 
   const audioData = audio.map(r => {
-    const hlsRepURL = repToM3U8(state.mpd, r);
+    const hlsRepURL = repToM3U8(state, r);
 
     return (
       `#EXT-X-MEDIA:TYPE=AUDIO,` +
@@ -61,7 +82,7 @@ const mpdToM3U8 = (state) => {
   });
 
   const videoData = video.map(r => {
-    const hlsRepURL = repToM3U8(state.mpd, r);
+    const hlsRepURL = repToM3U8(state, r);
 
     return (
       `#EXT-X-STREAM-INF:` +
@@ -73,23 +94,14 @@ const mpdToM3U8 = (state) => {
     );
   });
 
-  console.log(audioData);
-  console.log(videoData);
-
   console.log("state.mpd.type : " + state.mpd.type);
 
-  const result = "#EXTM3U\n" +
+  const result =
+  "#EXTM3U\n" +
   "#EXT-X-VERSION:6\n" +
   "#EXT-X-INDEPENDENT-SEGMENTS\n" +
   audioData.join('\n') + '\n' +
   videoData.join('\n');
-
-  console.log(result);
-
-  /*
-  const blob = new Blob([result], { type: mimeType });
-  return URL.createObjectURL(blob);
-  */
 
   return result;
 }

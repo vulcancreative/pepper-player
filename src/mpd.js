@@ -31,13 +31,12 @@ class MPD {
       const xhr = new XMLHttpRequest;
 
       xhr.onload = function() {
-        const dateHeader = xhr.getResponseHeader("Date");
-        const serverDate = new Date(dateHeader);
-        const now = Date.now();
+        // const dateHeader = xhr.getResponseHeader("Date");
+        // const serverDate = new Date(dateHeader);
+        // const now = Date.now();
 
-        console.log(xhr.response);
-        console.log(`Date header : ${dateHeader}`);
-        console.log(`server vs. local delta : ${serverDate - now}`);
+        // console.log(`Date header : ${dateHeader}`);
+        // console.log(`server vs. local delta : ${serverDate - now}`);
 
         resolve(xhr.response, 'xml');
       }
