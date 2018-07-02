@@ -1,4 +1,5 @@
 import jr from './jr';
+import clock from './clock';
 import { MPD } from './mpd';
 import { Stream } from './stream';
 import { mergeDicts } from './helpers';
@@ -111,6 +112,21 @@ class State {
                       })
                       .then((streams) => {
                         this.streams = streams;
+
+                        if (this.mpd.type === 'dynamic') {
+                          this.mpdUpdateInterval = setInterval(() => {
+                            this.mpd.setup()
+
+                            /*
+                            for (let i=0; i!=this.streams.length; i++) {
+                              const stream = this.streams[i];
+                              stream.updateMPD();
+                            }
+                            */
+                          }, this.mpd.updatePeriod
+                          );
+                        }
+
                         resolve();
                       });
     });
@@ -258,7 +274,7 @@ class State {
     if (this.started && this.paused) { return Promise.resolve(); }
 
     // base line time used for live buffering
-    const now = Date.now();
+    const now = clock.now();
     const lens = this.segmentLengths();
     const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
 
@@ -278,11 +294,13 @@ class State {
                    defer :
                    (this.started ? this.config.lead : this.config.base);
 
-      const end = Math.min(this.mpd.duration, start + lead);
+      // handles case of no known duration (e.g. – dynamic streams)
+      const projectedEnd = Math.min(this.mpd.duration, start + lead);
+      const end = projectedEnd < 0 ? 0 : projectedEnd;
 
       // used for measuring speed (in bytes over time delta)
       let payloadSize = 0;
-      let payloadStart = (new Date()).getTime(), payloadEnd;
+      let payloadStart = (clock.init()).getTime(), payloadEnd;
 
       // load-based lock
       if (!dynamic) { this.loading = true; }
@@ -303,6 +321,7 @@ class State {
 
           // remove already cached point; prevents toe-stepping
           points = points.filter(p => !duplicates.includes(p));
+          if (points.length > 0) { console.log(`points : ${points}`); }
 
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
@@ -319,7 +338,7 @@ class State {
                 payloadSize += dataSize;
 
                 if (lastStream && lastPoint) {
-                  payloadEnd = (new Date()).getTime();
+                  payloadEnd = (clock.init()).getTime();
 
                   // const bufferLength = stream.bufferLength();
                   const delta = (payloadEnd - payloadStart) / 1000;

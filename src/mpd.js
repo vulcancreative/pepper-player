@@ -1,5 +1,6 @@
 import jr from './jr';
 import Adp from './adp';
+import clock from './clock';
 import { mergeDicts } from './helpers';
 import { toDuration } from './convert';
 
@@ -12,6 +13,7 @@ class MPD {
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
+    this.fetchedOnce = false;
   }
 
   async setup() {
@@ -19,6 +21,7 @@ class MPD {
     const err = this.parse_(result);
     if (err) { throw(err); }
 
+    console.log('manifest updated');
     return this;
   }
 
@@ -30,15 +33,21 @@ class MPD {
 
       const xhr = new XMLHttpRequest;
 
-      xhr.onload = function() {
-        // const dateHeader = xhr.getResponseHeader("Date");
-        // const serverDate = new Date(dateHeader);
-        // const now = Date.now();
+      xhr.onload = () => {
+        const response = xhr.response;
 
-        // console.log(`Date header : ${dateHeader}`);
-        // console.log(`server vs. local delta : ${serverDate - now}`);
+        if (!this.fetchedOnce) {
+          console.log(response);
+          this.fetchedOnce = true;
+        }
 
-        resolve(xhr.response, 'xml');
+        if (jr.def(response) && response.includes(`"dynamic"`)) {
+          const dateHeader = xhr.getResponseHeader('Date');
+          const serverTime = new Date(dateHeader);
+          clock.sync(serverTime);
+        }
+
+        resolve(response, 'xml');
       }
 
       xhr.open('GET', url)
@@ -47,18 +56,18 @@ class MPD {
   }
 
   parse_(input = "") {
+    const url = this.config.url;
     const baseOverride = this.config.base;
     this.mpd = this.xml_(input);
 
     // dependency for adp and rep sourcing
     this.baseURL = this.baseURL_(this.mpd, baseOverride);
-
-    this.adps = this.adps_(this.mpd, this.config.url, this.baseURL);
+    this.startTime = this.startTime_(this.mpd);
+    this.adps = this.adps_(this.mpd, url, this.baseURL, this.startTime);
     this.duration = this.duration_(this.mpd);
     this.dvr = this.dvr_(this.mpd);
     this.muxed = this.muxed_(this.mpd);
     this.type = this.type_(this.mpd);
-    this.startTime = this.startTime_(this.mpd);
     this.updatePeriod = this.updatePeriod_(this.mpd);
 
     if (this.adps < 0) { return "Bad adps"; }
@@ -69,7 +78,9 @@ class MPD {
 
     if (this.type < 0) { return "Bad type"; }
 
-    if (this.type == 'dynamic' && this.startTime < 0) {
+    // console.log(this.startTime);
+    if (this.type == 'dynamic' &&
+        (isNaN(this.startTime) || jr.ndef(this.startTime))) {
       return "Bad start time";
     }
 
@@ -82,7 +93,7 @@ class MPD {
 
   // source adaptations and populate with critical data and metadata
   // mpd === parsed MPD XML
-  adps_(mpd, url, override) {
+  adps_(mpd, url, override, startTime) {
     const period = jr.q('Period', mpd)[0];
     const adaptations = jr.q('AdaptationSet', period);
 
@@ -100,7 +111,7 @@ class MPD {
       }
       */
 
-      adps.push(new Adp(adaptation, i, url, override));
+      adps.push(new Adp(adaptation, i, url, override, startTime));
     }
 
     return adps;
@@ -180,7 +191,7 @@ class MPD {
     }
 
     // WARNING: converting ISO 8601 to Date may not work in old browsers
-    return new Date(startAttr);
+    return clock.parse(startAttr);
   }
 
   // acquires MPD update period, if possible (live)
@@ -193,7 +204,8 @@ class MPD {
       return -1;
     }
 
-    return toDuration(periodAttr);
+    const result = toDuration(periodAttr);
+    return result < 1000 ? 1000 : result;
   }
 
   // converts to DOM-accessible XML, if not already in it

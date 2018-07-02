@@ -3,7 +3,7 @@ import Rep from './rep';
 import { toInt } from './convert';
 
 class Adp {
-  constructor(adp, i, url, override) {
+  constructor(adp, i, url, override, startTime) {
     const maxWidthAttr = jr.a('maxWidth', adp);
     const maxHeightAttr = jr.a('maxHeight', adp);
 
@@ -11,10 +11,10 @@ class Adp {
     this.index = i;
     this.maxWidth = toInt(maxWidthAttr);
     this.maxHeight = toInt(maxHeightAttr);
-    this.reps = this.reps_(adp, url, override);
+    this.reps = this.reps_(adp, url, override, startTime);
   }
 
-  reps_(adp, url, override) {
+  reps_(adp, url, override, startTime) {
     const representations = jr.q('Representation', adp);
 
     if (representations && representations.length > 0) {
@@ -23,7 +23,7 @@ class Adp {
       for (let i = 0; i != representations.length; i++) {
         const rep = representations[i];
 
-        reps.push(new Rep(adp, rep, url, override));
+        reps.push(new Rep(adp, rep, url, override, startTime));
       }
 
       // ensure all elements have bandwidth

@@ -1,12 +1,15 @@
 import jr from './jr';
+// import clock from './clock';
 import { toInt } from './convert';
 import { kStreamType } from './constants';
 
 class Rep {
-  constructor(adp, rep, url, override) {
+  constructor(adp, rep, url, override, startTime) {
+    this.presentationTime = startTime;
+
     let id, codecs, width, height, bandwidth, baseURL,
     initialization, mediaTemplate, segmentTimeline, segmentTemplate,
-    timelineParts, startNumber, timescale, mimeType,
+    timeline, timelineParts, startNumber, timescale, mimeType,
     segmentDuration, type, tileInfo;
 
     // source id from rep attribute
@@ -43,7 +46,9 @@ class Rep {
 
     segmentTimeline = jr.q('SegmentTimeline', adp)[0];
     if (jr.def(segmentTimeline)) {
-      timelineParts = [...segmentTimeline.children];
+      const pieces = [...segmentTimeline.children];
+      timelineParts = pieces;
+      timeline = this.timeline_(pieces);
     }
 
     // find segment template
@@ -104,7 +109,8 @@ class Rep {
     this.height = height;
     this.bandwidth = bandwidth;
     this.baseURL = baseURL;
-    this.timeline = timelineParts;
+    this.timelineParts = timelineParts;
+    this.timeline = timeline;
     this.mediaTemplate = mediaTemplate;
     this.initialization = initialization;
     this.startNumber = startNumber;
@@ -122,35 +128,56 @@ class Rep {
     return initURL.replace(/\$RepresentationID\$/g, `${this.id}`);
   }
 
-  makePoints(mpd, current, target, now, timelineCount = 1) {
+  makePoints(mpd, current, target, now, last = 0) {
     if (jr.def(this.timeline)) {
-      return this.makeTimelinePoints(this.lastPoint, timelineCount);
+      return this.makeTimelinePoints(last);
     }
 
     return [this.makeTemplatePoints(mpd, current, target, now), null];
   }
 
-  makeTimelinePoints(point) {//, count = 1) {
-    const len = this.timeline.length;
-    if (len < 1) { return null; }
+  makeTimelinePoints(last) {
+    /*
+    // TODO: use time-based points, in order to handle length mismatch
+    let current = last;
+    let position = 0;
 
-    let result = [];
+    console.log(`last : ${last}`);
 
-    const init = this.timeline[0];
+    while (current <= last) {
+      if (this.timeline.length === 1) {
+        let t = parseInt(jr.a('t', this.timelineParts[0]));
+        let d = parseInt(jr.a('d', this.timelineParts[0]));
 
-    const t = parseInt(jr.a('t', init));
-    const d = parseInt(jr.a('d', init));
+        t -= this.presentationTime;
 
-    result = [point ? point + d : t];
-    const current = result[result.length - 1];
+        if (current === 0) {
+          current += t + d;
+        } else {
+          current += d;
+        }
+      } else {
+        current = this.timeline[position];
+        position++;
+      }
+    }
 
-    return [result, current];
+    console.log(`current : ${current}`);
+
+    return [[current], current];
+    */
+
+    console.log(
+      `this.timeline[last] : ${this.timeline[last]}, last : ${last}`
+    );
+
+    return [[this.timeline[last]], last + 1];
   }
 
   makeTemplatePoints(mpd, current, target, now) {
     const len = this.segmentLength();
 
-    if (this.mpd.type === 'static') {
+    if (mpd.type === 'static') {
       if (this.type === kStreamType.image && this.tileInfo !== null) {
         const count = Math.ceil(mpd.duration / this.tileInfo.duration);
         return (new Array(count)).fill(0).map((s, i) => i + 1);
@@ -228,11 +255,11 @@ class Rep {
 
   segmentLength() {
     // average size if timeline-based
-    if (this.timeline && this.timeline.length > 0) {
+    if (this.timelineParts && this.timelineParts.length > 0) {
       const points = [];
 
-      for (let i = 0; i < this.timeline.length; i++) {
-        const point = this.timeline[i];
+      for (let i = 0; i < this.timelineParts.length; i++) {
+        const point = this.timelineParts[i];
         const scale = this.timescale;
         const d = parseInt(point.getAttribute('d'));
         
@@ -260,6 +287,40 @@ class Rep {
 
   weight() {
     return this.width + this.height + this.bandwidth;
+  }
+
+  timeline_(points) {
+    let timeline = [];
+    let lastTime = 0;
+
+    for (let i = 0; i != points.length; i++) {
+      const point = points[i];
+
+      let t = parseInt(jr.a('t', point));
+      let d = parseInt(jr.a('d', point));
+      let r = parseInt(jr.a('r', point));
+
+      // normalize t
+      t -= this.presentationTime;
+      console.log(`t : ${t}`);
+
+      // normalize r
+      r = isNaN(r) || r < 1 ? 1 : r;
+      // console.log(`r : ${r}`);
+
+      let startTime = jr.def(t) && !isNaN(t) ? t : lastTime;
+
+      for (let j = 0; j != r; j++) {
+        let endTime = startTime + d;
+        timeline.push(endTime);
+
+        lastTime = endTime;
+      }
+    }
+
+    // console.log(timeline);
+
+    return timeline;
   }
 }
 

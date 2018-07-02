@@ -7,7 +7,6 @@ class Stream {
     const kDefaultConfig = {
       mediaSource:  null,
       mpd:  null,
-      adp:  null,
       rep:  null,
       sources:  null,
     };
@@ -17,9 +16,9 @@ class Stream {
     this.mediaSource = this.config.mediaSource;
 
     this.mpd = this.config.mpd;
-    this.adp = this.config.adp;
     this.rep = this.config.rep;
     this.sources = this.config.sources;
+    this.mpdWasUpdated = false;
   }
 
   setup() {
@@ -245,8 +244,10 @@ class Stream {
   }
 
   makePoints(current, target, now, rep) {
-    const mpd = this.mpd;
-    const [result, last] = rep.makePoints(mpd, current, target, now);
+    let last = this.mpdWasUpdated ? 0 : this.lastPoint;
+    let result;
+
+    [result, last] = rep.makePoints(this.mpd, current, target, now, last);
 
     this.lastPoint = last;
     return result;
@@ -309,6 +310,10 @@ class Stream {
         }
       }
     });
+  }
+
+  updateMPD() {
+    this.mpdWasUpdated = true;
   }
 }
 
