@@ -34,5 +34,5 @@ Up next:
 λ git clone https://github.com/chris-calo/pepper-player.git
 λ cd pepper-player
 λ npm i
-λ npm run build && cd lib && python -m http.server
+λ npm run build && cd lib && http-server --port 8000
 ```
