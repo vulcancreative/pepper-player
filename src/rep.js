@@ -1,5 +1,4 @@
 import jr from './jr';
-// import clock from './clock';
 import { toInt } from './convert';
 import { kStreamType } from './constants';
 
@@ -137,41 +136,18 @@ class Rep {
   }
 
   makeTimelinePoints(last) {
-    /*
-    // TODO: use time-based points, in order to handle length mismatch
-    let current = last;
-    let position = 0;
-
-    console.log(`last : ${last}`);
+    let pos = 0, current = last, result;
 
     while (current <= last) {
-      if (this.timeline.length === 1) {
-        let t = parseInt(jr.a('t', this.timelineParts[0]));
-        let d = parseInt(jr.a('d', this.timelineParts[0]));
-
-        t -= this.presentationTime;
-
-        if (current === 0) {
-          current += t + d;
-        } else {
-          current += d;
-        }
-      } else {
-        current = this.timeline[position];
-        position++;
-      }
+      result = this.timeline[pos];
+      current = result;
+      pos++;
     }
 
-    console.log(`current : ${current}`);
+    console.log(`${last}, ${result}`);
+    if (last === result) { throw("last === result") }
 
-    return [[current], current];
-    */
-
-    console.log(
-      `this.timeline[last] : ${this.timeline[last]}, last : ${last}`
-    );
-
-    return [[this.timeline[last]], last + 1];
+    return [[result], result];
   }
 
   makeTemplatePoints(mpd, current, target, now) {
@@ -302,11 +278,9 @@ class Rep {
 
       // normalize t
       t -= this.presentationTime;
-      console.log(`t : ${t}`);
 
       // normalize r
       r = isNaN(r) || r < 1 ? 1 : r;
-      // console.log(`r : ${r}`);
 
       let startTime = jr.def(t) && !isNaN(t) ? t : lastTime;
 
@@ -317,8 +291,6 @@ class Rep {
         lastTime = endTime;
       }
     }
-
-    // console.log(timeline);
 
     return timeline;
   }

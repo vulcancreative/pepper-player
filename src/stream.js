@@ -1,13 +1,14 @@
-import { mergeDicts, isInt } from './helpers';
+import { mergeDicts } from './helpers';
 import { arrayBufferToBase64 } from './convert';
 import { kStreamType, kSegmentType } from './constants';
 
 class Stream {
   constructor(config = {}) {
     const kDefaultConfig = {
+      adp: null,
+      id:  null,
       mediaSource:  null,
       mpd:  null,
-      rep:  null,
       sources:  null,
     };
 
@@ -15,8 +16,9 @@ class Stream {
 
     this.mediaSource = this.config.mediaSource;
 
+    this.adp = this.config.adp;
+    this.id = this.config.id;
     this.mpd = this.config.mpd;
-    this.rep = this.config.rep;
     this.sources = this.config.sources;
     this.mpdWasUpdated = false;
   }
@@ -32,8 +34,10 @@ class Stream {
 
   init_(cache = []) {
     return new Promise((resolve) => {
-      this.type = this.rep.type;
-      this.codecs = `${this.rep.mimeType}; codecs="${this.rep.codecs}"`;
+      const rep = this.mpd.repByID(this.id);
+
+      this.type = rep.type;
+      this.codecs = `${rep.mimeType}; codecs="${rep.codecs}"`;
 
       // resolve setup immediately for non-audio/video adaptations
       if (!MediaSource.isTypeSupported(this.codecs)) {
@@ -64,7 +68,7 @@ class Stream {
           if (i === this.sources.length - 1) {
             for (let j = 0; j != cache.length; j++) {
               const segment = cache[j];
-              if (segment.point === 0 && segment.rep === this.rep.id) {
+              if (segment.point === 0 && segment.rep === rep.id) {
                 this.appendBuffer(this.buffer, segment).then((buffer) => {
                 this.buffer = buffer;
                   resolve(cache);
@@ -79,7 +83,9 @@ class Stream {
 
   fetchSegment_(url = "") {
     return new Promise((resolve, reject) => {
-      const id = this.rep.id;
+      const rep = this.mpd.repByID(this.id);
+
+      const id = rep.id;
       const type = this.mpd.type;
       const xhr = new XMLHttpRequest;
 
@@ -103,7 +109,7 @@ class Stream {
         if (xhr.status >= 200 && xhr.status < 400) {
           const data = xhr.response;
 
-          console.log(`Fetched segment at "${url}" for rep "${id}"`);
+          // console.log(`Fetched segment at "${url}" for rep "${id}"`);
           resolve(data);
         } else {
           reject(`Unable to fetch segment at "${url}" for rep "${id}"`);
@@ -118,7 +124,7 @@ class Stream {
 
   appendBuffer(buffer, segment) {
     return new Promise((resolve, reject) => {
-      const rep = this.rep;
+      const rep = this.mpd.repByID(this.id);
 
       if (buffer === null || typeof buffer === 'undefined') {
         reject("Buffer invalid!");
@@ -157,8 +163,11 @@ class Stream {
   }
 
   fillBuffer(next) {
+    // if (jr.ndef(next)) { return Promise.resolve(0); }
+
     return new Promise((resolve) => {
-      const rep = this.rep;
+      const rep = this.mpd.repByID(this.id);
+
       const mediaURL = rep.mediaURL(next);
 
       this.fetchSegment_(mediaURL).catch((err) => {
@@ -179,7 +188,7 @@ class Stream {
         if (this.type === kStreamType.image) {
           this.cache.push({
             point: next,
-            mime: this.rep.mimeType,
+            mime: rep.mimeType,
             data: arrayBufferToBase64(data),
             info: rep.tileInfo,
           });
@@ -206,10 +215,17 @@ class Stream {
 
   // checks if a point (or array of points) has been cached
   inCache(points = []) {
+    let duplicates = [];
+
+    /*
     let binSearchCache = (point) => {
       let min = 0;
       let max = this.cache.length - 1;
-      let index, current;
+      let current, index = this.cache.length - 1;
+
+      if (this.cache.length > 0 && this.cache[index].point === point) {
+        return index;
+      }
 
       while (min <= max) {
         index = (min + max) / 2 | 0;
@@ -227,7 +243,14 @@ class Stream {
       return -1;
     };
 
-    let duplicates = [];
+    for (let i = 0; i != points.length; i++) {
+      const point = points[i];
+      if (binSearchCache(point) > -1) { duplicates.push(point); }
+    }
+    */
+
+    /*
+    // assumes potential for both Array and int input; weak, so pulled
     if (points.constructor === Array) {
       for (let i = 0; i != points.length; i++) {
         const point = points[i];
@@ -239,13 +262,24 @@ class Stream {
     } else {
       throw(`Invalid argument value : "${points}"`);
     }
+    */
+
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      for (let j = 0; j < this.cache.length; j++) {
+        const c = this.cache[i];
+        if (c.point === point) { duplicates.push(point) }
+      }
+    }
 
     return duplicates;
   }
 
-  makePoints(current, target, now, rep) {
-    let last = this.mpdWasUpdated ? 0 : this.lastPoint;
+  makePoints(current, target, now, repID) {
+    const rep = this.mpd.repByID(repID);
+
     let result;
+    let last = this.lastPoint || 0;
 
     [result, last] = rep.makePoints(this.mpd, current, target, now, last);
 
@@ -281,7 +315,7 @@ class Stream {
   }
 
   segmentLength() {
-    const rep = this.rep;
+    const rep = this.mpd.repByID(this.id);
 
     if (rep === null && typeof rep === 'undefined') {
       throw(`Unable to determine segment length of rep "${rep.id}"`);
@@ -298,11 +332,10 @@ class Stream {
         if (segment.point === 0 && segment.rep === repID) {
           this.appendBuffer(this.buffer, segment).then((buffer) => {
             this.buffer = buffer;
-            this.id = repID;
             
             for (let j = 0; j != this.sources.length; j++) {
               const source = this.sources[j];
-              if (source.id === repID) { this.rep = source; break; }
+              if (source.id === repID) { this.id = source.id; break; }
             }
 
             resolve();

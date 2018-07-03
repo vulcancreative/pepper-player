@@ -79,8 +79,8 @@ class MPD {
     if (this.type < 0) { return "Bad type"; }
 
     // console.log(this.startTime);
-    if (this.type == 'dynamic' &&
-        (isNaN(this.startTime) || jr.ndef(this.startTime))) {
+    if (this.type == 'dynamic' && (this.startTime == -1 ||
+        isNaN(this.startTime) || jr.ndef(this.startTime))) {
       return "Bad start time";
     }
 
@@ -220,6 +220,20 @@ class MPD {
     }
 
     return mpd;
+  }
+
+  // finds a rep with the given ID string
+  repByID(id) {
+    for (let i = 0; i < this.adps.length; i++) {
+      const adp = this.adps[i];
+
+      for (let j = 0; j < adp.reps.length; j++) {
+        const rep = adp.reps[j];
+        if (rep.id === id) { return rep; }
+      }
+    }
+
+    throw(`Unable to find rep with ID '${id}'`);
   }
 }
 

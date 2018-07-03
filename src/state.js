@@ -82,7 +82,8 @@ class State {
       this.qualityQueued = null;
       this.bufferTime = this.config.start;
 
-      if (this.config.timed > 0) { resolve(); return; }
+      if (this.config.timed > 0) { resolve(); return }
+      if (this.mpdUpdateInterval) { clearInterval(this.mpdUpdateInterval) }
 
       this.init_().then(() => resolve());
     });
@@ -123,8 +124,7 @@ class State {
                               stream.updateMPD();
                             }
                             */
-                          }, this.mpd.updatePeriod
-                          );
+                          }, this.mpd.updatePeriod);
                         }
 
                         resolve();
@@ -142,10 +142,10 @@ class State {
         const rep = adp.reps[adp.bestRep()];
 
         const stream = new Stream({
+          adp: adp,
+          id: rep.id, // using ID instead of rep for dynamic swapping
           mediaSource: mediaSource,
           mpd: mpd,
-          adp: adp,
-          rep: rep,
           sources: mpd.adps[i].reps,
         });
 
@@ -225,9 +225,9 @@ class State {
 
           // lower quality if factor > 0.5; raise if < 0.25
           if (factor >= 0.60) {
-            rep = adp.weakerRep(stream.rep.id);
+            rep = adp.weakerRep(stream.id);
           } else if (factor <= 0.30) {
-            rep = adp.strongerRep(stream.rep.id);
+            rep = adp.strongerRep(stream.id);
           } else {
             this.loading = false;
             resolve(false);
@@ -270,7 +270,7 @@ class State {
     const dynamic = this.mpd.type === 'dynamic';
 
     // fail if actively buffering
-    if (!dynamic && this.loading) { return Promise.resolve(); }
+    if (this.loading) { return Promise.resolve(); }
     if (this.started && this.paused) { return Promise.resolve(); }
 
     // base line time used for live buffering
@@ -282,8 +282,6 @@ class State {
       if (this.lastTime && now - this.lastTime < minTime) {
         return Promise.resolve();
       }
-
-      // console.log(`time delta (ms) : ${now - this.lastTime}`);
     }
 
     return new Promise(resolve => {
@@ -303,7 +301,7 @@ class State {
       let payloadStart = (clock.init()).getTime(), payloadEnd;
 
       // load-based lock
-      if (!dynamic) { this.loading = true; }
+      this.loading = true;
 
       // double reducer for serialized Promise returns
       // prevents the need for a (potentially) very large recursion stack
@@ -314,22 +312,23 @@ class State {
             start,
             dynamic ? null : end,
             now,
-            stream.rep
+            stream.id
           );
 
+          // remove anything undefined
+          points = points.filter(p => jr.def(p));
+
+          // find duplicates (if any); prevents need for forcing delays
           let duplicates = stream.inCache(points);
 
           // remove already cached point; prevents toe-stepping
           points = points.filter(p => !duplicates.includes(p));
-          if (points.length > 0) { console.log(`points : ${points}`); }
+          // if (points.length > 0) { console.log(`points : ${points}`); }
 
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
               return stream.fillBuffer(point).then((dataSize) => {
-                if (dataSize===null || typeof dataSize==='undefined') {
-                  resolve(0);
-                  return;
-                }
+                if (jr.ndef(dataSize)) { resolve(0); return; }
 
                 const lastStream = streamIndex === this.streams.length-1;
                 const lastPoint = pointIndex === points.length - 1;
@@ -350,7 +349,7 @@ class State {
                   this.started = true;
                   this.loading = false;
 
-                  if (dynamic) { this.lastTime = now; }
+                  this.lastTime = clock.now();
 
                   console.log(`Buffers filled; download speed: ` +
                               `${speed}kbps, speedFactor: ${factor}`);

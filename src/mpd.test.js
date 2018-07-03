@@ -440,7 +440,7 @@ describe('MPD.updatePeriod_', () => {
     const outputA = -1;
     const outputB = -1;
     const outputC = -1;
-    const outputD = 0;
+    const outputD = 1000;
 
     expect.assertions(4);
 
