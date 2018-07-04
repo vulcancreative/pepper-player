@@ -1,3 +1,8 @@
+const kMPDType = {
+  static: 'static',
+  dynamic: 'dynamic',
+};
+
 const kProtocol = {
   hls: 'HLS',
   dash: 'DASH',
@@ -27,6 +32,7 @@ const kBackingType = {
 };
 
 export {
+  kMPDType,
   kProtocol,
   kStreamType,
   kSegmentType,

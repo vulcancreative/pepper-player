@@ -1,6 +1,6 @@
-import { os } from './os';
+// import { os } from './os';
 // import clock from './clock';
-import { kStreamType } from './constants';
+import { kMPDType, kStreamType } from './constants';
 
 // let lastPoint;
 const mimeType = "application/vnd.apple.mpegurl";
@@ -13,10 +13,7 @@ const hlsSupported = () => {
 }
 
 const hlsPreferred = () => {
-  if (os.is('chrome')) { return false; }
-  if (!hlsSupported()) { return false; }
-
-  return true;
+  return hlsSupported() && !('MediaSource' in window);
 }
 
 // TODO: group like-code in this function
@@ -26,13 +23,13 @@ const hlsMakePoints = (state, r, len) => {
   // const now = clock.now();
   // const [points] = r.makePoints(state.mpd, 0, null, now, 0);
   // console.log(points);
-  const base = mpd.type === 'dynamic' ?
+  const base = mpd.type === kMPDType.dynamic ?
     r.timeline.slice(0, 10) :
     Array(Math.ceil(mpd.duration / len)).fill();
 
   return base.map((s, i) =>
     `#EXTINF:${parseFloat(len / 1000).toFixed(5)},
-    ${r.mediaURL(mpd.type === 'dynamic' ? s : i + 1)}`
+    ${r.mediaURL(mpd.type === kMPDType.dynamic ? s : i + 1)}`
   );
 }
 

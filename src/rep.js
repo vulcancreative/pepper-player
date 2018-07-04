@@ -1,6 +1,6 @@
 import jr from './jr';
 import { toInt } from './convert';
-import { kStreamType } from './constants';
+import { kMPDType, kStreamType } from './constants';
 
 class Rep {
   constructor(adp, rep, url, override, startTime) {
@@ -169,7 +169,7 @@ class Rep {
       );
 
       return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
-    } else if (mpd.type === 'dynamic') {
+    } else if (mpd.type === kMPDType.dynamic) {
       const delta = Math.abs(now - mpd.startTime);
 
       if (target && target > now) {

@@ -2,6 +2,7 @@ import jr from './jr';
 import { os } from './os';
 import { State } from './state';
 import { mergeDicts } from './helpers';
+import { kMPDType } from './constants';
 
 class Player {
   constructor(config = {}) {
@@ -79,14 +80,14 @@ class Player {
       const [speed, now] = await this.state.fillBuffers();
       const type = this.state.mpd.type;
 
-      if (type === 'dynamic') {
+      if (type === kMPDType.dynamic) {
         this.safariStartTime = now / 1000;
       }
 
       await this.state.adjustQuality(speed)   
 
       if (this.config.auto) {
-        if (type === 'dynamic' && os.is('safari')) {
+        if (type === kMPDType.dynamic && os.is('safari')) {
           const start = this.safariStartTime;
           this.state.video.currentTime = start;
         }
@@ -166,7 +167,7 @@ class Player {
 
         return Promise.resolve();
       };
-    } else if (type === 'dynamic') {
+    } else if (type === kMPDType.dynamic) {
       const lens = this.state.segmentLengths();
       const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
       const maxTime = lens.reduce((a,b) => Math.max(a,b));

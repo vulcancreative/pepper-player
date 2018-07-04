@@ -1,5 +1,6 @@
 import Adp from './adp';
 import { MPD } from './mpd';
+import { kMPDType } from './constants';
 import { 
   tfVodMpd as caseA,
   bbb4kVodMpd as caseB,
@@ -353,10 +354,10 @@ describe('MPD.type_', () => {
     const inputC = caseC.data;
     const inputD = caseD.data;
 
-    const outputA = 'static';
-    const outputB = 'static';
-    const outputC = 'static';
-    const outputD = 'dynamic';
+    const outputA = kMPDType.static;
+    const outputB = kMPDType.static;
+    const outputC = kMPDType.static;
+    const outputD = kMPDType.dynamic;
 
     expect.assertions(4);
 

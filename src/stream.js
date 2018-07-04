@@ -1,6 +1,6 @@
 import { mergeDicts } from './helpers';
 import { arrayBufferToBase64 } from './convert';
-import { kStreamType, kSegmentType } from './constants';
+import { kMPDType, kStreamType, kSegmentType } from './constants';
 
 class Stream {
   constructor(config = {}) {
@@ -24,11 +24,9 @@ class Stream {
   }
 
   setup() {
-    return new Promise((resolve) => {
-      this.init_().then((cache) => {
-        this.cache = cache;
-        resolve();
-      });
+    return new Promise(async resolve => {
+      this.cache = await this.init_();
+      resolve();
     });
   }
 
@@ -48,7 +46,7 @@ class Stream {
       this.buffer = this.mediaSource.addSourceBuffer(this.codecs);
       this.buffer.mode = 'sequence';
 
-      if (this.mpd.type === 'dynamic') {
+      if (this.mpd.type === kMPDType.dynamic) {
         this.buffer.timestampOffset = 0.1;
       }
 
@@ -91,7 +89,7 @@ class Stream {
 
       xhr.onload = function() {
         if (xhr.status >= 400) {
-          if (type === 'dynamic') {
+          if (type === kMPDType.dynamic) {
             console.log(
               "Playing bleeding edge in dynamic mode; " +
               "waiting for more viable segments"
@@ -165,13 +163,17 @@ class Stream {
   fillBuffer(next) {
     // if (jr.ndef(next)) { return Promise.resolve(0); }
 
-    return new Promise((resolve) => {
+    return new Promise(async resolve => {
       const rep = this.mpd.repByID(this.id);
 
       const mediaURL = rep.mediaURL(next);
 
-      this.fetchSegment_(mediaURL).catch((err) => {
-        if (this.mpd.type === 'dynamic') {
+      let data;
+
+      try {
+        data = await this.fetchSegment_(mediaURL);
+      } catch(err) {
+        if (this.mpd.type === kMPDType.dynamic) {
           console.log(
             "Playing bleeding edge in dynamic mode; " +
             "waiting for more viable segments"
@@ -179,37 +181,35 @@ class Stream {
         } else {
           console.log(`Unable to fetch segment "${mediaURL}" : ${err}`);
         }
-      }).then((data) => {
-        if (data === null || typeof data === 'undefined') {
-          resolve(null);
-          return;
-        }
+      }
 
-        if (this.type === kStreamType.image) {
-          this.cache.push({
-            point: next,
-            mime: rep.mimeType,
-            data: arrayBufferToBase64(data),
-            info: rep.tileInfo,
-          });
+      if (data === null || typeof data === 'undefined') {
+        resolve(null);
+        return;
+      }
 
-          resolve(data.byteLength);
-          return;
-        }
-
+      if (this.type === kStreamType.image) {
         this.cache.push({
-          type: kSegmentType.segment,
           point: next,
-          data: data,
-          size: data.byteLength,
+          mime: rep.mimeType,
+          data: arrayBufferToBase64(data),
+          info: rep.tileInfo,
         });
 
-        const i = this.cache.length - 1;
-        this.appendBuffer(this.buffer, this.cache[i]).then((buffer) => {
-          this.buffer = buffer;
-          resolve(data.byteLength);
-        });
+        resolve(data.byteLength);
+        return;
+      }
+
+      this.cache.push({
+        type: kSegmentType.segment,
+        point: next,
+        data: data,
+        size: data.byteLength,
       });
+
+      const i = this.cache.length - 1;
+      this.buffer = await this.appendBuffer(this.buffer, this.cache[i]);
+      resolve(data.byteLength);
     });
   }
 

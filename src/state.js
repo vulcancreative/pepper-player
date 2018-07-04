@@ -3,9 +3,9 @@ import clock from './clock';
 import { MPD } from './mpd';
 import { Stream } from './stream';
 import { mergeDicts } from './helpers';
-import { kStreamType } from './constants';
+import { kMPDType, kStreamType } from './constants';
 import { kbps, speedFactor } from './measure';
-import { mpdToM3U8, hlsSupported, hlsMimeType } from './hls';
+import { mpdToM3U8, hlsPreferred, hlsMimeType } from './hls';
 
 /*
 // TODO: move within class structure
@@ -36,7 +36,7 @@ class State {
   }
 
   setup() {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       /*
       if (this.config.timed.start !== -1) {
         const zone = this.config.timed.zone;
@@ -85,7 +85,8 @@ class State {
       if (this.config.timed > 0) { resolve(); return }
       if (this.mpdUpdateInterval) { clearInterval(this.mpdUpdateInterval) }
 
-      this.init_().then(() => resolve());
+      await this.init_()
+      resolve();
     });
   }
 
@@ -94,41 +95,37 @@ class State {
       return Promise.resolve();
     }
 
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
       const track = this.config.track;
       const url = this.config.playlist[track].dash.url;
       const base = this.config.playlist[track].dash.base;
 
       this.mpd = new MPD({ url: url, base: base });
-      this.mpd.setup().then(() => this.mediaSource_())
-                      .then((mediaSource) => {
-                        this.mediaSource = mediaSource;
-                        if (this.usingHLS()) { resolve(); }
-                      })
-                      .then(() => {
-                        return !this.usingHLS() ? this.buildStreams_(
-                          this.mpd,
-                          this.mediaSource
-                        ) : null;
-                      })
-                      .then((streams) => {
-                        this.streams = streams;
 
-                        if (this.mpd.type === 'dynamic') {
-                          this.mpdUpdateInterval = setInterval(() => {
-                            this.mpd.setup()
+      await this.mpd.setup();
 
-                            /*
-                            for (let i=0; i!=this.streams.length; i++) {
-                              const stream = this.streams[i];
-                              stream.updateMPD();
-                            }
-                            */
-                          }, this.mpd.updatePeriod);
-                        }
+      this.mediaSource = await this.mediaSource_();
+      if (this.usingHLS()) { resolve(); return }
 
-                        resolve();
-                      });
+      this.streams = !this.usingHLS() ? await this.buildStreams_(
+        this.mpd,
+        this.mediaSource
+      ) : null;
+
+      if (this.mpd.type === kMPDType.dynamic) {
+        this.mpdUpdateInterval = setInterval(() => {
+          this.mpd.setup()
+
+          /*
+          for (let i=0; i!=this.streams.length; i++) {
+            const stream = this.streams[i];
+            stream.updateMPD();
+          }
+          */
+        }, this.mpd.updatePeriod);
+      }
+
+      resolve();
     });
   }
 
@@ -203,7 +200,7 @@ class State {
 
     this.loading = true;
 
-    return new Promise(resolve => {
+    return new Promise(async resolve => {
       // handle queued, fixed quality
       if (!this.qualityAuto && this.qualityQueued !== null) {
         const stream = this.qualityQueued.stream;
@@ -211,11 +208,10 @@ class State {
 
         this.qualityQueued = null;
 
-        stream.switchToRep(repID).then(() => {
-          console.log(`Consumed queued rep "${repID}"`);
-          this.loading = false;
-          resolve(true);
-        });
+        await stream.switchToRep(repID);
+        console.log(`Consumed queued rep "${repID}"`);
+        this.loading = false;
+        resolve(true);
       // handle automatic quality switching
       } else if (this.qualityAuto) {
         for (let i = 0; i < this.streams.length; i++) {
@@ -267,7 +263,7 @@ class State {
   }
 
   fillBuffers(defer = null) {
-    const dynamic = this.mpd.type === 'dynamic';
+    const dynamic = this.mpd.type === kMPDType.dynamic;
 
     // fail if actively buffering
     if (this.loading) { return Promise.resolve(); }
@@ -298,7 +294,7 @@ class State {
 
       // used for measuring speed (in bytes over time delta)
       let payloadSize = 0;
-      let payloadStart = (clock.init()).getTime(), payloadEnd;
+      let payloadStart = clock.init().getTime(), payloadEnd;
 
       // load-based lock
       this.loading = true;
@@ -337,7 +333,7 @@ class State {
                 payloadSize += dataSize;
 
                 if (lastStream && lastPoint) {
-                  payloadEnd = (clock.init()).getTime();
+                  payloadEnd = clock.init().getTime();
 
                   // const bufferLength = stream.bufferLength();
                   const delta = (payloadEnd - payloadStart) / 1000;
@@ -431,7 +427,7 @@ class State {
   }
 
   usingHLS() {
-    if (!hlsSupported()) { return false; }
+    if (!hlsPreferred()) { return false; }
 
     const track = this.config.track;
     const current = this.config.playlist[track];

@@ -1,6 +1,7 @@
 import jr from './jr';
 import Adp from './adp';
 import clock from './clock';
+import { kMPDType } from './constants';
 import { mergeDicts } from './helpers';
 import { toDuration } from './convert';
 
@@ -79,12 +80,12 @@ class MPD {
     if (this.type < 0) { return "Bad type"; }
 
     // console.log(this.startTime);
-    if (this.type == 'dynamic' && (this.startTime == -1 ||
+    if (this.type == kMPDType.dynamic && (this.startTime == -1 ||
         isNaN(this.startTime) || jr.ndef(this.startTime))) {
       return "Bad start time";
     }
 
-    if (this.type == 'dynamic' && this.updatePeriod < 0) {
+    if (this.type == kMPDType.dynamic && this.updatePeriod < 0) {
       return "Bad update period";
     }
 
