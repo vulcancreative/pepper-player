@@ -14,18 +14,16 @@ Features include:
 - [x] Ultra low-latency start times (even up to 4K)
 - [x] Automatic or manual adaptive quality
 - [x] Lazy loading of media segments (reduces serving bandwidth)
+- [x] Client-side, on-the-fly HLS conversion (currently static only)
 - [x] Cross-browser compatible (<= ES7)
 - [x] Fully tested, ~100% coverage
 - [x] Mobile compatible
 
 Being incorporated from working prototype now:
-
-- [x] Client-side, on-the-fly HLS conversion (static)
-- [ ] Client-side, on-the-fly HLS conversion (dynamic)
 - [ ] Hooks for custom user-interface
+- [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 
 Up next:
-- [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 - [ ] Usage documentation
 - [ ] Contribution info
 

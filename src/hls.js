@@ -1,4 +1,5 @@
 import { os } from './os';
+// import clock from './clock';
 import { kStreamType } from './constants';
 
 // let lastPoint;
@@ -15,29 +16,24 @@ const hlsPreferred = () => {
   if (os.is('chrome')) { return false; }
   if (!hlsSupported()) { return false; }
 
-  return false;
+  return true;
 }
 
 // TODO: group like-code in this function
 const hlsMakePoints = (state, r, len) => {
-  let result;
   const mpd = state.mpd;
 
-  if (mpd.type === 'dynamic') {
-    const now = new Date();
-    const then = (new Date()).setSeconds(now.getSeconds() + 28800);
-    const [points] = r.makePoints(state.mpd, now, then, r, 80);
-    result = points.map(s =>
-      `#EXTINF:${parseFloat(len/1000).toFixed(5)},\n${r.mediaURL(s)}`
-    );
-  } else {
-    const count = Math.ceil(mpd.duration / len);
-    result = Array(count).fill().map((s, i) =>
-      `#EXTINF:${parseFloat(len/1000).toFixed(5)},\n${r.mediaURL(i+1)}`
-    );
-  }
+  // const now = clock.now();
+  // const [points] = r.makePoints(state.mpd, 0, null, now, 0);
+  // console.log(points);
+  const base = mpd.type === 'dynamic' ?
+    r.timeline.slice(0, 10) :
+    Array(Math.ceil(mpd.duration / len)).fill();
 
-  return result;
+  return base.map((s, i) =>
+    `#EXTINF:${parseFloat(len / 1000).toFixed(5)},
+    ${r.mediaURL(mpd.type === 'dynamic' ? s : i + 1)}`
+  );
 }
 
 const repToM3U8 = (state, r) => {

@@ -164,10 +164,10 @@ class State {
   mediaSource_() {
     return new Promise((resolve, reject) => {
       if (this.usingHLS()) {
-        this.video.type = hlsMimeType;
+        const s = `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
 
-        this.video.src =
-          `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
+        this.video.type = hlsMimeType;
+        this.video.src = s;
 
         console.log("streaming via gen-hls");
         resolve(null);

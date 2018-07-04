@@ -285,7 +285,7 @@ class Rep {
       let startTime = jr.def(t) && !isNaN(t) ? t : lastTime;
 
       for (let j = 0; j != r; j++) {
-        let endTime = startTime + d;
+        let endTime = startTime + d * (j + 1);
         timeline.push(endTime);
 
         lastTime = endTime;
