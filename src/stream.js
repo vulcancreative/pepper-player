@@ -268,7 +268,7 @@ class Stream {
       const point = points[i];
       for (let j = 0; j < this.cache.length; j++) {
         const c = this.cache[i];
-        if (c.point === point) { duplicates.push(point) }
+        if (c && c.point === point) { duplicates.push(point) }
       }
     }
 
