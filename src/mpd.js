@@ -34,7 +34,7 @@ class MPD {
     if (err) { throw(err); }
 
     console.log('manifest updated');
-    return Promise.resolve(this, speedBps);
+    return Promise.resolve([this, speedBps]);
   }
 
   fetch_(url = '', data) {

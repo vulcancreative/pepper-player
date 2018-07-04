@@ -106,7 +106,7 @@ class State {
       const base = this.config.playlist[track].dash.base;
 
       this.mpd = new MPD({ url: url, base: base });
-      [this.mpdDownloadSpeed] = await this.mpd.setup();
+      [this.mpd, this.mpdDownloadSpeed] = await this.mpd.setup();
 
       this.mediaSource = await this.mediaSource_();
       if (this.usingHLS()) { resolve(); return }
@@ -118,7 +118,7 @@ class State {
 
       if (this.mpd.type === kMPDType.dynamic) {
         this.mpdUpdateInterval = setInterval(async () => {
-          [this.mpdDownloadSpeed] = await this.mpd.setup()
+          [this.mpd, this.mpdDownloadSpeed] = await this.mpd.setup()
 
           /*
           for (let i=0; i!=this.streams.length; i++) {
