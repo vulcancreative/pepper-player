@@ -1,4 +1,4 @@
-import { mergeDicts } from './helpers';
+import { isInt, mergeDicts } from './helpers';
 import { arrayBufferToBase64 } from './convert';
 import { kMPDType, kStreamType, kSegmentType } from './constants';
 
@@ -31,8 +31,8 @@ class Stream {
   }
 
   init_(cache = []) {
-    return new Promise((resolve) => {
-      const rep = this.mpd.repByID(this.id);
+    return new Promise(async resolve => {
+      const rep = this.rep();
 
       this.type = rep.type;
       this.codecs = `${rep.mimeType}; codecs="${rep.codecs}"`;
@@ -50,6 +50,7 @@ class Stream {
         this.buffer.timestampOffset = 0.1;
       }
 
+      /*
       for (let i = 0; i != this.sources.length; i++) {
         const source = this.sources[i];
         const initURL = source.initURL();
@@ -76,12 +77,45 @@ class Stream {
           }
         });
       }
+      */
+
+      const initSegments = await Promise.all(this.sources.map(source => {
+        return new Promise(resolve => {
+        const initURL = source.initURL();
+
+          this.fetchSegment_(initURL).then((data) => {
+            const segment = {
+              type: kSegmentType.init,
+              rep: source.id,
+              point: 0,
+              data: data,
+              size: data.byteLength,
+            };
+
+            cache.push(segment);
+            resolve(segment);
+          });
+        });
+      }));
+
+      // TODO: fix buffer append overlap
+      for (let i = 0; i != initSegments.length; i++) {
+        const segment = initSegments[i];
+        if (segment.point === 0 && segment.rep === rep.id) {
+          this.appendBuffer(this.buffer, segment).then((buffer) => {
+            this.buffer = buffer;
+            resolve();
+          });
+        }
+      }
+
+      resolve(cache);
     });
   }
 
   fetchSegment_(url = "") {
     return new Promise((resolve, reject) => {
-      const rep = this.mpd.repByID(this.id);
+      const rep = this.rep();
 
       const id = rep.id;
       const type = this.mpd.type;
@@ -122,7 +156,7 @@ class Stream {
 
   appendBuffer(buffer, segment) {
     return new Promise((resolve, reject) => {
-      const rep = this.mpd.repByID(this.id);
+      const rep = this.rep();
 
       if (buffer === null || typeof buffer === 'undefined') {
         reject("Buffer invalid!");
@@ -164,7 +198,7 @@ class Stream {
     // if (jr.ndef(next)) { return Promise.resolve(0); }
 
     return new Promise(async resolve => {
-      const rep = this.mpd.repByID(this.id);
+      const rep = this.rep();
 
       const mediaURL = rep.mediaURL(next);
 
@@ -217,7 +251,6 @@ class Stream {
   inCache(points = []) {
     let duplicates = [];
 
-    /*
     let binSearchCache = (point) => {
       let min = 0;
       let max = this.cache.length - 1;
@@ -247,9 +280,7 @@ class Stream {
       const point = points[i];
       if (binSearchCache(point) > -1) { duplicates.push(point); }
     }
-    */
 
-    /*
     // assumes potential for both Array and int input; weak, so pulled
     if (points.constructor === Array) {
       for (let i = 0; i != points.length; i++) {
@@ -262,8 +293,8 @@ class Stream {
     } else {
       throw(`Invalid argument value : "${points}"`);
     }
-    */
 
+    /*
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
       for (let j = 0; j < this.cache.length; j++) {
@@ -271,12 +302,13 @@ class Stream {
         if (c && c.point === point) { duplicates.push(point) }
       }
     }
+    */
 
     return duplicates;
   }
 
-  makePoints(current, target, now, repID) {
-    const rep = this.mpd.repByID(repID);
+  makePoints(current, target, now) {
+    const rep = this.rep();
 
     let result;
     let last = this.lastPoint || 0;
@@ -314,8 +346,12 @@ class Stream {
     });
   }
 
+  rep() {
+    return this.mpd.repByID(this.id);
+  }
+
   segmentLength() {
-    const rep = this.mpd.repByID(this.id);
+    const rep = this.rep();
 
     if (rep === null && typeof rep === 'undefined') {
       throw(`Unable to determine segment length of rep "${rep.id}"`);
@@ -325,7 +361,7 @@ class Stream {
   }
 
   switchToRep(repID) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       for (let i = 0; i != this.cache.length; i++) {
         const segment = this.cache[i];
 

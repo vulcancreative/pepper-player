@@ -1,6 +1,7 @@
 import jr from './jr';
 import Adp from './adp';
 import clock from './clock';
+import { bps } from './measure';
 import { kMPDType } from './constants';
 import { mergeDicts } from './helpers';
 import { toDuration } from './convert';
@@ -18,12 +19,22 @@ class MPD {
   }
 
   async setup() {
+    let payloadSize = 0;
+    let payloadStart = clock.init().getTime(), payloadEnd;
+
     const result = await this.fetch_(this.config.url, this.config.data);
+
+    payloadSize += result.length;
+    payloadEnd = clock.init().getTime();
+    
+    const delta = (payloadEnd - payloadStart) / 1000;
+    const speedBps = bps(payloadSize, delta);
+
     const err = this.parse_(result);
     if (err) { throw(err); }
 
     console.log('manifest updated');
-    return this;
+    return Promise.resolve(this, speedBps);
   }
 
   fetch_(url = '', data) {

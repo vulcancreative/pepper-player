@@ -1,9 +1,13 @@
-function kbps(bytes, delta) {
-  const bitsLoaded = bytes * 8;
+function bps(bytes, delta) {
+  const augBytes = delta < 1 ? bytes * (1 / delta) : bytes;
+  const bitsLoaded = augBytes * 8;
   const speedBps = (bitsLoaded / delta).toFixed(2);
-  const speedKbps = (speedBps / 1024).toFixed(2);
 
-  return parseFloat(speedKbps);
+  return parseFloat(speedBps);
+}
+
+function kbps(bytes, delta) {
+  return parseFloat((bps(bytes, delta) / 1024).toFixed(2));
 }
 
 // take a speed (kbps), size (bytes), and a time (ms)
@@ -20,4 +24,4 @@ function speedFactor(speed, size, delta) {
   return parseFloat(contrast);
 }
 
-export { kbps, speedFactor };
+export { bps, kbps, speedFactor };

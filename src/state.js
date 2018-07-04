@@ -4,7 +4,7 @@ import { MPD } from './mpd';
 import { Stream } from './stream';
 import { mergeDicts } from './helpers';
 import { kMPDType, kStreamType } from './constants';
-import { kbps, speedFactor } from './measure';
+import { bps, kbps, speedFactor } from './measure';
 import { mpdToM3U8, hlsPreferred, hlsMimeType } from './hls';
 
 /*
@@ -22,6 +22,7 @@ class State {
   constructor(config = {}) {
     const kDefaultConfig = {
       playlist: [],
+      hooks:  {},
       base:   0,
       lead:   0,
       start:  0,
@@ -86,6 +87,10 @@ class State {
       if (this.mpdUpdateInterval) { clearInterval(this.mpdUpdateInterval) }
 
       await this.init_()
+      if (jr.fnc(this.config.hooks.onReady)) {
+        this.config.hooks.onReady();
+      }
+
       resolve();
     });
   }
@@ -101,8 +106,7 @@ class State {
       const base = this.config.playlist[track].dash.base;
 
       this.mpd = new MPD({ url: url, base: base });
-
-      await this.mpd.setup();
+      [this.mpdDownloadSpeed] = await this.mpd.setup();
 
       this.mediaSource = await this.mediaSource_();
       if (this.usingHLS()) { resolve(); return }
@@ -113,8 +117,8 @@ class State {
       ) : null;
 
       if (this.mpd.type === kMPDType.dynamic) {
-        this.mpdUpdateInterval = setInterval(() => {
-          this.mpd.setup()
+        this.mpdUpdateInterval = setInterval(async () => {
+          [this.mpdDownloadSpeed] = await this.mpd.setup()
 
           /*
           for (let i=0; i!=this.streams.length; i++) {
@@ -136,7 +140,7 @@ class State {
 
       for (let i = 0; i < mpd.adps.length; i++) {
         const adp = mpd.adps[i];
-        const rep = adp.reps[adp.bestRep()];
+        const rep = adp.bestRep(this.mpdDownloadSpeed);
 
         const stream = new Stream({
           adp: adp,
@@ -194,7 +198,7 @@ class State {
     }
   }
 
-  adjustQuality(factor = 1.0) {
+  adjustQuality(speed = 0, factor = 1.0) {
     // fail if actively buffering
     if (this.loading) { return Promise.resolve(false); }
 
@@ -210,32 +214,46 @@ class State {
 
         await stream.switchToRep(repID);
         console.log(`Consumed queued rep "${repID}"`);
+
         this.loading = false;
+
+        if (jr.fnc(this.config.hooks.onAdapt)) {
+          this.config.hooks.onAdapt(this.currentBitrate());
+        }
+
         resolve(true);
       // handle automatic quality switching
       } else if (this.qualityAuto) {
         for (let i = 0; i < this.streams.length; i++) {
           const stream = this.streams[i];
           const adp = stream.adp;
+
           let rep;
 
           // lower quality if factor > 0.5; raise if < 0.25
-          if (factor >= 0.60) {
-            rep = adp.weakerRep(stream.id);
-          } else if (factor <= 0.30) {
-            rep = adp.strongerRep(stream.id);
+          if (factor >= 0.50) {
+            const current = this.mpd.repByID(stream.id);
+            rep = adp.matchBandwidth(current.bandwidth * 0.8);
+          } else {
+            rep = adp.matchBandwidth(speed);
+          }
+
+          if (stream.id !== rep.id) {
+            stream.switchToRep(rep.id).then(() => {
+              if (i === this.streams.length - 1) {
+                this.loading = false;
+
+                if (jr.fnc(this.config.hooks.onAdapt)) {
+                  this.config.hooks.onAdapt(this.currentBitrate());
+                }
+
+                resolve(true);
+              }
+            });
           } else {
             this.loading = false;
             resolve(false);
-            return;
           }
-
-          stream.switchToRep(rep.id).then(() => {
-            if (i === this.streams.length - 1) {
-              this.loading = false;
-              resolve(true);
-            }
-          });
         }
       } else {
         this.loading = false;
@@ -262,12 +280,28 @@ class State {
     return this.streams.map(stream => stream.codecs());
   }
 
+  currentBitrate() {
+    const video = this.videoRep();
+    if (jr.ndef(video)) { return 0 }
+
+    return video.bandwidth / 1000;
+  }
+
+  currentResolution() {
+    const video = this.videoRep();
+    if (jr.ndef(video)) { return 'uninitialized' }
+
+    return `${video.width}x${video.height}`;
+  }
+
   fillBuffers(defer = null) {
     const dynamic = this.mpd.type === kMPDType.dynamic;
 
     // fail if actively buffering
-    if (this.loading) { return Promise.resolve(); }
-    if (this.started && this.paused) { return Promise.resolve(); }
+    if (this.loading) { return Promise.resolve([0, 0, 0]); }
+    if (this.started && this.paused) {
+      return Promise.resolve([0, 0, 0]);
+    }
 
     // base line time used for live buffering
     const now = clock.now();
@@ -276,7 +310,7 @@ class State {
 
     if (dynamic) {
       if (this.lastTime && now - this.lastTime < minTime) {
-        return Promise.resolve();
+        return Promise.resolve([0, 0, 0]);
       }
     }
 
@@ -324,7 +358,7 @@ class State {
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
               return stream.fillBuffer(point).then((dataSize) => {
-                if (jr.ndef(dataSize)) { resolve(0); return; }
+                if (jr.ndef(dataSize)) { resolve([0, 0, 0]); return; }
 
                 const lastStream = streamIndex === this.streams.length-1;
                 const lastPoint = pointIndex === points.length - 1;
@@ -337,8 +371,9 @@ class State {
 
                   // const bufferLength = stream.bufferLength();
                   const delta = (payloadEnd - payloadStart) / 1000;
-                  const speed = kbps(payloadSize, delta);
-                  const factor = speedFactor(speed, payloadSize, lead);
+                  const speedBps = bps(payloadSize, delta);
+                  const speedKbps = kbps(payloadSize, delta);
+                  const factor = speedFactor(speedKbps, payloadSize, lead);
 
                   this.bufferTime = end;
 
@@ -348,7 +383,7 @@ class State {
                   this.lastTime = clock.now();
 
                   console.log(`Buffers filled; download speed: ` +
-                              `${speed}kbps, speedFactor: ${factor}`);
+                              `${speedKbps}kbps, speedFactor: ${factor}`);
 
                   /*
                   if (this.mpd.dvr && bufferLength > this.mpd.dvr) {
@@ -358,7 +393,7 @@ class State {
                   }
                   */
 
-                  resolve([factor, now]);
+                  resolve([speedBps, factor, now]);
                 }
               });
             });
@@ -383,11 +418,21 @@ class State {
 
   pause() {
     this.paused = true;
+
+    if (jr.fnc(this.config.hooks.onPause)) {
+      this.config.hooks.onPause();
+    }
+
     return this.video.pause();
   }
 
   play() {
     this.paused = false;
+        
+    if (jr.fnc(this.config.hooks.onPlay)) {
+      this.config.hooks.onPlay();
+    }
+
     return this.video.play();
   }
 
@@ -436,18 +481,18 @@ class State {
     return jr.def(hls) && (hls.gen || hls.url) ? true : false;
   }
 
-  videoStream() {
-    if (this.streams === null || typeof this.streams === 'undefined') {
-      return null;
-    }
+  videoRep() {
+    let result = null;
+    if (jr.ndef(this.streams)) { return result; }
 
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
-      if (stream.type === kStreamType.video ||
-          stream.type === kStreamType.muxed) { return stream.rep; }
+      const rep = stream.rep();
+      if (rep.type === kStreamType.video ||
+          rep.type === kStreamType.muxed) { result = rep; break }
     }
 
-    return null;
+    return result;
   }
 }
 

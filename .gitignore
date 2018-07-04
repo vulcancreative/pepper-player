@@ -10,6 +10,7 @@ report.txt
 # production
 server.js
 /build
+/lib/stlz.js
 
 # misc
 .DS_Store

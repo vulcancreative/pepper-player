@@ -2,6 +2,7 @@
   <head>
     <title>Pepper Player - Dev Env</title>
     <script src="pepper.js"></script>
+    <script src="stlz.js"></script>
     <style>
       body {
         background: grey;
@@ -37,7 +38,74 @@
       </div>
     </div>
     <script type="text/javascript">
-      // media test
+      // Streamlyzer test
+      var player = new pepper.Player();
+      window.player = player;
+
+      var observer = new szrpg.playbackObserver({
+        customerKey: '354715413d8e41d79c',
+        isLive: false,
+
+        cbGetDuration: () => player.duration(),
+        cbGetBuffer: () => player.bufferTime(),
+        cbGetPosition: () => player.currentTime(),
+        cbGetBitrate: () => player.currentBitrate(),
+        cbGetResolution: () => player.currentResolution(),
+      });
+
+      player.config.playlist = [
+        {
+          dash: {
+            url: "http://media.tfod.tomferry.com/" +
+            "5ibn2LmwWNYZvd3YzfhOGjzuwkVWMjhUqR4Fw0AnYxDMYbFP9L/" +
+            "2017/01-james-suarez/stream.mpd"
+          },
+          hls: {
+            gen: true
+          }
+        }
+      ];
+
+      player.config.hooks = {
+        onReady: () => {
+          console.log("Player ready");
+          observer.onPlayerReady();
+        },
+        onPlay: () => {
+          console.log("Player playing");
+          observer.onPlayerPlay();
+        },
+        onPause: () => {
+          console.log("Player paused");
+          observer.onPlayerPaused();
+        },
+        onStop: () => {
+          console.log("Player stopped");
+          observer.onPlayerStop();
+          location.reload();
+        },
+        onStallStarted: () => {
+          console.log("Player stalled");
+          observer.onBufferingStart();
+        },
+        onStallEnded: () => {
+          console.log("Player playing");
+          observer.onPlayerPlay();
+        },
+        onError: error => {
+          console.log("Player errored out");
+          observer.onPlayerErrorMessage(error);
+        },
+        onAdapt: bitrate => {
+          console.log(`Player adapted to ${bitrate}kbps`);
+          observer.onPlayerBitrateChange(bitrate);
+        },
+      };
+
+      player.play();
+
+      /*
+      // TFOD 1.0 media test
       var player = new pepper.Player({
         playlist: [
           {
@@ -53,6 +121,25 @@
           }
         ]
       });
+      */
+
+      /*
+      // 10-adaptation media test
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "http://media.tfod.tomferry.com/" +
+              "5ibn2LmwWNYZvd3YzfhOGjzuwkVWMjhUqR4Fw0AnYxDMYbFP9L/" +
+              "2017/01-james-suarez/stream.mpd"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
+      */
 
       /*
       // bbb 4k test

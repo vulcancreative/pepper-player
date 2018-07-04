@@ -57,10 +57,28 @@ class Adp {
   }
 
   // TODO: consolidate shared code with the following 3 methods
-  bestRep() {
-    return this.reps.length - 1;
+  bestRep(speedBps) {
+    if (jr.def(speedBps)) { return this.matchBandwidth(speedBps) }
+    return this.reps[this.reps.length - 1];
   }
 
+  matchBandwidth(speedBps) {
+    let pos = 0, current = this.reps[pos].bandwidth;
+
+    for (let i = 1; i < this.reps.length; i++) {
+      const rep = this.reps[i];
+      const bits = rep.bandwidth;
+
+      if (Math.abs(speedBps * 0.8 - bits) < Math.abs(bits - current)) {
+        pos = i;
+        current = bits;
+      }
+    }
+
+    return this.reps[pos];
+  }
+
+  /*
   // TODO: consolidate shared code with the following method
   strongerRep(repID) {
     let rep;
@@ -103,6 +121,7 @@ class Adp {
   worstRep() {
     return 0;
   }
+  */
 }
 
 export default Adp;

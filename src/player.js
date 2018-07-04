@@ -20,6 +20,18 @@ class Player {
         // },
       ],
 
+      hooks: {
+        // onReady: 0,
+        // onPlay: 0,
+        // onPause: 0,
+        // onStop: 0,
+        // onSeek: 0,
+        // onStallStarted: 0,
+        // onStallEnded: 0,
+        // onError: 0,
+        // onAdapt: 0,
+      },
+        
       auto:   true,
       adapt:  true,
       base:   1000,
@@ -34,10 +46,27 @@ class Player {
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
-    this.setup_();
+
+    this.lazyStart = false;
+    this.initialized = false;
+
+    // console.log(this.config.hooks.onReady);
+
+    /*
+    this.config.hooks.onReady();
+    this.config.hooks.onAdapt(2000);
+    this.config.hooks.onPlay();
+    this.config.hooks.onAdapt(1000);
+    this.config.hooks.onPause();
+    this.config.hooks.onPlay();
+    */
+
+    if (this.config.playlist.length > 0) { this.setup_(); }
   }
 
   async setup_() {
+    this.initialized = true;
+
     if (!this.config.query.length || this.config.query.length < 1) {
       throw("Invalid insertion query.");
     }
@@ -77,14 +106,14 @@ class Player {
     await this.state.init_();
 
     if (!this.state.usingHLS()) {
-      const [speed, now] = await this.state.fillBuffers();
+      const [speed, factor, now] = await this.state.fillBuffers();
       const type = this.state.mpd.type;
 
       if (type === kMPDType.dynamic) {
         this.safariStartTime = now / 1000;
       }
 
-      await this.state.adjustQuality(speed)   
+      await this.state.adjustQuality(speed, factor)   
 
       if (this.config.auto) {
         if (type === kMPDType.dynamic && os.is('safari')) {
@@ -92,7 +121,7 @@ class Player {
           this.state.video.currentTime = start;
         }
 
-        this.play();
+        if (!this.lazyStart) { this.play(); }
       }
     }
     
@@ -101,6 +130,14 @@ class Player {
 
   bufferTime() {
     return this.state.bufferTime;
+  }
+
+  currentBitrate() {
+    return this.state.currentBitrate();
+  }
+
+  currentResolution() {
+    return this.state.currentResolution();
   }
 
   currentTime() {
@@ -144,6 +181,8 @@ class Player {
   }
 
   async play() {
+    if (!this.initialized) { this.lazyStart = true; await this.setup_() }
+
     const type = this.state.mpd.type;
     await this.state.play();
 
@@ -156,13 +195,18 @@ class Player {
         // this.renderUI();
 
         if (currentTime >= bufferTime - leadTime / 2) {
-          const speed = await this.state.fillBuffers();
-          this.state.adjustQuality(speed);
+          const [speed, factor] = await this.state.fillBuffers();
+          this.state.adjustQuality(speed, factor);
         }
 
         if (this.didEnd()) {
           this.state.video.currentTime = 0;
-          if (!this.config.loop) { this.pause(); }
+          if (!this.config.loop) {
+            this.pause();
+            if (jr.fnc(this.config.hooks.onStop)) {
+              this.config.hooks.onStop();
+            }
+          }
         }
 
         return Promise.resolve();
@@ -177,14 +221,14 @@ class Player {
       // this.state.video.ontimeupdate = () => this.renderUI();
 
       setInterval(async () => {
-        const speed = await this.state.fillBuffers(maxTime);
+        const [speed, factor] = await this.state.fillBuffers(maxTime);
         this.lastSpeed = speed;
 
         if (this.config.auto && !this.isPaused()) {
-          this.state.play();
+          await this.state.play();
         }
 
-        this.state.adjustQuality(speed);
+        this.state.adjustQuality(speed, factor);
 
         return Promise.resolve();
       }, waitTime);
