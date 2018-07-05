@@ -15,7 +15,7 @@ Features include:
 - [x] Automatic or manual adaptive quality
 - [x] Lazy loading of media segments (reduces serving bandwidth)
 - [x] Client-side, on-the-fly HLS conversion (currently static only)
-- [x] Cross-browser compatible (<= ES7)
+- [x] Cross-browser compatible (<= ES8)
 - [x] Fully tested, ~100% coverage
 - [x] Mobile compatible
 
