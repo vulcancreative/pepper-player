@@ -2,6 +2,10 @@
 // import clock from './clock';
 import { kMPDType, kStreamType } from './constants';
 
+const N = '\n';
+const EXTM3U = `#EXTM3U\n`;
+const EXT_VERSION = `#EXT-X-VERSION:7\n`;
+
 // let lastPoint;
 const mimeType = "application/vnd.apple.mpegurl";
 
@@ -13,10 +17,9 @@ const hlsSupported = () => {
 }
 
 const hlsPreferred = () => {
-  return hlsSupported() && !('MediaSource' in window);
+  return hlsSupported(); // && !('MediaSource' in window);
 }
 
-// TODO: group like-code in this function
 const hlsMakePoints = (state, r, len) => {
   const mpd = state.mpd;
 
@@ -40,14 +43,14 @@ const repToM3U8 = (state, r) => {
   const points = hlsMakePoints(state, r, len);
 
   const m3u8 =
-  `#EXTM3U\n` +
+  EXTM3U +
   `#EXT-X-TARGETDURATION:${parseInt(Math.ceil(len / 1000))}\n` +
-  `#EXT-X-VERSION:7\n` +
-  `#EXT-X-PLAYLIST-TYPE:${mpd.type === 'static' ? 'VOD' : 'EVENT'}\n` +
+  EXT_VERSION +
+  `#EXT-X-PLAYLIST-TYPE:${mpd.type === kMPDType.static?'VOD':'EVENT'}\n` +
   `#EXT-X-INDEPENDENT-SEGMENTS\n` +
   `#EXT-X-MAP:URI="${r.initURL()}"\n` +
-  points.join('\n') + '\n' +
-  `${mpd.type === 'static' ? '#EXT-X-ENDLIST' : ''}`
+  points.join(N) + N +
+  `${mpd.type === kMPDType.static ? '#EXT-X-ENDLIST' : ''}`
 
   const blob = new Blob([m3u8], { type: mimeType });
   return URL.createObjectURL(blob);
@@ -90,11 +93,11 @@ const mpdToM3U8 = (state) => {
   console.log("state.mpd.type : " + state.mpd.type);
 
   const result =
-  "#EXTM3U\n" +
-  "#EXT-X-VERSION:6\n" +
+  EXTM3U +
+  EXT_VERSION +
   "#EXT-X-INDEPENDENT-SEGMENTS\n" +
-  audioData.join('\n') + '\n' +
-  videoData.join('\n');
+  audioData.join(N) + N +
+  videoData.join(N);
 
   return result;
 }

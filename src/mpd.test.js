@@ -423,7 +423,7 @@ describe('MPD.startTime_', () => {
 
   it('should throw an error if no start time exists', () => {
     const input = caseI.data;
-    const output = "Bad start time";
+    const output = "Bad start";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())
@@ -465,7 +465,7 @@ describe('MPD.updatePeriod_', () => {
 
   it('should throw an error if no update period exists', () => {
     const input = caseJ.data;
-    const output = "Bad update period";
+    const output = "Bad update";
 
     expect.assertions(1);
     return expect((new MPD({ data: input })).setup())

@@ -85,6 +85,7 @@ class Player {
     if (diff > 0) {
       this.startsInMs = diff;
 
+      /*
       setTimeout(() => {
         this.startsInMs = diff >= 1000 ?
           diff - 1000 : diff;
@@ -95,6 +96,7 @@ class Player {
           diff >= 1000 ? diff - 1000 : diff
         );
       }, 1000);
+      */
 
       return;
     }
@@ -158,6 +160,7 @@ class Player {
     return this.state.paused;
   }
 
+  /*
   makeActive() {
     // TODO
   }
@@ -165,6 +168,7 @@ class Player {
   next() {
     // TODO
   }
+  */
 
   pause() {
     return this.state.pause();
@@ -176,7 +180,7 @@ class Player {
     const type = this.state.mpd.type;
     await this.state.play();
 
-    if (type === 'static') {
+    if (type === kMPDType.static) {
       this.state.video.ontimeupdate = async () => {
         const currentTime = this.currentTime();
         const bufferTime = this.bufferTime();
@@ -225,9 +229,11 @@ class Player {
     }
   }
 
+  /*
   previous() {
     // TODO
   }
+  */
 
   renderUI() {
     if (!this.injectedUI) {
@@ -261,6 +267,7 @@ class Player {
     this.setup_();
   }
 
+  /*
   updateTimer_(diff) {
     if (diff <= 0) { this.init_(); return }
 
@@ -270,6 +277,7 @@ class Player {
       this.updateTimer_(diff > 0 ? diff - 1000 : 0)
     }, 1000);
   }
+  */
 }
 
 export default Player;

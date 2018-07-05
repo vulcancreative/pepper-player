@@ -2,6 +2,12 @@ import jr from './jr';
 import { toInt } from './convert';
 import { kMPDType, kStreamType } from './constants';
 
+const BLANK = '';
+const MIMETYPE_STR = 'mimeType';
+const SEGMENTTIMELINE_STR = 'SegmentTimeline';
+const SEGMENTTEMPLATE_STR = 'SegmentTemplate';
+const DURATION_STR = 'duration';
+
 class Rep {
   constructor(adp, rep, url, override, startTime) {
     this.presentationTime = startTime;
@@ -15,9 +21,9 @@ class Rep {
     id = jr.a('id', rep);
 
     // mimeType can be on either the adp or the rep
-    mimeType = jr.a('mimeType', adp);
+    mimeType = jr.a(MIMETYPE_STR, adp);
     if (jr.ndef(mimeType)) {
-      mimeType = jr.a('mimeType', rep);
+      mimeType = jr.a(MIMETYPE_STR, rep);
     }
 
     // source codecs from rep attribute
@@ -35,15 +41,15 @@ class Rep {
     bandwidth = toInt(bandwidthAttr);
 
     // get default baseURL, if available and no override
-    baseURL = override || "";
+    baseURL = override || BLANK;
 
     const srcParts = url.split('/');
     const srcLen = srcParts.length;
 
     baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
-    baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? '' : '/';
+    baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? BLANK : '/';
 
-    segmentTimeline = jr.q('SegmentTimeline', adp)[0];
+    segmentTimeline = jr.q(SEGMENTTIMELINE_STR, adp)[0];
     if (jr.def(segmentTimeline)) {
       const pieces = [...segmentTimeline.children];
       timelineParts = pieces;
@@ -51,9 +57,9 @@ class Rep {
     }
 
     // find segment template
-    segmentTemplate = jr.q('SegmentTemplate', adp)[0];
+    segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, adp)[0];
     if (!segmentTemplate) {
-      segmentTemplate = jr.q('SegmentTemplate', rep)[0];
+      segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, rep)[0];
     }
 
     if (segmentTemplate) {
@@ -71,7 +77,7 @@ class Rep {
       const timescaleAttr = jr.a('timescale', segmentTemplate);
       timescale = toInt(timescaleAttr);
 
-      const segDurationAttr = jr.a('duration', segmentTemplate);
+      const segDurationAttr = jr.a(DURATION_STR, segmentTemplate);
       segmentDuration = toInt(segDurationAttr);
     }
 
@@ -86,7 +92,7 @@ class Rep {
     if (type === kStreamType.image) {
       let dimensionAttr = '1x1';
 
-      const durationAttr = jr.a('duration', segmentTemplate);
+      const durationAttr = jr.a(DURATION_STR, segmentTemplate);
       const essential = jr.q('EssentialProperty', rep)[0];
 
       if (essential) {
@@ -153,7 +159,7 @@ class Rep {
   makeTemplatePoints(mpd, current, target, now) {
     const len = this.segmentLength();
 
-    if (mpd.type === 'static') {
+    if (mpd.type === kMPDType.static) {
       if (this.type === kStreamType.image && this.tileInfo !== null) {
         const count = Math.ceil(mpd.duration / this.tileInfo.duration);
         return (new Array(count)).fill(0).map((s, i) => i + 1);
@@ -252,8 +258,7 @@ class Rep {
     const timescale = parseFloat(this.timescale);
     const duration = parseFloat(this.segmentDuration);
 
-    if ((timescale===null && typeof timescale==='undefined') ||
-         isNaN(timescale)) { return duration * 1000; }
+    if (jr.ndef(timescale) || isNaN(timescale)) { return duration * 1000 }
 
     const ticks = Math.floor(duration / timescale);
     const size = parseInt(ticks) * 1000;

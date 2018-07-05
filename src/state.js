@@ -7,16 +7,9 @@ import { kMPDType, kStreamType } from './constants';
 import { bps, kbps, speedFactor } from './measure';
 import { mpdToM3U8, hlsPreferred, hlsMimeType } from './hls';
 
-/*
-// TODO: move within class structure
-// merge passed config with default config; returning assembled config
-function configure(config, kDefaultConfig) {
-  mergedConfig = mergeDicts(config, kDefaultConfig);
-  mergedConfig.playlist = validatePlaylist(mergedConfig.playlist);
-
-  return mergedConfig;
-}
-*/
+const BLANK = ''
+const ERR_ROOT_INJECT = "No injection point";
+const ERR_MEDIASOURCE = "MediaSource failed";
 
 class State {
   constructor(config = {}) {
@@ -28,12 +21,12 @@ class State {
       start:  0,
       timed:  0,
       track:  0,
-      query:  "",
+      query:  BLANK,
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
     this.config.query += this.config.query.match(/(^|\s)video(\s|\.|$)/) ?
-      '' : ' video';
+      BLANK : ' video';
   }
 
   setup() {
@@ -53,11 +46,9 @@ class State {
       }
       */
 
-      const root = document.querySelectorAll(this.config.query)[0];
+      const root = jr.q(this.config.query)[0];
 
-      if (jr.ndef(root)) {
-        reject("Unable to find root element for insertion query.");
-      }
+      if (jr.ndef(root)) { reject(ERR_ROOT_INJECT); }
 
       // Handle weird, browser-specific DOMExceptions
       root.onerror = (e) => {
@@ -168,18 +159,17 @@ class State {
         this.video.type = hlsMimeType;
         this.video.src = s;
 
-        console.log("streaming via gen-hls");
+        console.log("gen-hls");
         resolve(null);
       } else {
         const mediaSource = new MediaSource();
 
         mediaSource.addEventListener('sourceopen', () => {
           if (mediaSource.readyState === 'open') {
-            // console.log("Media source successfully opened");
-            console.log("streaming via mpeg-dash");
+            console.log("mpeg-dash");
             resolve(mediaSource);
           } else {
-            reject("Unable to open media source!");
+            reject(ERR_MEDIASOURCE);
           }
         });
 
@@ -192,7 +182,7 @@ class State {
     if (jr.def(ms)) {
       return URL.createObjectURL(ms);
     } else {
-      throw("Media source is invalid.");
+      throw(ERR_MEDIASOURCE);
     }
   }
 
@@ -211,7 +201,7 @@ class State {
         this.qualityQueued = null;
 
         await stream.switchToRep(repID);
-        console.log(`Consumed queued rep "${repID}"`);
+        // console.log(`Consumed queued rep "${repID}"`);
 
         this.loading = false;
 

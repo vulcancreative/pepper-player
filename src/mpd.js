@@ -6,11 +6,20 @@ import { kMPDType } from './constants';
 import { mergeDicts } from './helpers';
 import { toDuration } from './convert';
 
+const BLANK = '';
+const MPD_STR = 'MPD';
+const PREFIX = "Bad ";
+const ERR_ADPS = PREFIX + "adps";
+const ERR_DURATION = PREFIX + "duration";
+const ERR_TYPE = PREFIX + "type";
+const ERR_STARTTIME = PREFIX + "start";
+const ERR_UPDATEPERIOD = PREFIX + "update";
+
 class MPD {
   constructor(config = {}) {
     const kDefaultConfig = {
-      url: "",
-      base: "",
+      url: BLANK,
+      base: BLANK,
       data: null,
     };
 
@@ -37,7 +46,7 @@ class MPD {
     return Promise.resolve([this, speedBps]);
   }
 
-  fetch_(url = '', data) {
+  fetch_(url = BLANK, data) {
     return new Promise(resolve => {
       if (jr.def(data)) {
         resolve(data, 'data');
@@ -53,7 +62,7 @@ class MPD {
           this.fetchedOnce = true;
         }
 
-        if (jr.def(response) && response.includes(`"dynamic"`)) {
+        if (jr.def(response) && response.includes(`${kMPDType.dynamic}`)) {
           const dateHeader = xhr.getResponseHeader('Date');
           const serverTime = new Date(dateHeader);
           clock.sync(serverTime);
@@ -67,7 +76,7 @@ class MPD {
     });
   }
 
-  parse_(input = "") {
+  parse_(input) {
     const url = this.config.url;
     const baseOverride = this.config.base;
     this.mpd = this.xml_(input);
@@ -82,22 +91,22 @@ class MPD {
     this.type = this.type_(this.mpd);
     this.updatePeriod = this.updatePeriod_(this.mpd);
 
-    if (this.adps < 0) { return "Bad adps"; }
+    if (this.adps < 0) { return ERR_ADPS }
 
-    if (this.type == 'static' && this.duration == -1) {
-      return "Bad duration";
+    if (this.type == kMPDType.static && this.duration == -1) {
+      return ERR_DURATION
     }
 
-    if (this.type < 0) { return "Bad type"; }
+    if (this.type < 0) { return ERR_TYPE }
 
     // console.log(this.startTime);
     if (this.type == kMPDType.dynamic && (this.startTime == -1 ||
         isNaN(this.startTime) || jr.ndef(this.startTime))) {
-      return "Bad start time";
+      return ERR_STARTTIME
     }
 
     if (this.type == kMPDType.dynamic && this.updatePeriod < 0) {
-      return "Bad update period";
+      return ERR_UPDATEPERIOD
     }
 
     return null;
@@ -132,7 +141,7 @@ class MPD {
   // gets MPD-level base URL
   // mpd === parsed MPD XML
   baseURL_(mpd, override) {
-    let url = '';
+    let url = BLANK;
 
     if (override) { url = `${override}`; }
 
@@ -141,13 +150,13 @@ class MPD {
       url = url && url.textContent ? url.textContent.trim() : '/';
     }
 
-    return url + (url.charAt(url.length - 1) !== '/' ? '/' : '');
+    return url + (url.charAt(url.length - 1) !== '/' ? '/' : BLANK);
   }
 
   // acquires overall duration, if possible (VoD)
   // mpd === parsed MPD XML
   duration_(mpd) {
-    const root = jr.q('MPD', mpd)[0];
+    const root = jr.q(MPD_STR, mpd)[0];
     const durationAttr = jr.a('mediaPresentationDuration', root);
 
     if (jr.ndef(durationAttr) ||
@@ -162,7 +171,7 @@ class MPD {
   // far back someone can rewind a live video
   // for static videos, it's assumed one can rewind indefinitely
   dvr_(mpd) {
-    const root = jr.q('MPD', mpd)[0];
+    const root = jr.q(MPD_STR, mpd)[0];
     const dvrAttr = jr.a('timeShiftBufferDepth', root);
    
     if (jr.ndef(dvrAttr) ||
@@ -185,17 +194,17 @@ class MPD {
 
   // determined if we have a live ("dynamic") or vod ("static") stream
   type_(mpd) {
-    const root = jr.q('MPD', mpd)[0];
+    const root = jr.q(MPD_STR, mpd)[0];
 
     let type = jr.a('type', root);
 
-    if (!type || type.trim() === '') { return -1; }
+    if (!type || type.trim() === BLANK) { return -1; }
     return type.trim();
   }
 
   // acquires availability start time from MPD, if possible (live)
   startTime_(mpd) {
-    const root = jr.q('MPD', mpd)[0];
+    const root = jr.q(MPD_STR, mpd)[0];
     const startAttr = jr.a('availabilityStartTime', root);
 
     if (jr.ndef(startAttr)) {
@@ -209,7 +218,7 @@ class MPD {
   // acquires MPD update period, if possible (live)
   //) mpd === parsed MPD XML
   updatePeriod_(mpd) {
-    const root = jr.q('MPD', mpd)[0];
+    const root = jr.q(MPD_STR, mpd)[0];
     const periodAttr = jr.a('minimumUpdatePeriod', root);
 
     if (jr.ndef(periodAttr)) {
