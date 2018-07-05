@@ -55,7 +55,7 @@ class State {
 
       const root = document.querySelectorAll(this.config.query)[0];
 
-      if (root === null || typeof root === 'undefined') {
+      if (jr.ndef(root)) {
         reject("Unable to find root element for insertion query.");
       }
 
@@ -96,9 +96,7 @@ class State {
   }
 
   init_() {
-    if (this.mpd !== null && typeof this.mpd !== 'undefined') {
-      return Promise.resolve();
-    }
+    if (jr.def(this.mpd)) { return Promise.resolve() }
 
     return new Promise(async resolve => {
       const track = this.config.track;
@@ -191,7 +189,7 @@ class State {
   }
 
   url_(ms) {
-    if (ms !== null && typeof ms !== 'undefined') {
+    if (jr.def(ms)) {
       return URL.createObjectURL(ms);
     } else {
       throw("Media source is invalid.");
@@ -263,9 +261,7 @@ class State {
   }
 
   audioStream() {
-    if (this.streams === null || typeof this.streams === 'undefined') {
-      return null;
-    }
+    if (jr.ndef(this.streams)) { return null }
 
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
@@ -404,9 +400,7 @@ class State {
   }
 
   imageStream() {
-    if (this.streams === null || typeof this.streams === 'undefined') {
-      return null;
-    }
+    if (jr.ndef(this.streams)) { return null }
 
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];

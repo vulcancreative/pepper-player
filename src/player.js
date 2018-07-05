@@ -141,14 +141,7 @@ class Player {
   }
 
   currentTime() {
-    if (this.state===null || typeof this.state==='undefined') {
-      return 0;
-    }
-
-    if (this.state.video===null || typeof this.state.video==='undefined') {
-      return 0;
-    }
-
+    if (jr.ndef(this.state) || jr.ndef(this.state.video)) { return 0; }
     return this.state.video.currentTime * 1000;
   }
 
@@ -161,10 +154,7 @@ class Player {
   }
 
   isPaused() {
-    if (this.state === null || typeof this.state === 'undefined') {
-      return true;
-    }
-
+    if (jr.ndef(this.state)) { return true; }
     return this.state.paused;
   }
 
@@ -262,9 +252,7 @@ class Player {
   }
 
   seek(percentage) {
-    if (percentage === null || typeof percentage === 'undefined') {
-      return;
-    }
+    if (jr.ndef(percentage)) { return }
 
     const time = this.state.mpd.duration * (percentage / 100);
     this.config.start = time;
@@ -274,7 +262,7 @@ class Player {
   }
 
   updateTimer_(diff) {
-    if (diff <= 0) { this.init_(); return; }
+    if (diff <= 0) { this.init_(); return }
 
     setTimeout(() => {
       this.startsInMs -= 1000;

@@ -1,3 +1,4 @@
+import jr from './jr';
 import { isInt, mergeDicts } from './helpers';
 import { arrayBufferToBase64 } from './convert';
 import { kMPDType, kStreamType, kSegmentType } from './constants';
@@ -158,13 +159,8 @@ class Stream {
     return new Promise((resolve, reject) => {
       const rep = this.rep();
 
-      if (buffer === null || typeof buffer === 'undefined') {
-        reject("Buffer invalid!");
-      }
-
-      if (segment === null || typeof segment === 'undefined') {
-        reject("Segment invalid!");
-      }
+      if (jr.ndef(buffer)) { reject("Buffer invalid!") }
+      if (jr.ndef(segment)) { reject("Segment invalid!") }
 
       try {
         buffer.appendBuffer(new Uint8Array(segment.data));
@@ -217,10 +213,7 @@ class Stream {
         }
       }
 
-      if (data === null || typeof data === 'undefined') {
-        resolve(null);
-        return;
-      }
+      if (jr.ndef(data)) { resolve(null); return }
 
       if (this.type === kStreamType.image) {
         this.cache.push({
@@ -353,7 +346,7 @@ class Stream {
   segmentLength() {
     const rep = this.rep();
 
-    if (rep === null && typeof rep === 'undefined') {
+    if (jr.ndef(rep)) {
       throw(`Unable to determine segment length of rep "${rep.id}"`);
     }
 
