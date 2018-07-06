@@ -20,7 +20,7 @@ Features include:
 - [x] Mobile compatible
 
 Being incorporated from working prototype now:
-- [ ] Hooks for custom user-interface
+- [ ] Hooks for custom user-interface (in-progress)
 - [ ] Developer-friendly hooks for analysis, inline ads, et cetera
 
 Up next:
