@@ -2,7 +2,6 @@
   "name": "@pepper/pepper-player",
   "version": "2.0.0",
   "author": "Vulcan",
-  "private": true,
   "license": "Vulcan Closed-Source",
   "main": "lib/pepper.js",
   "repository": "github:chris-calo/pepper-player",
