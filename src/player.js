@@ -275,6 +275,12 @@ class Player {
     }, 1000);
   }
   */
+
+  volume(value = -1) {
+    if (jr.ndef(this.state) || jr.ndef(this.state.video)) { return -1 }
+    if (value > -1 && value <= 1) { this.state.video.volume = value }
+    return this.state.video.volume;
+  }
 }
 
 export default Player;

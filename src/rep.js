@@ -1,4 +1,5 @@
 import jr from './jr';
+import { os } from './os';
 import { toInt } from './convert';
 import { kMPDType, kStreamType } from './constants';
 
@@ -51,7 +52,11 @@ class Rep {
 
     segmentTimeline = jr.q(SEGMENTTIMELINE_STR, adp)[0];
     if (jr.def(segmentTimeline)) {
-      const pieces = [...segmentTimeline.children];
+      const s = os.is('edge') ?
+      jr.q('s', segmentTimeline) :
+      segmentTimeline.children;
+
+      const pieces = [...s];
       timelineParts = pieces;
       timeline = this.timeline_(pieces);
     }

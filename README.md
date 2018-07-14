@@ -15,16 +15,16 @@ Features include:
 - [x] Automatic or manual adaptive quality
 - [x] Lazy loading of media segments (reduces serving bandwidth)
 - [x] Client-side, on-the-fly HLS conversion (currently static only)
+- [x] Hooks for custom user-interface
 - [x] Cross-browser compatible (<= ES8)
 - [x] Fully tested, ~100% coverage
 - [x] Mobile compatible
 
 Being incorporated from working prototype now:
-- [ ] Hooks for custom user-interface (in-progress)
-- [ ] Developer-friendly hooks for analysis, inline ads, et cetera
+- [ ] Developer-friendly hooks for analysis, inline ads, et cetera (WIP)
+- [ ] Usage documentation
 
 Up next:
-- [ ] Usage documentation
 - [ ] Contribution info
 
 ## dev installation
