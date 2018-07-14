@@ -1,10 +1,10 @@
 {
   "name": "@vulcancreative/pepper-player",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "author": "Vulcan",
   "license": "Vulcan Closed-Source",
   "main": "lib/pepper.js",
-  "repository": "github:chris-calo/pepper-player",
+  "repository": "github:vulcancreative/pepper-player",
   "description": "A JavaScript-based MPEG-DASH player, but more specialer.",
   "scripts": {
     "dev": "NODE_ENV=development webpack --module-bind js=babel-loader --w",
