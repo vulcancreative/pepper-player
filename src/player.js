@@ -34,7 +34,7 @@ class Player {
         
       auto:   true,
       adapt:  true,
-      base:   1000,
+      base:   os.is('edge') ? 5000 : 1000,
       debug:  false,
       lead:   5000,
       loop:   false,
@@ -197,9 +197,6 @@ class Player {
           this.state.video.currentTime = 0;
           if (!this.config.loop) {
             this.pause();
-            if (jr.fnc(this.config.hooks.onStop)) {
-              this.config.hooks.onStop();
-            }
           }
         }
 

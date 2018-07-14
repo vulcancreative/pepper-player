@@ -162,24 +162,44 @@ class Stream {
       if (jr.ndef(buffer)) { reject("Buffer invalid!") }
       if (jr.ndef(segment)) { reject("Segment invalid!") }
 
-      try {
-        buffer.appendBuffer(new Uint8Array(segment.data));
-        /*
-         * TODO: solidfy as trace-level debug text
-        console.log(
-          `Successfully appended ${segment.type} to ` +
-          `buffer for rep "${rep.id}"`
-        );
-        */
-      } catch(err) {
-        console.log(err);
-        console.log(
-          `Failed to append ${segment.type} to buffer for ` +
-          `rep "${rep.id}"`
-        );
+      const append = () => {
+        try {
+          buffer.appendBuffer(new Uint8Array(segment.data));
+          /*
+           * TODO: solidfy as trace-level debug text
+          console.log(
+            `Successfully appended ${segment.type} to ` +
+            `buffer for rep "${rep.id}"`
+          );
+          */
+        } catch(err) {
+          console.log(err);
+          console.log(
+            `Failed to append ${segment.type} to buffer for ` +
+            `rep "${rep.id}"`
+          );
+        }
+      };
+
+      if (buffer.updating) {
+        console.log("buffer still updating");
+        buffer.onupdateend = () => {
+          console.log("buffer ready after delay");
+          console.log(`appending ${segment.type}`);
+          append();
+          buffer.onupdateend = (() => resolve(buffer));
+        };
+      } else {
+        console.log("buffer ready");
+        console.log(`appending ${segment.type}`);
+        append();
+        buffer.onupdateend = (() => resolve(buffer));
       }
 
+     /*
       buffer.onupdateend = (() => resolve(buffer));
+      append();
+     */
     });
   }
 

@@ -11,9 +11,11 @@ const mimeType = "application/vnd.apple.mpegurl";
 
 const hlsSupported = () => {
   const kHLSType = mimeType;
-
   let video = document.createElement('video');
-  return video.canPlayType && !!video.canPlayType(kHLSType);
+
+  return video.canPlayType &&
+  !!video.canPlayType(kHLSType) &&
+  !('MediaSource' in window);
 }
 
 const hlsPreferred = () => {

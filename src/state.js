@@ -52,8 +52,11 @@ class State {
 
       // Handle weird, browser-specific DOMExceptions
       root.onerror = (e) => {
-        // console.error(e.target.error.message);
-        console.error(e);
+        if (e.target && e.target.error) {
+          console.error(e.target.error);
+        } else {
+          console.error(e);
+        }
       };
 
       /*
@@ -78,9 +81,11 @@ class State {
       if (this.mpdUpdateInterval) { clearInterval(this.mpdUpdateInterval) }
 
       await this.init_()
+      /*
       if (jr.fnc(this.config.hooks.onReady)) {
         this.config.hooks.onReady();
       }
+      */
 
       resolve();
     });
@@ -205,9 +210,11 @@ class State {
 
         this.loading = false;
 
+        /*
         if (jr.fnc(this.config.hooks.onAdapt)) {
           this.config.hooks.onAdapt(this.currentBitrate());
         }
+        */
 
         resolve(true);
       // handle automatic quality switching
@@ -231,9 +238,11 @@ class State {
               if (i === this.streams.length - 1) {
                 this.loading = false;
 
+                /*
                 if (jr.fnc(this.config.hooks.onAdapt)) {
                   this.config.hooks.onAdapt(this.currentBitrate());
                 }
+                */
 
                 resolve(true);
               }
@@ -403,9 +412,11 @@ class State {
   pause() {
     this.paused = true;
 
+    /*
     if (jr.fnc(this.config.hooks.onPause)) {
       this.config.hooks.onPause();
     }
+    */
 
     return this.video.pause();
   }
@@ -413,9 +424,11 @@ class State {
   play() {
     this.paused = false;
         
+    /*
     if (jr.fnc(this.config.hooks.onPlay)) {
       this.config.hooks.onPlay();
     }
+    */
 
     return this.video.play();
   }
