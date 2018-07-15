@@ -1,6 +1,6 @@
 {
   "name": "@vulcancreative/pepper-player",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "author": "Vulcan",
   "license": "Vulcan Closed-Source",
   "main": "lib/pepper.js",

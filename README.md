@@ -37,7 +37,7 @@ Up next:
 
 ## versioning
 
-pepper is our interpretation of a [new(ish), living standard](http://standards.iso.org/ittf/PubliclyAvailableStandards/c057623_ISO_IEC_23009-1_2012.zip). But, we frequently liken its lifespan to that of a "perpetually-awkward teenager – complete with headgear, a speech-impediment, and uncomfortably-pointy classroom boners."
+pepper is our interpretation of a [newish, living standard](http://standards.iso.org/ittf/PubliclyAvailableStandards/c057623_ISO_IEC_23009-1_2012.zip). But, we frequently liken its lifespan to that of a "perpetually-awkward teenager – complete with headgear, a speech-impediment, and uncomfortably-pointy classroom boners."
 
 We first made the player to help ease the development of a client app, starting in November of 2016. Due to timeline restrictions, we hastily built pepper twice that winter – resulting in v1.0. First written in nasty ol' [CoffeeScript](https://github.com/jashkenas/coffeescript), pepper has since adopted the ECMAScript standard. Our goal is to build a compact, yet quick and maintainable, library. This round-about journey has lead our little player to be re-written ~5 times in 2.5 years… YIKES!
 
