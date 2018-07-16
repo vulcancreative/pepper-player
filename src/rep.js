@@ -52,11 +52,20 @@ class Rep {
 
     segmentTimeline = jr.q(SEGMENTTIMELINE_STR, adp)[0];
     if (jr.def(segmentTimeline)) {
-      const s = os.is('edge') ?
-      jr.q('s', segmentTimeline) :
-      segmentTimeline.children;
+      let s = [];
 
-      const pieces = [...s];
+      if (os.is('edge')) {
+        const nodes = segmentTimeline.childNodes;
+        for (let i = 0; i != nodes.length; i++) {
+          const node = nodes[i];
+
+          if (node.nodeName.toLowerCase() === 's') { s.push(node) }
+        }
+      } else {
+        s = segmentTimeline.children;
+      }
+
+      const pieces = s;
       timelineParts = pieces;
       timeline = this.timeline_(pieces);
     }
@@ -147,18 +156,39 @@ class Rep {
   }
 
   makeTimelinePoints(last) {
-    let pos = 0, current = last, result;
+    let pos = 0, current = last, result = [], end;
 
-    while (current <= last) {
-      result = this.timeline[pos];
-      current = result;
+    while (current <= last) { current = this.timeline[pos++] }
+    pos -= 1; // fix trailing incrementation, without additional branching
+
+    // ensure enough known segments to advance
+    if (this.timeline.length >= pos + 5) {
+      end = pos + 5;
+    } else {
+      const diff = this.timeline.length - pos;
+
+      if (diff <= 0) { return [[], last]; }
+      end = pos + diff - 1;
+    }
+
+    while(pos < end) {
+      result.push(this.timeline[pos]);
       pos++;
     }
 
-    console.log(`${last}, ${result}`);
-    if (last === result) { throw("last === result") }
+    // ensure unique results
+    result = result.filter((v, i, a) => a.indexOf(v) === i);
+    if (result.length < 1) { return [[], last] }
 
-    return [[result], result];
+    console.log(result);
+    for (let i = 0; i != result.length; i++) {
+      const data = result[i];
+      console.log(`${last}, ${data}`);
+      if (last >= data) { throw("last >= data") }
+    }
+
+    // array of results, and last value + smallest possible rep seg length
+    return [result, result[result.length - 1] + this.segmentLength()];
   }
 
   makeTemplatePoints(mpd, current, target, now) {
