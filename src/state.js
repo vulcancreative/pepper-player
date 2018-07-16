@@ -1,5 +1,6 @@
 import jr from './jr';
 import clock from './clock';
+import Hooks from './hooks';
 import { MPD } from './mpd';
 import { Stream } from './stream';
 import { mergeDicts } from './helpers';
@@ -12,10 +13,9 @@ const ERR_ROOT_INJECT = "No injection point";
 const ERR_MEDIASOURCE = "MediaSource failed";
 
 class State {
-  constructor(config = {}) {
+  constructor(config = {}, hooks = new Hooks()) {
     const kDefaultConfig = {
       playlist: [],
-      hooks:  {},
       base:   0,
       lead:   0,
       start:  0,
@@ -27,6 +27,8 @@ class State {
     this.config = mergeDicts(config, kDefaultConfig);
     this.config.query += this.config.query.match(/(^|\s)video(\s|\.|$)/) ?
       BLANK : ' video';
+
+    this.hooks = hooks;
   }
 
   setup() {
@@ -81,11 +83,7 @@ class State {
       if (this.mpdUpdateInterval) { clearInterval(this.mpdUpdateInterval) }
 
       await this.init_()
-      /*
-      if (jr.fnc(this.config.hooks.onReady)) {
-        this.config.hooks.onReady();
-      }
-      */
+      this.hooks.run('onReady');
 
       resolve();
     });
@@ -142,7 +140,7 @@ class State {
           mediaSource: mediaSource,
           mpd: mpd,
           sources: mpd.adps[i].reps,
-        });
+        }, this.hooks);
 
         stream.setup().then(() => {
           streams.push(stream);
@@ -209,12 +207,7 @@ class State {
         // console.log(`Consumed queued rep "${repID}"`);
 
         this.loading = false;
-
-        /*
-        if (jr.fnc(this.config.hooks.onAdapt)) {
-          this.config.hooks.onAdapt(this.currentBitrate());
-        }
-        */
+        this.hooks.run('onAdapt', this.currentBitrate());
 
         resolve(true);
       // handle automatic quality switching
@@ -237,12 +230,7 @@ class State {
             stream.switchToRep(rep.id).then(() => {
               if (i === this.streams.length - 1) {
                 this.loading = false;
-
-                /*
-                if (jr.fnc(this.config.hooks.onAdapt)) {
-                  this.config.hooks.onAdapt(this.currentBitrate());
-                }
-                */
+                this.hooks.run('onAdapt', this.currentBitrate());
 
                 resolve(true);
               }
@@ -349,6 +337,8 @@ class State {
           // remove already cached point; prevents toe-stepping
           points = points.filter(p => !duplicates.includes(p));
           // if (points.length > 0) { console.log(`points : ${points}`); }
+          
+          if (points.length > 0) { this.hooks.run('onBufferStart') }
 
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
@@ -362,6 +352,8 @@ class State {
                 payloadSize += dataSize;
 
                 if (lastStream && lastPoint) {
+                  this.hooks.run('onBufferEnd');
+
                   payloadEnd = clock.init().getTime();
 
                   // const bufferLength = stream.bufferLength();
@@ -411,24 +403,14 @@ class State {
 
   pause() {
     this.paused = true;
-
-    /*
-    if (jr.fnc(this.config.hooks.onPause)) {
-      this.config.hooks.onPause();
-    }
-    */
+    this.hooks.run('onPause');
 
     return this.video.pause();
   }
 
   play() {
     this.paused = false;
-        
-    /*
-    if (jr.fnc(this.config.hooks.onPlay)) {
-      this.config.hooks.onPlay();
-    }
-    */
+    this.hooks.run('onPlay');
 
     return this.video.play();
   }

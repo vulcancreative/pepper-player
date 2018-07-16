@@ -38,13 +38,12 @@
       </div>
     </div>
     <script type="text/javascript">
-      /*
       // Streamlyzer test
       var player = new pepper.Player();
       window.player = player;
 
       var observer = new szrpg.playbackObserver({
-        customerKey: '354715413d8e41d79c',
+        customerKey: 'a82b22517ef946aa8c',
         isLive: false,
 
         cbGetDuration: () => player.duration(),
@@ -85,13 +84,13 @@
           observer.onPlayerStop();
           location.reload();
         },
-        onStallStarted: () => {
-          console.log("Player stalled");
+        onBufferStart: () => {
+          console.log("Player buffer started");
           observer.onBufferingStart();
         },
-        onStallEnded: () => {
-          console.log("Player playing");
-          observer.onPlayerPlay();
+        onBufferEnd: () => {
+          console.log("Player buffer ended");
+          observer.onBufferingEnd();
         },
         onError: error => {
           console.log("Player errored out");
@@ -104,7 +103,6 @@
       };
 
       player.play();
-      */
 
       /*
       // TFOD 1.0 media test
@@ -178,6 +176,7 @@
       });
       */
 
+      /*
       // live echo test
       var player = new pepper.Player({
         playlist: [
@@ -192,6 +191,7 @@
           }
         ]
       });
+      */
 
       /*
       // deferred live echo test

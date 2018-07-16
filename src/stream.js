@@ -1,10 +1,11 @@
 import jr from './jr';
+import Hooks from './hooks';
 import { isInt, mergeDicts } from './helpers';
 import { arrayBufferToBase64 } from './convert';
 import { kMPDType, kStreamType, kSegmentType } from './constants';
 
 class Stream {
-  constructor(config = {}) {
+  constructor(config = {}, hooks = new Hooks()) {
     const kDefaultConfig = {
       adp: null,
       id:  null,
@@ -14,6 +15,7 @@ class Stream {
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
+    this.hooks = hooks;
 
     this.mediaSource = this.config.mediaSource;
 
@@ -80,11 +82,17 @@ class Stream {
       }
       */
 
+      let bufferStarted = false;
       const initSegments = await Promise.all(this.sources.map(source => {
         return new Promise(resolve => {
         const initURL = source.initURL();
 
           this.fetchSegment_(initURL).then((data) => {
+            if (!bufferStarted) {
+              this.hooks.run('onBufferStart');
+              bufferStarted = true;
+            }
+
             const segment = {
               type: kSegmentType.init,
               rep: source.id,
@@ -110,6 +118,7 @@ class Stream {
         }
       }
 
+      this.hooks.run('onBufferEnd');
       resolve(cache);
     });
   }

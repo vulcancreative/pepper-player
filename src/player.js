@@ -1,5 +1,6 @@
 import jr from './jr';
 import { os } from './os';
+import Hooks from './hooks';
 import { State } from './state';
 import { mergeDicts } from './helpers';
 import { kMPDType } from './constants';
@@ -21,15 +22,15 @@ class Player {
       ],
 
       hooks: {
-        // onReady: 0,
-        // onPlay: 0,
-        // onPause: 0,
-        // onStop: 0,
-        // onSeek: 0,
-        // onStallStarted: 0,
-        // onStallEnded: 0,
-        // onError: 0,
-        // onAdapt: 0,
+        // onReady: null,
+        // onPlay: null,
+        // onPause: null,
+        // onStop: null,
+        // onSeek: null,
+        // onBufferStart: null,
+        // onBufferEnd: null,
+        // onError: null,
+        // onAdapt: null,
       },
         
       auto:   true,
@@ -66,6 +67,7 @@ class Player {
 
   async setup_() {
     this.initialized = true;
+    this.hooks = new Hooks(this.config.hooks);
 
     if (!this.config.query.length || this.config.query.length < 1) {
       throw("Invalid insertion query.");
@@ -75,7 +77,7 @@ class Player {
     if (this.config.lead < 1000) { this.config.lead = 1000; }
 
     this.renderUI();
-    this.state = new State(this.config);
+    this.state = new State(this.config, this.hooks);
 
     await this.state.setup();
     console.log("State ready");
