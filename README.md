@@ -22,6 +22,7 @@ Features include:
 - [x] Mobile compatible
 
 Being incorporated from working prototype now:
+- [ ] DRM and CENC compliance
 - [ ] Usage documentation
 
 Up next:

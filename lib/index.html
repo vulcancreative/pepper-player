@@ -106,6 +106,20 @@
       player.play();
       */
 
+      // Cole test
+      var player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url: "https://dz9p2tkdnp8h0.cloudfront.net/index.mpd"
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ]
+      });
+
       /*
       // TFOD 1.0 media test
       var player = new pepper.Player({
@@ -178,6 +192,7 @@
       });
       */
 
+      /*
       // live echo test
       var player = new pepper.Player({
         playlist: [
@@ -192,6 +207,7 @@
           }
         ]
       });
+      */
 
       /*
       // deferred live echo test
