@@ -50,26 +50,6 @@ class Rep {
     baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
     baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? BLANK : '/';
 
-    segmentTimeline = jr.q(SEGMENTTIMELINE_STR, adp)[0];
-    if (jr.def(segmentTimeline)) {
-      let s = [];
-
-      if (os.is('edge')) {
-        const nodes = segmentTimeline.childNodes;
-        for (let i = 0; i != nodes.length; i++) {
-          const node = nodes[i];
-
-          if (node.nodeName.toLowerCase() === 's') { s.push(node) }
-        }
-      } else {
-        s = segmentTimeline.children;
-      }
-
-      const pieces = s;
-      timelineParts = pieces;
-      timeline = this.timeline_(pieces);
-    }
-
     // find segment template
     segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, adp)[0];
     if (!segmentTemplate) {
@@ -87,12 +67,33 @@ class Rep {
 
       const startNumAttr = jr.a('startNumber', segmentTemplate);
       startNumber = toInt(startNumAttr);
+      // console.log(`startNumAttr : ${startNumAttr}`);
 
       const timescaleAttr = jr.a('timescale', segmentTemplate);
       timescale = toInt(timescaleAttr);
 
       const segDurationAttr = jr.a(DURATION_STR, segmentTemplate);
       segmentDuration = toInt(segDurationAttr);
+    }
+
+    segmentTimeline = jr.q(SEGMENTTIMELINE_STR, adp)[0];
+    if (jr.def(segmentTimeline)) {
+      let s = [];
+
+      if (os.is('edge')) {
+        const nodes = segmentTimeline.childNodes;
+        for (let i = 0; i != nodes.length; i++) {
+          const node = nodes[i];
+
+          if (node.nodeName.toLowerCase() === 's') { s.push(node) }
+        }
+      } else {
+        s = segmentTimeline.children;
+      }
+
+      const pieces = s;
+      timelineParts = pieces;
+      timeline = this.timeline_(pieces, startNumber);
     }
 
     if (mimeType && mimeType.includes('video') && width && height) {
@@ -305,30 +306,37 @@ class Rep {
     return this.width + this.height + this.bandwidth;
   }
 
-  timeline_(points) {
+  timeline_(points, startNumber) {
     let timeline = [];
-    let lastTime = 0;
 
-    for (let i = 0; i != points.length; i++) {
-      const point = points[i];
+    if (startNumber) {
+      for (let i = 0; i < 20; i++) {
+        timeline.push(startNumber + i);
+      }
+    } else {
+      let lastTime = 0;
 
-      let t = parseInt(jr.a('t', point));
-      let d = parseInt(jr.a('d', point));
-      let r = parseInt(jr.a('r', point));
+      for (let i = 0; i != points.length; i++) {
+        const point = points[i];
 
-      // normalize t
-      t -= this.presentationTime;
+        let t = parseInt(jr.a('t', point));
+        let d = parseInt(jr.a('d', point));
+        let r = parseInt(jr.a('r', point));
 
-      // normalize r
-      r = isNaN(r) || r < 1 ? 1 : r;
+        // normalize t
+        t -= this.presentationTime;
 
-      let startTime = jr.def(t) && !isNaN(t) ? t : lastTime;
+        // normalize r
+        r = isNaN(r) || r < 1 ? 1 : r;
 
-      for (let j = 0; j != r; j++) {
-        let endTime = startTime + d * (j + 1);
-        timeline.push(endTime);
+        let startTime = jr.def(t) && !isNaN(t) ? t : lastTime;
 
-        lastTime = endTime;
+        for (let j = 0; j != r; j++) {
+          let endTime = startTime + d * (j + 1);
+          timeline.push(endTime);
+
+          lastTime = endTime;
+        }
       }
     }
 
