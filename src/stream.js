@@ -191,16 +191,11 @@ class Stream {
       };
 
       if (buffer.updating) {
-        console.log("buffer still updating");
         buffer.onupdateend = () => {
-          console.log("buffer ready after delay");
-          console.log(`appending ${segment.type}`);
           append();
           buffer.onupdateend = (() => resolve(buffer));
         };
       } else {
-        console.log("buffer ready");
-        console.log(`appending ${segment.type}`);
         append();
         buffer.onupdateend = (() => resolve(buffer));
       }

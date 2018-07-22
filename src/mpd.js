@@ -29,12 +29,12 @@ class MPD {
 
   async setup() {
     let payloadSize = 0;
-    let payloadStart = clock.init().getTime(), payloadEnd;
+    let payloadStart = (new Date()).getTime(), payloadEnd;
 
     const result = await this.fetch_(this.config.url, this.config.data);
 
     payloadSize += result.length;
-    payloadEnd = clock.init().getTime();
+    payloadEnd = (new Date()).getTime();
     
     const delta = (payloadEnd - payloadStart) / 1000;
     const speedBps = bps(payloadSize, delta);

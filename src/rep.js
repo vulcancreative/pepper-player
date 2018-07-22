@@ -51,9 +51,9 @@ class Rep {
     baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? BLANK : '/';
 
     // find segment template
-    segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, adp)[0];
+    segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, rep)[0];
     if (!segmentTemplate) {
-      segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, rep)[0];
+      segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, adp)[0];
     }
 
     if (segmentTemplate) {
@@ -133,7 +133,8 @@ class Rep {
     this.timeline = timeline;
     this.mediaTemplate = mediaTemplate;
     this.initialization = initialization;
-    this.startNumber = startNumber;
+    this.startNumber = !startNumber || typeof startNumber === 'undefined' ?
+    null : startNumber;
     this.timescale = timescale;
     this.segmentDuration = segmentDuration;
     this.tileInfo = tileInfo;
@@ -181,11 +182,13 @@ class Rep {
     result = result.filter((v, i, a) => a.indexOf(v) === i);
     if (result.length < 1) { return [[], last] }
 
-    console.log(result);
     for (let i = 0; i != result.length; i++) {
       const data = result[i];
-      console.log(`${last}, ${data}`);
       if (last >= data) { throw("last >= data") }
+    }
+
+    if (this.startNumber) {
+      return [result, result[result.length - 1]];
     }
 
     // array of results, and last value + smallest possible rep seg length
@@ -310,7 +313,7 @@ class Rep {
     let timeline = [];
 
     if (startNumber) {
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 5; i++) {
         timeline.push(startNumber + i);
       }
     } else {

@@ -63,19 +63,14 @@ class Adp {
   }
 
   matchBandwidth(speedBps) {
-    let pos = 0, current = this.reps[pos].bandwidth;
+    const goal = speedBps;
+    const bandwidths = this.reps.map(r => r.bandwidth);
 
-    for (let i = 1; i < this.reps.length; i++) {
-      const rep = this.reps[i];
-      const bits = rep.bandwidth;
+    const closest = bandwidths.reduce((prev, current) =>
+      Math.abs(current - goal) < Math.abs(prev - goal) ? current : prev
+    );
 
-      if (Math.abs(speedBps * 0.8 - bits) < Math.abs(bits - current)) {
-        pos = i;
-        current = bits;
-      }
-    }
-
-    return this.reps[pos];
+    return this.reps.find(r => r.bandwidth === closest);
   }
 
   /*

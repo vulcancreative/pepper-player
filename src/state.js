@@ -132,7 +132,7 @@ class State {
 
       for (let i = 0; i < mpd.adps.length; i++) {
         const adp = mpd.adps[i];
-        const rep = adp.bestRep(this.mpdDownloadSpeed);
+        const rep = adp.bestRep(this.mpdDownloadSpeed * 4);
 
         const stream = new Stream({
           adp: adp,
@@ -192,8 +192,6 @@ class State {
   adjustQuality(speed = 0, factor = 1.0) {
     // fail if actively buffering
     if (this.loading) { return Promise.resolve(false); }
-
-    this.loading = true;
 
     return new Promise(async resolve => {
       // handle queued, fixed quality
@@ -281,9 +279,9 @@ class State {
     const dynamic = this.mpd.type === kMPDType.dynamic;
 
     // fail if actively buffering
-    if (this.loading) { return Promise.resolve([0, 0, 0]); }
+    if (this.loading) { return Promise.resolve([-1, -1, -1]); }
     if (this.started && this.paused) {
-      return Promise.resolve([0, 0, 0]);
+      return Promise.resolve([-1, -1, -1]);
     }
 
     // base line time used for live buffering
@@ -291,9 +289,10 @@ class State {
     const lens = this.segmentLengths();
     const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
 
-    if (dynamic) {
+    const startNumbers = this.streams.map(s => s.rep().startNumber);
+    if (dynamic && startNumbers.includes(null)) {
       if (this.lastTime && now - this.lastTime < minTime) {
-        return Promise.resolve([0, 0, 0]);
+        return Promise.resolve([-1, -1, -1]);
       }
     }
 
@@ -314,7 +313,9 @@ class State {
       let payloadStart = clock.init().getTime(), payloadEnd;
 
       // load-based lock
-      this.loading = true;
+      if (!dynamic || (dynamic && startNumbers.includes(null))) {
+        this.loading = true;
+      }
 
       // double reducer for serialized Promise returns
       // prevents the need for a (potentially) very large recursion stack
@@ -336,14 +337,18 @@ class State {
 
           // remove already cached point; prevents toe-stepping
           points = points.filter(p => !duplicates.includes(p));
-          // if (points.length > 0) { console.log(`points : ${points}`); }
           
-          if (points.length > 0) { this.hooks.run('onBufferStart') }
+          if (points.length > 0) {
+            this.hooks.run('onBufferStart')
+          } else {
+            this.loading = false;
+            resolve([-1, -1, -1]);
+          }
 
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
               return stream.fillBuffer(point).then((dataSize) => {
-                if (jr.ndef(dataSize)) { resolve([0, 0, 0]); return; }
+                if (jr.ndef(dataSize)) { resolve([-1, -1, -1]); return; }
 
                 const lastStream = streamIndex === this.streams.length-1;
                 const lastPoint = pointIndex === points.length - 1;
@@ -360,7 +365,11 @@ class State {
                   const delta = (payloadEnd - payloadStart) / 1000;
                   const speedBps = bps(payloadSize, delta);
                   const speedKbps = kbps(payloadSize, delta);
-                  const factor = speedFactor(speedKbps, payloadSize, lead);
+                  const factor = speedFactor(
+                    speedKbps,
+                    payloadSize,
+                    payloadEnd - payloadStart
+                  );
 
                   this.bufferTime = end;
 

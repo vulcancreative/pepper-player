@@ -221,7 +221,9 @@ class Player {
           await this.state.play();
         }
 
-        this.state.adjustQuality(speed, factor);
+        if (speed >= 0 && factor >= 0) {
+          await this.state.adjustQuality(speed, factor);
+        }
 
         return Promise.resolve();
       }, waitTime);
