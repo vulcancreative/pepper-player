@@ -61,6 +61,43 @@ class State {
         }
       };
 
+      root.addEventListener('encrypted', () => {
+        const root = jr.q(this.config.query)[0];
+        const keys = root.mediaKeys;
+
+        if (keys === null || typeof keys === 'undefined') {
+          if (window.navigator.requestMediaKeySystemAccess) {
+            const widevine = "com.widevine.alpha";
+
+            const c = [{
+              "initDataTypes": ["cenc"],
+              "audioCapabilities": [{
+                "contentType": "audio/mp4;codecs=\"mp4a.40.2\"",
+                robustness: 'SW_SECURE_CRYPTO',
+              }],
+              "videoCapabilities": [{
+                "contentType": "video/mp4;codecs=\"avc1.42E01E\"",
+                robustness: 'SW_SECURE_CRYPTO',
+              }]
+            }];
+
+            try {
+              navigator.requestMediaKeySystemAccess(widevine, c)
+              .then(() => {
+                console.log('widevine support ok');
+              })
+              .catch((e) => {
+                console.log('no widevine support');
+                console.log(e);
+              });
+            } catch (e) {
+              console.log('no widevine support');
+              console.log(e);
+            }
+          }
+        }
+      });
+
       /*
       root.addEventListener('waiting', () => {
         console.error("VIDEO FIRED WAITING EVENT");

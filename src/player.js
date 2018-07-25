@@ -32,6 +32,18 @@ class Player {
         // onError: null,
         // onAdapt: null,
       },
+
+      drm: {
+        playready: {
+          url: '',
+          data: '',
+        },
+
+        widevine: {
+          url: '',
+          data: '',
+        },
+      },
         
       auto:   true,
       adapt:  true,
