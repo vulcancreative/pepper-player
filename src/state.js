@@ -247,6 +247,11 @@ class State {
         resolve(true);
       // handle automatic quality switching
       } else if (this.qualityAuto) {
+        if (this.streams===null || typeof this.streams==='undefined') {
+          resolve(false);
+          return;
+        }
+
         for (let i = 0; i < this.streams.length; i++) {
           const stream = this.streams[i];
           const adp = stream.adp;
@@ -324,6 +329,8 @@ class State {
     // base line time used for live buffering
     const now = clock.now();
     const lens = this.segmentLengths();
+    if (lens < 0) { return Promise.resolve([-1, -1, -1]) }
+
     const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
 
     const startNumbers = this.streams.map(s => s.rep().startNumber);
@@ -493,6 +500,10 @@ class State {
   }
 
   segmentLengths() {
+    if (this.streams === null || typeof this.streams === 'undefined') {
+      return -1;
+    }
+
     return this.streams.map(stream => stream.segmentLength());
   }
 

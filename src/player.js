@@ -158,7 +158,13 @@ class Player {
 
   currentTime() {
     if (jr.ndef(this.state) || jr.ndef(this.state.video)) { return 0; }
-    return this.state.video.currentTime * 1000;
+
+    // return this.forcedCurrentTime ||
+    // this.state.video.currentTime * 1000;
+    
+    return this.forcedCurrentTime ?
+    this.forcedCurrentTime + this.state.video.currentTime * 1000 :
+    this.state.video.currentTime * 1000;
   }
 
   didEnd() {
@@ -196,6 +202,7 @@ class Player {
 
     if (type === kMPDType.static) {
       this.state.video.ontimeupdate = async () => {
+        console.log('attempting update');
         const currentTime = this.currentTime();
         const bufferTime = this.bufferTime();
         const leadTime = this.config.lead;
@@ -275,6 +282,8 @@ class Player {
 
     const time = this.state.mpd.duration * (percentage / 100);
     this.config.start = time;
+    this.forcedCurrentTime = time;
+    console.log(`forcedCurrentTime : ${this.forcedCurrentTime}`);
 
     this.pause();
     this.setup_();
