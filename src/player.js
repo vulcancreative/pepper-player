@@ -82,7 +82,7 @@ class Player {
     this.hooks = new Hooks(this.config.hooks);
 
     if (!this.config.query.length || this.config.query.length < 1) {
-      throw("Invalid insertion query.");
+      throw("Invalid insertion query");
     }
 
     if (this.config.base < 100) { this.config.base = 100; }
@@ -277,16 +277,21 @@ class Player {
     }
   }
 
-  seek(percentage) {
+  async seek(percentage) {
     if (jr.ndef(percentage)) { return }
 
     const time = this.state.mpd.duration * (percentage / 100);
     this.config.start = time;
     this.forcedCurrentTime = time;
-    console.log(`forcedCurrentTime : ${this.forcedCurrentTime}`);
+    this.state.bufferTime = time;
 
-    this.pause();
-    this.setup_();
+    this.state = new State(this.config, this.hooks);
+
+    await this.state.setup();
+    this.init_();
+
+    // this.pause();
+    // this.setup_();
   }
 
   /*
