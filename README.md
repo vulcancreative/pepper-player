@@ -42,6 +42,6 @@ pepper is our interpretation of a [newish, living standard](http://standards.iso
 
 We first made the player to help ease the development of a client app, starting in November of 2016. Due to timeline restrictions, we hastily built pepper twice that winter – resulting in v1.0. First written in nasty ol' [CoffeeScript](https://github.com/jashkenas/coffeescript), pepper has since adopted the ECMAScript standard. Our goal is to build a compact, yet quick and maintainable, library. This round-about journey has lead our little player to be re-written ~5 times in 2.5 years… YIKES!
 
-v2.X – the current stable, production version – was scratch-made, using modern practices. It remains the de facto player for many, large clients. Daily, it serves terabytes of on-demand and live clients data to the unaware masses. If asked, most have no idea what pepper is or where it came from. Who knew something so discreet could have such an impact?!
+v2.X – the current stable, production version – was scratch-made, using modern practices. It remains the de-facto player for many, large clients. Daily, it serves terabytes of on-demand and live data, on behalf of clients, to the unaware masses. If asked, most have no idea what pepper is or where it came from. Who knew something so discreet could have such an impact?!
 
 And in case anyone asks… shh… don't tell! It'll spoil the surprise!
