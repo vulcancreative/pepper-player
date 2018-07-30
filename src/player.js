@@ -1,6 +1,6 @@
 import jr from './jr';
-import { os } from './os';
 import Hooks from './hooks';
+import { os } from './os';
 import { State } from './state';
 import { mergeDicts } from './helpers';
 import { kMPDType } from './constants';
@@ -137,7 +137,10 @@ class Player {
           this.state.video.currentTime = start;
         }
 
-        if (!this.lazyStart) { this.play(); }
+        if (!this.lazyStart || this.browserBlocked) {
+          this.browserBlocked = false;
+          this.play();
+        }
       }
     }
     
@@ -195,14 +198,27 @@ class Player {
   }
 
   async play() {
+    this.recoverBlock_();
     if (!this.initialized) { this.lazyStart = true; await this.setup_() }
 
     const type = this.state.mpd.type;
-    await this.state.play();
+
+    try {
+      await this.state.play();
+    } catch(e) {
+      const error = "browser blocked player start";
+      console.error(`ERROR : ${error}`);
+      this.hooks.run('onError', error);
+
+      this.browserBlocked = true;
+      await this.state.pause();
+    }
 
     if (type === kMPDType.static) {
       this.state.video.ontimeupdate = async () => {
         console.log('attempting update');
+        this.recoverBlock_();
+
         const currentTime = this.currentTime();
         const bufferTime = this.bufferTime();
         const leadTime = this.config.lead;
@@ -233,11 +249,23 @@ class Player {
       // this.state.video.ontimeupdate = () => this.renderUI();
 
       setInterval(async () => {
+        console.log('attempting update');
+        this.recoverBlock_();
+
         const [speed, factor] = await this.state.fillBuffers(maxTime);
         this.lastSpeed = speed;
 
         if (this.config.auto && !this.isPaused()) {
-          await this.state.play();
+          try {
+            await this.state.play();
+          } catch(e) {
+            const error = "browser blocked player start";
+            console.error(`ERROR : ${error}`);
+            this.hooks.run('onError', error);
+
+            this.browserBlocked = true;
+            await this.state.pause();
+          }
         }
 
         if (speed >= 0 && factor >= 0) {
@@ -286,7 +314,6 @@ class Player {
     this.state.bufferTime = time;
 
     this.state = new State(this.config, this.hooks);
-
     await this.state.setup();
     this.init_();
 
@@ -310,6 +337,19 @@ class Player {
     if (jr.ndef(this.state) || jr.ndef(this.state.video)) { return -1 }
     if (value > -1 && value <= 1) { this.state.video.volume = value }
     return this.state.video.volume;
+  }
+
+  async recoverBlock_() {
+    if (this.browserBlocked) {
+      console.log("recovering from browser block");
+      this.state = new State(this.config, this.hooks);
+      await this.state.setup();
+      this.init_();
+
+      return true;
+    }
+
+    return false;
   }
 }
 
