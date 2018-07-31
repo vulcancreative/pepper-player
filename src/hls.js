@@ -16,6 +16,12 @@ const hlsSupported = () => {
   return video.canPlayType &&
   !!video.canPlayType(kHLSType) &&
   !('MediaSource' in window);
+
+  /*
+  // force desktop Safari to play HLS
+  return video.canPlayType &&
+  !!video.canPlayType(kHLSType);
+  */
 }
 
 const hlsPreferred = () => {

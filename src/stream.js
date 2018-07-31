@@ -114,6 +114,10 @@ class Stream {
           this.appendBuffer(this.buffer, segment).then((buffer) => {
             this.buffer = buffer;
             resolve();
+          })
+          .catch(() => {
+            console.warn("WARNING: buffer not ready");
+            resolve();
           });
         }
       }
@@ -259,7 +263,14 @@ class Stream {
       });
 
       const i = this.cache.length - 1;
-      this.buffer = await this.appendBuffer(this.buffer, this.cache[i]);
+
+      try {
+        this.buffer = await this.appendBuffer(this.buffer, this.cache[i]);
+      } catch(e) {
+        console.warn("WARNING: buffer not ready");
+        resolve(null);
+      }
+
       resolve(data.byteLength);
     });
   }
@@ -391,6 +402,10 @@ class Stream {
               if (source.id === repID) { this.id = source.id; break; }
             }
 
+            resolve();
+          })
+          .catch(() => {
+            console.warn("WARNING: buffer not ready");
             resolve();
           });
         }

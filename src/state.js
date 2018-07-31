@@ -194,13 +194,25 @@ class State {
   mediaSource_() {
     return new Promise((resolve, reject) => {
       if (this.usingHLS()) {
-        const s = `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
+        const track = this.config.track;
+        const current = this.config.playlist[track];
+        const hls = current.hls;
 
-        this.video.type = hlsMimeType;
-        this.video.src = s;
+        if (hls.url && hls.url.length && hls.url.length > 0) {
+          this.video.type = hlsMimeType;
+          this.video.src = hls.url;
 
-        console.log("gen-hls");
-        resolve(null);
+          console.log("url-hls");
+          resolve(null);
+        } else {
+          const s = `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
+
+          this.video.type = hlsMimeType;
+          this.video.src = s;
+
+          console.log("gen-hls");
+          resolve(null);
+        }
       } else {
         const mediaSource = new MediaSource();
 
@@ -232,14 +244,20 @@ class State {
 
     return new Promise(async resolve => {
       // handle queued, fixed quality
-      if (!this.qualityAuto && this.qualityQueued !== null) {
-        const stream = this.qualityQueued.stream;
-        const repID = this.qualityQueued.repID;
+      console.log(`qualityAuto : ${this.qualityAuto}`);
+      console.log(`qualityQueued : ${this.qualityAuto}`);
 
+      if (!this.qualityAuto && this.qualityQueued !== null) {
+        const stream = this.videoStream();
+        const repID = this.qualityQueued.rep.id;
         this.qualityQueued = null;
+
+        console.log(`attempting adaptation to video of id : ${repID}`);
 
         await stream.switchToRep(repID);
         // console.log(`Consumed queued rep "${repID}"`);
+
+        console.log(`finished adaptation; id now : ${stream.id}`);
 
         this.loading = false;
         this.hooks.run('onAdapt', this.currentBitrate());
@@ -514,10 +532,45 @@ class State {
     const current = this.config.playlist[track];
     const hls = current.hls;
     
-    return jr.def(hls) && (hls.gen || hls.url) ? true : false;
+    return jr.def(hls) && (hls.url || hls.gen) ? true : false;
+  }
+
+  qualities() {
+    let result = [];
+    if (jr.ndef(this.mpd) || jr.ndef(this.mpd.adps)) { return result }
+
+    const currentRep = this.videoRep();
+    if (jr.ndef(currentRep)) { return result }
+
+    for (let i = 0; i != this.mpd.adps.length; i++) {
+      const adp = this.mpd.adps[i];
+      if (jr.ndef(adp.reps) || adp.reps.length < 1) { continue }
+      
+      const firstRep = adp.reps[0];
+      if (firstRep.type !== kStreamType.video &&
+          firstRep.type !== kStreamType.muxed) { continue }
+
+      for (let j = 0; j != adp.reps.length; j++) {
+        const rep = adp.reps[j];
+
+        result.push({
+          rep: rep,
+          current: currentRep.id == rep.id,
+        });
+      }
+    }
+
+    return result;
   }
 
   videoRep() {
+    const stream = this.videoStream();
+    if (!stream) { return null }
+
+    return stream.rep();
+  }
+
+  videoStream() {
     let result = null;
     if (jr.ndef(this.streams)) { return result; }
 
@@ -525,7 +578,7 @@ class State {
       const stream = this.streams[i];
       const rep = stream.rep();
       if (rep.type === kStreamType.video ||
-          rep.type === kStreamType.muxed) { result = rep; break }
+          rep.type === kStreamType.muxed) { result = stream; break }
     }
 
     return result;

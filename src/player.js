@@ -333,6 +333,24 @@ class Player {
   }
   */
 
+  qualities() {
+    if (jr.ndef(this.state)) { return [] }
+    return this.state.qualities();
+  }
+
+  queueQuality(quality = null) {
+    if (jr.ndef(this.state)) {
+      console.error("state undefined");
+      return;
+    }
+
+    console.log(`queueing quality :`);
+    console.log(quality);
+
+    this.state.qualityAuto = false;
+    this.state.qualityQueued = quality;
+  }
+
   volume(value = -1) {
     if (jr.ndef(this.state) || jr.ndef(this.state.video)) { return -1 }
     if (value > -1 && value <= 1) { this.state.video.volume = value }
