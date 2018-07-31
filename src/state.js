@@ -199,18 +199,22 @@ class State {
         const hls = current.hls;
 
         if (hls.url && hls.url.length && hls.url.length > 0) {
+          console.log("url-hls");
           this.video.type = hlsMimeType;
           this.video.src = hls.url;
 
-          console.log("url-hls");
           resolve(null);
         } else {
-          const s = `data:${hlsMimeType};base64,${btoa(mpdToM3U8(this))}`;
+          console.log("gen-hls");
+
+          const m = mpdToM3U8(this);
+          console.log(m);
+
+          const s = `data:${hlsMimeType};base64,${btoa(m)}`;
 
           this.video.type = hlsMimeType;
           this.video.src = s;
 
-          console.log("gen-hls");
           resolve(null);
         }
       } else {
@@ -218,13 +222,13 @@ class State {
 
         mediaSource.addEventListener('sourceopen', () => {
           if (mediaSource.readyState === 'open') {
-            console.log("mpeg-dash");
             resolve(mediaSource);
           } else {
             reject(ERR_MEDIASOURCE);
           }
         });
 
+        console.log("mpeg-dash");
         this.video.src = this.url_(mediaSource);
       }
     });
