@@ -299,6 +299,7 @@ class Player {
         video.addEventListener('click', () => {
           this.state.video.play().catch((e) => console.log(e));
         });
+        video.addEventListener('contextmenu', e => e.preventDefault());
 
         injectPoint.appendChild(video);
       }

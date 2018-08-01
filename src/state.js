@@ -5,7 +5,14 @@ import { MPD } from './mpd';
 import { Stream } from './stream';
 import { mergeDicts } from './helpers';
 import { kMPDType, kStreamType } from './constants';
-import { bps, kbps, speedFactor } from './measure';
+import {
+  bps,
+  bpsAvg,
+  kbpsAvg,
+  speedFactor,
+  pushBpsHistory,
+  clearBpsHistory,
+} from './measure';
 import { mpdToM3U8, hlsPreferred, hlsMimeType } from './hls';
 
 const BLANK = ''
@@ -135,7 +142,7 @@ class State {
       const base = this.config.playlist[track].dash.base;
 
       this.mpd = new MPD({ url: url, base: base });
-      [this.mpd, this.mpdDownloadSpeed] = await this.mpd.setup();
+      this.mpd = await this.mpd.setup();
 
       this.mediaSource = await this.mediaSource_();
       if (this.usingHLS()) { resolve(); return }
@@ -147,7 +154,7 @@ class State {
 
       if (this.mpd.type === kMPDType.dynamic) {
         this.mpdUpdateInterval = setInterval(async () => {
-          [this.mpd, this.mpdDownloadSpeed] = await this.mpd.setup()
+          this.mpd = await this.mpd.setup()
 
           /*
           for (let i=0; i!=this.streams.length; i++) {
@@ -169,7 +176,7 @@ class State {
 
       for (let i = 0; i < mpd.adps.length; i++) {
         const adp = mpd.adps[i];
-        const rep = adp.bestRep(this.mpdDownloadSpeed * 4);
+        const rep = adp.bestRep(bpsAvg() * 4);
 
         const stream = new Stream({
           adp: adp,
@@ -429,10 +436,13 @@ class State {
 
                   // const bufferLength = stream.bufferLength();
                   const delta = (payloadEnd - payloadStart) / 1000;
-                  const speedBps = bps(payloadSize, delta);
-                  const speedKbps = kbps(payloadSize, delta);
+
+                  if (delta > lead) { clearBpsHistory() }
+                  pushBpsHistory(bps(payloadSize, delta));
+                  const kbpsSpeed = kbpsAvg();
+
                   const factor = speedFactor(
-                    speedKbps,
+                    kbpsSpeed,
                     payloadSize,
                     payloadEnd - payloadStart
                   );
@@ -445,7 +455,7 @@ class State {
                   this.lastTime = clock.now();
 
                   console.log(`Buffers filled; download speed: ` +
-                              `${speedKbps}kbps, speedFactor: ${factor}`);
+                              `${kbpsSpeed}kbps, speedFactor: ${factor}`);
 
                   /*
                   if (this.mpd.dvr && bufferLength > this.mpd.dvr) {
@@ -455,7 +465,7 @@ class State {
                   }
                   */
 
-                  resolve([speedBps, factor, now]);
+                  resolve([bpsAvg(), factor, now]);
                 }
               });
             });

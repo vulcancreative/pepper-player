@@ -1,3 +1,15 @@
+const bpsHistory = [];
+
+function clearBpsHistory() {
+  while (bpsHistory.length > 0) { bpsHistory.shift() }
+}
+
+function pushBpsHistory(value) {
+  const maxBpsHistory = 15;
+  bpsHistory.push(value);
+  while (bpsHistory.length > maxBpsHistory) { bpsHistory.shift() }
+}
+
 function bps(bytes, delta) {
   const augBytes = delta < 1 ? bytes * (1 / delta) : bytes;
   const bitsLoaded = augBytes * 8;
@@ -8,6 +20,18 @@ function bps(bytes, delta) {
 
 function kbps(bytes, delta) {
   return parseFloat((bps(bytes, delta) / 1024).toFixed(2));
+}
+
+function bpsAvg() {
+  if (bpsHistory.length < 1) { return 0 }
+  const avg = bpsHistory.reduce((p, c) => p + c, 0) / bpsHistory.length;
+  const speedBps = avg.toFixed(2);
+
+  return parseFloat(speedBps);
+}
+
+function kbpsAvg() {
+  return (bpsAvg() / 1024).toFixed(2);
 }
 
 // take a speed (kbps), size (bytes), and a time (ms)
@@ -24,4 +48,12 @@ function speedFactor(speed, size, delta) {
   return parseFloat(contrast);
 }
 
-export { bps, kbps, speedFactor };
+export {
+  bps,
+  kbps,
+  bpsAvg,
+  kbpsAvg,
+  speedFactor,
+  pushBpsHistory,
+  clearBpsHistory,
+};

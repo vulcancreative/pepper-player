@@ -1,5 +1,6 @@
 import jr from './jr';
 import Hooks from './hooks';
+import { bps, pushBpsHistory, clearBpsHistory } from './measure';
 import { isInt, mergeDicts } from './helpers';
 import { arrayBufferToBase64 } from './convert';
 import { kMPDType, kStreamType, kSegmentType } from './constants';
@@ -128,12 +129,17 @@ class Stream {
   }
 
   fetchSegment_(url = "") {
+    let payloadSize = 0;
+    let payloadStart = (new Date()).getTime(), payloadEnd;
+
     return new Promise((resolve, reject) => {
       const rep = this.rep();
 
       const id = rep.id;
       const type = this.mpd.type;
       const xhr = new XMLHttpRequest;
+
+      const segmentLength = this.segmentLength();
 
       xhr.onload = function() {
         if (xhr.status >= 400) {
@@ -154,6 +160,14 @@ class Stream {
 
         if (xhr.status >= 200 && xhr.status < 400) {
           const data = xhr.response;
+
+          payloadSize += data.byteLength;
+          payloadEnd = (new Date()).getTime();
+
+          const delta = (payloadEnd - payloadStart) / 1000;
+
+          if (delta > segmentLength) { clearBpsHistory() }
+          pushBpsHistory(bps(payloadSize, delta));
 
           // console.log(`Fetched segment at "${url}" for rep "${id}"`);
           resolve(data);
