@@ -171,7 +171,8 @@ class Player {
   }
 
   didEnd() {
-    return Math.round(this.currentTime() / 1000) * 1000 >= this.duration();
+    return Math.round(this.currentTime() / 1000) * 1000 >=
+    this.duration() - 2000;
   }
 
   duration() {
@@ -231,6 +232,7 @@ class Player {
         }
 
         if (this.didEnd()) {
+          this.hooks.run('onEnd');
           this.state.video.currentTime = 0;
           if (!this.config.loop) {
             this.pause();

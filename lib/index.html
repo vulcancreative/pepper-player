@@ -72,6 +72,9 @@
           console.log("Player ready");
           observer.onPlayerReady();
         },
+        onEnd: () => {
+          observer.onPlayerComplete();
+        },
         onPlay: () => {
           console.log("Player playing");
           observer.onPlayerPlay();

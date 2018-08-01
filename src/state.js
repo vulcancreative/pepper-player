@@ -405,7 +405,7 @@ class State {
           points = points.filter(p => !duplicates.includes(p));
           
           if (points.length > 0) {
-            this.hooks.run('onBufferStart')
+            this.hooks.run('onBufferStart');
           } else {
             this.loading = false;
             resolve([-1, -1, -1]);
