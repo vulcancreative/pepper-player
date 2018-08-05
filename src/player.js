@@ -323,7 +323,9 @@ class Player {
 
     this.state = new State(this.config, this.hooks);
     await this.state.setup();
-    this.init_();
+    await this.init_();
+
+    this.hooks.run('onSeek');
 
     // this.pause();
     // this.setup_();
