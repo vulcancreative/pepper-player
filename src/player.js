@@ -316,6 +316,11 @@ class Player {
     this.forcedCurrentTime = time;
     this.state.bufferTime = time;
 
+    if (this.lazyStart) {
+      this.initialized = false;
+      this.lazyStart = false;
+    }
+
     this.state = new State(this.config, this.hooks);
     await this.state.setup();
     this.init_();
