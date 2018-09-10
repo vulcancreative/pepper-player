@@ -55,7 +55,7 @@ class State {
       }
       */
 
-      const root = jr.q(this.config.query)[0];
+      const root = jr.q(this.config.query, document)[0];
 
       if (jr.ndef(root)) { reject(ERR_ROOT_INJECT); }
 
@@ -69,7 +69,7 @@ class State {
       };
 
       root.addEventListener('encrypted', () => {
-        const root = jr.q(this.config.query)[0];
+        const root = jr.q(this.config.query, document)[0];
         const keys = root.mediaKeys;
 
         if (keys === null || typeof keys === 'undefined') {

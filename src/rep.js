@@ -133,7 +133,7 @@ class Rep {
     this.timeline = timeline;
     this.mediaTemplate = mediaTemplate;
     this.initialization = initialization;
-    this.startNumber = !startNumber || typeof startNumber === 'undefined' ?
+    this.startNumber = !startNumber || typeof startNumber==='undefined' ?
     null : startNumber;
     this.timescale = timescale;
     this.segmentDuration = segmentDuration;
@@ -144,6 +144,8 @@ class Rep {
   initURL() {
     const initName = this.initialization;
     const baseURL = this.baseURL;
+
+    if (!initName) { return "/" }
 
     let initURL = baseURL ? `${baseURL}${initName}` : initName;
     return initURL.replace(/\$RepresentationID\$/g, `${this.id}`);

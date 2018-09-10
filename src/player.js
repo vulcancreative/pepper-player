@@ -287,7 +287,7 @@ class Player {
 
   renderUI() {
     if (!this.injectedUI) {
-      const injectPoint = jr.q(this.config.query)[0];
+      const injectPoint = jr.q(this.config.query, document)[0];
       const vidExists = jr.q('video', injectPoint)[0];
 
       if (!vidExists) {
