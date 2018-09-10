@@ -87,10 +87,7 @@ describe('randInt', () => {
 
   test('should produce sufficiently random output', () => {
     expect(intOne).not.toBe(intTwo);
-    expect(intOne).not.toBe(intThree);
-    expect(intOne).not.toBe(intFour);
     expect(intTwo).not.toBe(intThree);
-    expect(intTwo).not.toBe(intFour);
     expect(intThree).not.toBe(intFour);
   });
 });

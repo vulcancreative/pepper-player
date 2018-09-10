@@ -22,7 +22,7 @@ describe('Adp.reps_', () => {
     expect.assertions(8);
 
     const promises = [
-      (new MPD({ data: inputA })).setup().then(([mpd]) => {
+      (new MPD({ data: inputA })).setup().then(mpd => {
         console.log(mpd);
         let reps = mpd.adps.map((a) => a.reps);
         reps = [].concat(...reps);
@@ -30,21 +30,21 @@ describe('Adp.reps_', () => {
         expect(reps.length).toBe(outputA[0]);
         expect(reps.every(r => r instanceof Rep)).toBe(outputA[1]);
       }),
-      (new MPD({ data: inputB })).setup().then(([mpd]) => {
+      (new MPD({ data: inputB })).setup().then(mpd => {
         let reps = mpd.adps.map((a) => a.reps);
         reps = [].concat(...reps);
 
         expect(reps.length).toBe(outputB[0]);
         expect(reps.every(r => r instanceof Rep)).toBe(outputB[1]);
       }),
-      (new MPD({ data: inputC })).setup().then(([mpd]) => {
+      (new MPD({ data: inputC })).setup().then(mpd => {
         let reps = mpd.adps.map((a) => a.reps);
         reps = [].concat(...reps);
 
         expect(reps.length).toBe(outputC[0]);
         expect(reps.every(r => r instanceof Rep)).toBe(outputC[1]);
       }),
-      (new MPD({ data: inputD })).setup().then(([mpd]) => {
+      (new MPD({ data: inputD })).setup().then(mpd => {
         let reps = mpd.adps.map((a) => a.reps);
         reps = [].concat(...reps);
 
@@ -81,16 +81,16 @@ describe('Adp.bestRep', () => {
     expect.assertions(4);
 
     const promises = [
-      (new MPD({ data: inputA })).setup().then(([mpd]) => {
+      (new MPD({ data: inputA })).setup().then(mpd => {
         expect(mpd.adps.map(a => a.bestRep().id)).toEqual(outputA);
       }),
-      (new MPD({ data: inputB })).setup().then(([mpd]) => {
+      (new MPD({ data: inputB })).setup().then(mpd => {
         expect(mpd.adps.map(a => a.bestRep().id)).toEqual(outputB);
       }),
-      (new MPD({ data: inputC })).setup().then(([mpd]) => {
+      (new MPD({ data: inputC })).setup().then(mpd => {
         expect(mpd.adps.map(a => a.bestRep().id)).toEqual(outputC);
       }),
-      (new MPD({ data: inputD })).setup().then(([mpd]) => {
+      (new MPD({ data: inputD })).setup().then(mpd => {
         expect(mpd.adps.map(a => a.bestRep().id)).toEqual(outputD);
       }),
     ];
