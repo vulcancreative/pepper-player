@@ -14,6 +14,8 @@ import {
   noUpdatePeriod as caseJ,
 } from './testdata/mpd.testdata.js';
 
+jest.setTimeout(10000);
+
 describe('MPD.fetch', () => {
   it('should be able to handle URL input', () => {
     const inputB = caseB.url;
