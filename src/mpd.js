@@ -24,7 +24,7 @@ class MPD {
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
-    this.fetchedOnce = false;
+    // this.fetchedOnce = false;
   }
 
   async setup() {
@@ -57,10 +57,12 @@ class MPD {
       xhr.onload = () => {
         const response = xhr.response;
 
+        /*
         if (!this.fetchedOnce) {
           console.log(response);
           this.fetchedOnce = true;
         }
+        */
 
         if (jr.def(response)&&response.includes(`${kMPDType.dynamic}`)) {
           const dateHeader = xhr.getResponseHeader('Date');
