@@ -44,11 +44,7 @@ class Adp {
       }
 
       // sort by weight
-      reps.sort((a, b) => {
-        if (a.weight() < b.weight()) { return -1; }
-        if (a.weight() > b.weight()) { return 1; }
-        return 0;
-      });
+      reps.sort((a, b) => a.weight() < b.weight() ? -1 : 1);
 
       return reps;
     } else {
