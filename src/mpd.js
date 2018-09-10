@@ -62,7 +62,7 @@ class MPD {
           this.fetchedOnce = true;
         }
 
-        if (jr.def(response) && response.includes(`${kMPDType.dynamic}`)) {
+        if (jr.def(response)&&response.includes(`${kMPDType.dynamic}`)) {
           const dateHeader = xhr.getResponseHeader('Date');
           const serverTime = new Date(dateHeader);
           clock.sync(serverTime);
