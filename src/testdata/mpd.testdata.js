@@ -148,6 +148,48 @@ const noUpdatePeriod = {
 </MPD>`
 };
 
+const noBandwidth = {
+  url: "http://media.tfod.tomferry.com/" +
+       "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
+       "uZUxdD2UDUcaO6FEKURQ/gLtSO2kPCWKZKXSdAeOj/" +
+       "SYC0zeIlORZH1JLBUe4z",
+  data: `<?xml version="1.0" encoding="utf-8"?>
+<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="urn:mpeg:dash:schema:mpd:2011"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+  profiles="urn:mpeg:dash:profile:isoff-live:2011"
+  type="static"
+  mediaPresentationDuration="PT2M3.5S"
+  minBufferTime="PT1.0S">
+  <ProgramInformation>
+  </ProgramInformation>
+  <Period start="PT0.0S">
+    <AdaptationSet contentType="video" segmentAlignment="true" bitstreamSwitching="true" frameRate="30000/1001">
+      <Representation id="0" mimeType="video/mp4" codecs="avc1.64001e" width="640" height="360" frameRate="30000/1001">
+        <SegmentTemplate timescale="1000000" duration="1001000" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="1">
+        </SegmentTemplate>
+      </Representation>
+      <Representation id="1" mimeType="video/mp4" codecs="avc1.64001f" width="1280" height="720" frameRate="30000/1001">
+        <SegmentTemplate timescale="1000000" duration="1001000" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="1">
+        </SegmentTemplate>
+      </Representation>
+      <Representation id="2" mimeType="video/mp4" codecs="avc1.640028" width="1920" height="1080" frameRate="30000/1001">
+        <SegmentTemplate timescale="1000000" duration="1001000" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="1">
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+    <AdaptationSet contentType="audio" segmentAlignment="true" bitstreamSwitching="true">
+      <Representation id="3" mimeType="audio/mp4" codecs="mp4a.40.2" audioSamplingRate="48000">
+        <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011" value="2" />
+        <SegmentTemplate timescale="1000000" duration="1001000" initialization="init-stream$RepresentationID$.m4s" media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="1">
+        </SegmentTemplate>
+      </Representation>
+    </AdaptationSet>
+  </Period>
+</MPD>`
+};
+
 const tfVodMpd = {
   url: "http://media.tfod.tomferry.com/" +
        "EF6K95BydowVv4Od6kvpkLvi3QzbeLDKiqfZcqRPWzZgE9rZhK/" +
@@ -378,6 +420,7 @@ export {
   noType,
   noStartTime,
   noUpdatePeriod,
+  noBandwidth,
   tfVodMpd,
   bbb4kVodMpd,
   bbb4kThumbnailsVodMpd,

@@ -6,6 +6,7 @@ import {
   bbb4kThumbnailsVodMpd as caseC,
   echoLiveMpd as caseD,
   noReps as caseE,
+  noBandwidth as caseF,
 } from './testdata/mpd.testdata.js';
 
 describe('Adp.reps_', () => {
@@ -67,6 +68,26 @@ describe('Adp.reps_', () => {
       (new MPD({ data: inputA })).setup().catch(e =>
         expect(e).toEqual(outputA)
       ),
+    ];
+
+    return Promise.all(promises);
+  });
+
+  it('should handle cases where no bandwidth is denoted', () => {
+    const inputA = caseF.data;
+
+    expect.assertions(4);
+    
+    const promises = [
+      (new MPD({ data: inputA })).setup().then(mpd => {
+        let reps = mpd.adps.map((a) => a.reps);
+        reps = [].concat(...reps);
+
+        expect(reps[0].bandwidth).toBe(0);
+        expect(reps[1].bandwidth).toBe(0);
+        expect(reps[2].bandwidth).toBe(0);
+        expect(reps[3].bandwidth).toBe(0);
+      }),
     ];
 
     return Promise.all(promises);
