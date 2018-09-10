@@ -22,6 +22,7 @@ Features include:
 - [x] Mobile compatible
 
 Being incorporated from working prototype now:
+- [ ] Embedding (for use in animation)
 - [ ] DRM and CENC compliance
 - [ ] Usage documentation
 
