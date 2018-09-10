@@ -13,6 +13,7 @@ import {
   noStartTime as caseI,
   noUpdatePeriod as caseJ,
   zeroUpdatePeriod as caseK,
+  positiveUpdatePeriod as caseL,
 } from './testdata/mpd.testdata.js';
 
 jest.setTimeout(10000);
@@ -446,13 +447,15 @@ describe('MPD.updatePeriod_', () => {
     const inputB = caseB.data;
     const inputC = caseC.data;
     const inputD = caseD.data;
+    const inputE = caseL.data;
 
     const outputA = -1;
     const outputB = -1;
     const outputC = -1;
     const outputD = 1000;
+    const outputE = 3000;
 
-    expect.assertions(4);
+    expect.assertions(5);
 
     const promises = [
       (new MPD({ data: inputA })).setup().then(mpd => {
@@ -466,6 +469,9 @@ describe('MPD.updatePeriod_', () => {
       }),
       (new MPD({ data: inputD })).setup().then(mpd => {
         expect(mpd.updatePeriod).toBe(outputD);
+      }),
+      (new MPD({ data: inputE })).setup().then(mpd => {
+        expect(mpd.updatePeriod).toBe(outputE);
       }),
     ];
 
