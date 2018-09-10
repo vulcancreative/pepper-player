@@ -12,6 +12,7 @@ import {
   noType as caseH,
   noStartTime as caseI,
   noUpdatePeriod as caseJ,
+  zeroUpdatePeriod as caseK,
 } from './testdata/mpd.testdata.js';
 
 jest.setTimeout(10000);
@@ -465,6 +466,27 @@ describe('MPD.updatePeriod_', () => {
       }),
       (new MPD({ data: inputD })).setup().then(mpd => {
         expect(mpd.updatePeriod).toBe(outputD);
+      }),
+    ];
+
+    return Promise.all(promises);
+  });
+
+  it('should fallback to 1000ms if less than 1000ms', () => {
+    const inputA = caseK.data;
+    const inputB = caseD.data;
+
+    const outputA = 1000;
+    const outputB = 1000;
+
+    expect.assertions(2);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then(mpd => {
+        expect(mpd.updatePeriod).toBe(outputA);
+      }),
+      (new MPD({ data: inputB })).setup().then(mpd => {
+        expect(mpd.updatePeriod).toBe(outputB);
       }),
     ];
 
