@@ -145,7 +145,7 @@ class Rep {
     const initName = this.initialization;
     const baseURL = this.baseURL;
 
-    if (!initName) { return "/" }
+    if (!initName) { return baseURL ? baseURL : "/" }
 
     let initURL = baseURL ? `${baseURL}${initName}` : initName;
     return initURL.replace(/\$RepresentationID\$/g, `${this.id}`);
