@@ -20,11 +20,13 @@ describe('MPD.fetch', () => {
   it('should be able to handle URL input', () => {
     const inputB = caseB.url;
     const inputC = caseC.url;
+    const inputD = caseD.url;
 
     const outputB = /.*<MPD/gm;
     const outputC = /.*<MPD/gm;
+    const outputD = /.*<MPD/gm;
 
-    expect.assertions(2);
+    expect.assertions(3);
 
     const promises = [
       (new MPD()).fetch_(inputB).then(result => {
@@ -32,6 +34,9 @@ describe('MPD.fetch', () => {
       }),
       (new MPD()).fetch_(inputC).then(result => {
         expect(result).toMatch(outputC);
+      }),
+      (new MPD()).fetch_(inputD).then(result => {
+        expect(result).toMatch(outputD);
       }),
     ];
 
@@ -42,12 +47,14 @@ describe('MPD.fetch', () => {
     const inputA = caseA.data;
     const inputB = caseB.data;
     const inputC = caseC.data;
+    const inputD = caseD.data;
 
     const outputA = caseA.data;
     const outputB = caseB.data;
     const outputC = caseC.data;
+    const outputD = caseD.data;
 
-    expect.assertions(3);
+    expect.assertions(4);
 
     const promises = [
       (new MPD()).fetch_(null, inputA).then((result) => {
@@ -58,6 +65,9 @@ describe('MPD.fetch', () => {
       }),
       (new MPD()).fetch_(null, inputC).then((result) => {
         expect(result).toBe(outputC);
+      }),
+      (new MPD()).fetch_(null, inputD).then((result) => {
+        expect(result).toBe(outputD);
       }),
     ];
 
@@ -411,7 +421,8 @@ describe('MPD.startTime_', () => {
         expect(mpd.startTime).toBe(outputC);
       }),
       (new MPD({ data: inputD })).setup().then(mpd => {
-        expect(mpd.startTime).toEqual(outputD);
+        const diff = outputD.getTime() - mpd.startTime.getTime();
+        expect(Math.abs(diff)).toBeLessThanOrEqual(1000);
       }),
     ];
 
