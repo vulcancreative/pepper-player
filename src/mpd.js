@@ -71,7 +71,13 @@ class MPD {
         resolve(response, 'xml');
       }
 
-      xhr.open('GET', url)
+      const timestamp = (new Date()).getTime();
+      xhr.open(
+        'GET',
+        url.includes('?') ?
+        `${url}&timestamp=${timestamp}` :
+        `${url}?timestamp=${timestamp}`
+      );
       xhr.send();
     });
   }

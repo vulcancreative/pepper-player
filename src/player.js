@@ -311,6 +311,8 @@ class Player {
   async seek(percentage) {
     if (jr.ndef(percentage)) { return }
 
+    this.hooks.run('onPause');
+
     const time = this.state.mpd.duration * (percentage / 100);
     this.config.start = time;
     this.forcedCurrentTime = time;
@@ -325,6 +327,7 @@ class Player {
     await this.state.setup();
     await this.init_();
 
+    this.hooks.run('onPlay');
     this.hooks.run('onSeek');
 
     // this.pause();

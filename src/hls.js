@@ -1,4 +1,4 @@
-// import { os } from './os';
+import { os } from './os';
 // import clock from './clock';
 import { kMPDType, kStreamType } from './constants';
 
@@ -9,13 +9,15 @@ const EXT_VERSION = `#EXT-X-VERSION:7\n`;
 // let lastPoint;
 const mimeType = "application/vnd.apple.mpegurl";
 
-const hlsSupported = () => {
+const hlsSupported = (mpd) => {
   const kHLSType = mimeType;
   let video = document.createElement('video');
 
-  return video.canPlayType &&
-  !!video.canPlayType(kHLSType) &&
-  !('MediaSource' in window);
+  return (os.is('safari') && mpd && mpd.live) || (
+    video.canPlayType &&
+    !!video.canPlayType(kHLSType) &&
+    !('MediaSource' in window)
+  );
 
   /*
   // force desktop Safari to play HLS
@@ -24,8 +26,8 @@ const hlsSupported = () => {
   */
 }
 
-const hlsPreferred = () => {
-  return hlsSupported(); // && !('MediaSource' in window);
+const hlsPreferred = (mpd) => {
+  return hlsSupported(mpd); // && !('MediaSource' in window);
 }
 
 const hlsMakePoints = (state, r, len) => {
