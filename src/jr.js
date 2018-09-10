@@ -22,9 +22,6 @@ q = (a, b) => {
   // Uses the default query function if possible, or improvises
   var q = (a, b) => {
 
-    // Check for b, otherwise use document as root node, instead
-    ndef(b) ? b = document : b;
-
     // Perform a general query on root node
     b = [].slice.call(b.querySelectorAll(a));
 
