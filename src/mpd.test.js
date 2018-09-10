@@ -479,3 +479,89 @@ describe('MPD.xml_', () => {
     expect((new MPD()).xml_(input).isEqualNode(output)).toBeTruthy();
   });
 });
+
+describe('MPD.repByID', () => {
+  it('should retrieve reps by IDs', () => {
+    const inputA = caseA.data;
+    const inputB = caseB.data;
+    const inputC = caseC.data;
+
+    const outputA = [
+      "0",
+      "2",
+    ];
+    const outputB = [
+      "bbb_30fps_1024x576_2500k",
+      "bbb_30fps_1920x1080_8000k",
+      "bbb_30fps_1280x720_4000k",
+      "bbb_30fps_1920x1080_8000k",
+    ];
+    const outputC = [
+      "bbb_30fps_320x180_400k",
+      "bbb_30fps_768x432_1500k",
+      "bbb_30fps_3840x2160_12000k",
+      "bbb_30fps_3840x2160_12000k",
+      "bbb_30fps_320x180_400k",
+    ];
+
+    expect.assertions(11);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then(mpd => {
+        expect(mpd.repByID(outputA[0]).id).toBe(outputA[0]);
+        expect(mpd.repByID(outputA[1]).id).toBe(outputA[1]);
+      }),
+      (new MPD({ data: inputB })).setup().then(mpd => {
+        expect(mpd.repByID(outputB[0]).id).toBe(outputB[0]);
+        expect(mpd.repByID(outputB[1]).id).toBe(outputB[1]);
+        expect(mpd.repByID(outputB[2]).id).toBe(outputB[2]);
+        expect(mpd.repByID(outputB[3]).id).toBe(outputB[3]);
+      }),
+      (new MPD({ data: inputC })).setup().then(mpd => {
+        expect(mpd.repByID(outputC[0]).id).toBe(outputC[0]);
+        expect(mpd.repByID(outputC[1]).id).toBe(outputC[1]);
+        expect(mpd.repByID(outputC[2]).id).toBe(outputC[2]);
+        expect(mpd.repByID(outputC[3]).id).toBe(outputC[3]);
+        expect(mpd.repByID(outputC[4]).id).toBe(outputC[4]);
+      }),
+    ];
+
+    return Promise.all(promises);
+  });
+
+  it('should throw an error if a corresponding rep is missing', () => {
+    const inputA = caseD.data;
+
+    const outputA = [
+      "bbb_30fps_3840x2160_12000k",
+      "V100",
+      "A100",
+    ];
+
+    expect.assertions(3);
+
+    const promises = [
+      (new MPD({ data: inputA })).setup().then(mpd => {
+        try {
+          mpd.repByID(outputA[0]);
+        } catch(e) {
+          expect(e).toBe(`Unable to find rep with ID '${outputA[0]}'`)
+        }
+
+        try {
+          mpd.repByID(outputA[1]);
+        } catch(e) {
+          expect(e).toBe(`Unable to find rep with ID '${outputA[1]}'`)
+        }
+
+        try {
+          mpd.repByID(outputA[2]);
+        } catch(e) {
+          expect(e).toBe(`Unable to find rep with ID '${outputA[2]}'`)
+        }
+      }),
+    ];
+
+    return Promise.all(promises);
+  });
+});
