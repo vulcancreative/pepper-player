@@ -156,3 +156,34 @@ describe('Rep.initURL', () => {
     return Promise.all(promises);
   });
 });
+
+describe('Rep.mediaURL', () => {
+  it('should return segment URLs', () => {
+  });
+
+  it('should respect baseURL overrides', () => {
+  });
+});
+
+describe('Rep.makePoints', () => {
+  it('should make points for template/timeline-based MPDs', () => {
+  });
+});
+
+describe('Rep.makeTimelinePoints', () => {
+  it('should make points for timeline-based MPDs', () => {
+  });
+});
+
+describe('Rep.makeTemplatePoints', () => {
+  it('should make points for template-based MPDs', () => {
+  });
+});
+
+describe('Rep.segmentLength', () => {
+  it('should compute an average length if timeline-based', () => {
+  });
+
+  it('should return a direct size if template-based', () => {
+  });
+});
