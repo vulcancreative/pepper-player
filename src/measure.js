@@ -31,7 +31,7 @@ function bpsAvg() {
 }
 
 function kbpsAvg() {
-  return (bpsAvg() / 1024).toFixed(2);
+  return parseFloat((bpsAvg() / 1024).toFixed(2));
 }
 
 // take a speed (kbps), size (bytes), and a time (ms)
