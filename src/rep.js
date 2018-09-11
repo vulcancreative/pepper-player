@@ -1,5 +1,5 @@
 import jr from './jr';
-import { os } from './os';
+import os from './os';
 import { toInt } from './convert';
 import { kMPDType, kStreamType } from './constants';
 

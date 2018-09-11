@@ -1,4 +1,4 @@
-import { os } from './os';
+import os from './os';
 // import clock from './clock';
 import { kMPDType, kStreamType } from './constants';
 

@@ -1,6 +1,6 @@
 import jr from './jr';
+import os from './os';
 import Hooks from './hooks';
-import { os } from './os';
 import { State } from './state';
 import { mergeDicts } from './helpers';
 import { kMPDType } from './constants';
