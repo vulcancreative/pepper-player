@@ -51,6 +51,7 @@ class Player {
       debug:  false,
       lead:   5000,
       loop:   false,
+      muted:  false,
       query:  ".pepper",
       start:  0,
       timed:  0,
@@ -296,6 +297,12 @@ class Player {
 
         video.controls = false;
         video.autoplay = this.config.auto && !hls;
+
+        if (this.config.muted) {
+          video.setAttribute("playsinline", "");
+          video.setAttribute("muted", "");
+        }
+
         video.addEventListener('click', () => {
           this.state.video.play().catch((e) => console.log(e));
         });

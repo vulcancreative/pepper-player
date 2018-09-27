@@ -4,12 +4,16 @@
     <script src="pepper.js"></script>
     <script src="stlz.js"></script>
     <style>
-      body {
+      html, body {
         background: grey;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
       }
 
       .pepper {
-        width: 500px;
+        width: 100%;
       }
 
       .pepper video {
@@ -109,19 +113,38 @@
       player.play();
       */
 
-      // AWS test
+      /*
+      // AWS test (TF)
       window.player = new pepper.Player({
         playlist: [
           {
             dash: {
               url:
-                "https://tfod-products.s3-accelerate.amazonaws.com/wysm/07-buyerconsultation/02-practicemodule/stream.mpd",
+                "https://tfod-products.s3-accelerate.amazonaws.com/wysm/00-gettingstarted/00-intro/stream.mpd",
             },
             hls: {
               gen: true
             }
           }
-        ]
+        ],
+        loop: true
+      });
+      */
+
+      // AWS test (HWE)
+      window.player = new pepper.Player({
+        playlist: [
+          {
+            dash: {
+              url:
+                "https://homeworksenergy.com/13wIn7slNL76Zg7UD6/stream.mpd",
+            },
+            hls: {
+              gen: true
+            }
+          }
+        ],
+        loop: true
       });
 
       /*

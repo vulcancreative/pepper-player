@@ -42,7 +42,7 @@ const hlsMakePoints = (state, r, len) => {
 
   return base.map((s, i) =>
     `#EXTINF:${parseFloat(len / 1000).toFixed(5)},
-    https:${r.mediaURL(mpd.type === kMPDType.dynamic ? s : i + 1)}`
+    ${r.mediaURL(mpd.type === kMPDType.dynamic ? s : i + 1)}`
   );
 }
 
@@ -58,7 +58,7 @@ const repToM3U8 = (state, r) => {
   EXT_VERSION +
   `#EXT-X-PLAYLIST-TYPE:${mpd.type === kMPDType.static?'VOD':'EVENT'}\n` +
   `#EXT-X-INDEPENDENT-SEGMENTS\n` +
-  `#EXT-X-MAP:URI="https:${r.initURL()}"\n` +
+  `#EXT-X-MAP:URI="${r.initURL()}"\n` +
   points.join(N) + N +
   `${mpd.type === kMPDType.static ? '#EXT-X-ENDLIST' : ''}`
 

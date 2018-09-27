@@ -177,12 +177,18 @@ class Stream {
       }
 
       const timestamp = (new Date()).getTime();
-      xhr.open(
-        'GET',
-        url.includes('?') ?
-        `${url}&timestamp=${timestamp}` :
-        `${url}?timestamp=${timestamp}`
-      );
+
+      if (type === kMPDType.dynamic) {
+        xhr.open(
+          'GET',
+          url.includes('?') ?
+          `${url}&timestamp=${timestamp}` :
+          `${url}?timestamp=${timestamp}`
+        );
+      } else {
+        xhr.open('GET', url);
+      }
+
       xhr.responseType = 'arraybuffer';
       xhr.send();
     });
