@@ -1,11 +1,11 @@
-import jr from './jr';
-import Rep from './rep';
-import { toInt } from './convert';
+import jr from "./jr";
+import Rep from "./rep";
+import { toInt } from "./convert";
 
 class Adp {
   constructor(adp, i, url, override, startTime) {
-    const maxWidthAttr = jr.a('maxWidth', adp);
-    const maxHeightAttr = jr.a('maxHeight', adp);
+    const maxWidthAttr = jr.a("maxWidth", adp);
+    const maxHeightAttr = jr.a("maxHeight", adp);
 
     this.adp = adp;
     this.index = i;
@@ -15,7 +15,7 @@ class Adp {
   }
 
   reps_(adp, url, override, startTime) {
-    const representations = jr.q('Representation', adp);
+    const representations = jr.q("Representation", adp);
 
     if (representations && representations.length > 0) {
       let reps = [];
@@ -40,21 +40,26 @@ class Adp {
         const notNull = bandwidths.findIndex(r => r !== null);
         const bandwidth = notNull > -1 ? bandwidths[notNull] : 0;
 
-        reps = reps.map(r => { r.bandwidth = bandwidth; return r; });
+        reps = reps.map(r => {
+          r.bandwidth = bandwidth;
+          return r;
+        });
       }
 
       // sort by weight
-      reps.sort((a, b) => a.weight() < b.weight() ? -1 : 1);
+      reps.sort((a, b) => (a.weight() < b.weight() ? -1 : 1));
 
       return reps;
     } else {
-      throw(`No representations present in adaptation[${this.index}]`);
+      throw `No representations present in adaptation[${this.index}]`;
     }
   }
 
   // TODO: consolidate shared code with the following 3 methods
   bestRep(speedBps) {
-    if (jr.def(speedBps)) { return this.matchBandwidth(speedBps) }
+    if (jr.def(speedBps)) {
+      return this.matchBandwidth(speedBps);
+    }
     return this.reps[this.reps.length - 1];
   }
 

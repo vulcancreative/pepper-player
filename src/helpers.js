@@ -7,7 +7,7 @@ function sizeDict(d) {
 function mergeDicts(a, b) {
   let result = {};
   for (let k of Object.keys(b)) {
-    result[k] = (a[k]!==null && typeof a[k]!=='undefined') ? a[k] : b[k];
+    result[k] = a[k] !== null && typeof a[k] !== "undefined" ? a[k] : b[k];
   }
 
   return result;
@@ -20,14 +20,11 @@ function randInt(min, max) {
 
 // checks whether a variable is an integer or not
 function isInt(value) {
-  if (isNaN(value)) { return false; }
+  if (isNaN(value)) {
+    return false;
+  }
   var x = parseFloat(value);
   return (x | 0) === x;
 }
 
-export {
-  sizeDict,
-  mergeDicts,
-  randInt,
-  isInt,
-};
+export { sizeDict, mergeDicts, randInt, isInt };

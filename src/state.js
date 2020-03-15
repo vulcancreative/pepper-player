@@ -1,21 +1,21 @@
-import jr from './jr';
-import clock from './clock';
-import Hooks from './hooks';
-import { MPD } from './mpd';
-import { Stream } from './stream';
-import { mergeDicts } from './helpers';
-import { kMPDType, kStreamType } from './constants';
+import jr from "./jr";
+import clock from "./clock";
+import Hooks from "./hooks";
+import { MPD } from "./mpd";
+import { Stream } from "./stream";
+import { mergeDicts } from "./helpers";
+import { kMPDType, kStreamType } from "./constants";
 import {
   bps,
   bpsAvg,
   kbpsAvg,
   speedFactor,
   pushBpsHistory,
-  clearBpsHistory,
-} from './measure';
-import { mpdToM3U8, hlsPreferred, hlsMimeType } from './hls';
+  clearBpsHistory
+} from "./measure";
+import { mpdToM3U8, hlsPreferred, hlsMimeType } from "./hls";
 
-const BLANK = ''
+const BLANK = "";
 const ERR_ROOT_INJECT = "No injection point";
 const ERR_MEDIASOURCE = "MediaSource failed";
 
@@ -23,17 +23,18 @@ class State {
   constructor(config = {}, hooks = new Hooks()) {
     const kDefaultConfig = {
       playlist: [],
-      base:   0,
-      lead:   0,
-      start:  0,
-      timed:  0,
-      track:  0,
-      query:  BLANK,
+      base: 0,
+      lead: 0,
+      start: 0,
+      timed: 0,
+      track: 0,
+      query: BLANK
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
-    this.config.query += this.config.query.match(/(^|\s)video(\s|\.|$)/) ?
-      BLANK : ' video';
+    this.config.query += this.config.query.match(/(^|\s)video(\s|\.|$)/)
+      ? BLANK
+      : " video";
 
     this.hooks = hooks;
   }
@@ -57,10 +58,12 @@ class State {
 
       const root = jr.q(this.config.query, document)[0];
 
-      if (jr.ndef(root)) { reject(ERR_ROOT_INJECT); }
+      if (jr.ndef(root)) {
+        reject(ERR_ROOT_INJECT);
+      }
 
       // Handle weird, browser-specific DOMExceptions
-      root.onerror = (e) => {
+      root.onerror = e => {
         if (e.target && e.target.error) {
           console.error(e.target.error);
         } else {
@@ -68,37 +71,44 @@ class State {
         }
       };
 
-      root.addEventListener('encrypted', () => {
+      root.addEventListener("encrypted", () => {
         const root = jr.q(this.config.query, document)[0];
         const keys = root.mediaKeys;
 
-        if (keys === null || typeof keys === 'undefined') {
+        if (keys === null || typeof keys === "undefined") {
           if (window.navigator.requestMediaKeySystemAccess) {
             const widevine = "com.widevine.alpha";
 
-            const c = [{
-              "initDataTypes": ["cenc"],
-              "audioCapabilities": [{
-                "contentType": "audio/mp4;codecs=\"mp4a.40.2\"",
-                robustness: 'SW_SECURE_CRYPTO',
-              }],
-              "videoCapabilities": [{
-                "contentType": "video/mp4;codecs=\"avc1.42E01E\"",
-                robustness: 'SW_SECURE_CRYPTO',
-              }]
-            }];
+            const c = [
+              {
+                initDataTypes: ["cenc"],
+                audioCapabilities: [
+                  {
+                    contentType: 'audio/mp4;codecs="mp4a.40.2"',
+                    robustness: "SW_SECURE_CRYPTO"
+                  }
+                ],
+                videoCapabilities: [
+                  {
+                    contentType: 'video/mp4;codecs="avc1.42E01E"',
+                    robustness: "SW_SECURE_CRYPTO"
+                  }
+                ]
+              }
+            ];
 
             try {
-              navigator.requestMediaKeySystemAccess(widevine, c)
-              .then(() => {
-                console.log('widevine support ok');
-              })
-              .catch((e) => {
-                console.log('no widevine support');
-                console.log(e);
-              });
+              navigator
+                .requestMediaKeySystemAccess(widevine, c)
+                .then(() => {
+                  console.log("widevine support ok");
+                })
+                .catch(e => {
+                  console.log("no widevine support");
+                  console.log(e);
+                });
             } catch (e) {
-              console.log('no widevine support');
+              console.log("no widevine support");
               console.log(e);
             }
           }
@@ -123,18 +133,25 @@ class State {
       this.qualityQueued = null;
       this.bufferTime = this.config.start;
 
-      if (this.config.timed > 0) { resolve(); return }
-      if (this.mpdUpdateInterval) { clearInterval(this.mpdUpdateInterval) }
+      if (this.config.timed > 0) {
+        resolve();
+        return;
+      }
+      if (this.mpdUpdateInterval) {
+        clearInterval(this.mpdUpdateInterval);
+      }
 
-      await this.init_()
-      this.hooks.run('onReady');
+      await this.init_();
+      this.hooks.run("onReady");
 
       resolve();
     });
   }
 
   init_() {
-    if (jr.def(this.mpd)) { return Promise.resolve() }
+    if (jr.def(this.mpd)) {
+      return Promise.resolve();
+    }
 
     return new Promise(async resolve => {
       const track = this.config.track;
@@ -145,16 +162,18 @@ class State {
       this.mpd = await this.mpd.setup();
 
       this.mediaSource = await this.mediaSource_();
-      if (this.usingHLS()) { resolve(); return }
+      if (this.usingHLS()) {
+        resolve();
+        return;
+      }
 
-      this.streams = !this.usingHLS() ? await this.buildStreams_(
-        this.mpd,
-        this.mediaSource
-      ) : null;
+      this.streams = !this.usingHLS()
+        ? await this.buildStreams_(this.mpd, this.mediaSource)
+        : null;
 
       if (this.mpd.type === kMPDType.dynamic) {
         this.mpdUpdateInterval = setInterval(async () => {
-          this.mpd = await this.mpd.setup()
+          this.mpd = await this.mpd.setup();
 
           /*
           for (let i=0; i!=this.streams.length; i++) {
@@ -178,13 +197,16 @@ class State {
         const adp = mpd.adps[i];
         const rep = adp.bestRep(bpsAvg() * 4);
 
-        const stream = new Stream({
-          adp: adp,
-          id: rep.id, // using ID instead of rep for dynamic swapping
-          mediaSource: mediaSource,
-          mpd: mpd,
-          sources: mpd.adps[i].reps,
-        }, this.hooks);
+        const stream = new Stream(
+          {
+            adp: adp,
+            id: rep.id, // using ID instead of rep for dynamic swapping
+            mediaSource: mediaSource,
+            mpd: mpd,
+            sources: mpd.adps[i].reps
+          },
+          this.hooks
+        );
 
         stream.setup().then(() => {
           streams.push(stream);
@@ -227,8 +249,8 @@ class State {
       } else {
         const mediaSource = new MediaSource();
 
-        mediaSource.addEventListener('sourceopen', () => {
-          if (mediaSource.readyState === 'open') {
+        mediaSource.addEventListener("sourceopen", () => {
+          if (mediaSource.readyState === "open") {
             resolve(mediaSource);
           } else {
             reject(ERR_MEDIASOURCE);
@@ -245,13 +267,15 @@ class State {
     if (jr.def(ms)) {
       return URL.createObjectURL(ms);
     } else {
-      throw(ERR_MEDIASOURCE);
+      throw ERR_MEDIASOURCE;
     }
   }
 
   adjustQuality(speed = 0, factor = 1.0) {
     // fail if actively buffering
-    if (this.loading) { return Promise.resolve(false); }
+    if (this.loading) {
+      return Promise.resolve(false);
+    }
 
     return new Promise(async resolve => {
       // handle queued, fixed quality
@@ -271,12 +295,12 @@ class State {
         console.log(`finished adaptation; id now : ${stream.id}`);
 
         this.loading = false;
-        this.hooks.run('onAdapt', this.currentBitrate());
+        this.hooks.run("onAdapt", this.currentBitrate());
 
         resolve(true);
-      // handle automatic quality switching
+        // handle automatic quality switching
       } else if (this.qualityAuto) {
-        if (this.streams===null || typeof this.streams==='undefined') {
+        if (this.streams === null || typeof this.streams === "undefined") {
           resolve(false);
           return;
         }
@@ -288,7 +312,7 @@ class State {
           let rep;
 
           // lower quality if factor > 0.5; raise if < 0.25
-          if (factor >= 0.50) {
+          if (factor >= 0.5) {
             const current = this.mpd.repByID(stream.id);
             rep = adp.matchBandwidth(current.bandwidth * 0.8);
           } else {
@@ -299,7 +323,7 @@ class State {
             stream.switchToRep(rep.id).then(() => {
               if (i === this.streams.length - 1) {
                 this.loading = false;
-                this.hooks.run('onAdapt', this.currentBitrate());
+                this.hooks.run("onAdapt", this.currentBitrate());
 
                 resolve(true);
               }
@@ -317,12 +341,18 @@ class State {
   }
 
   audioStream() {
-    if (jr.ndef(this.streams)) { return null }
+    if (jr.ndef(this.streams)) {
+      return null;
+    }
 
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
-      if (stream.type === kStreamType.audio ||
-          stream.type === kStreamType.muxed) { return stream.rep; }
+      if (
+        stream.type === kStreamType.audio ||
+        stream.type === kStreamType.muxed
+      ) {
+        return stream.rep;
+      }
     }
 
     return null;
@@ -334,14 +364,18 @@ class State {
 
   currentBitrate() {
     const video = this.videoRep();
-    if (jr.ndef(video)) { return 0 }
+    if (jr.ndef(video)) {
+      return 0;
+    }
 
     return video.bandwidth / 1000;
   }
 
   currentResolution() {
     const video = this.videoRep();
-    if (jr.ndef(video)) { return 'uninitialized' }
+    if (jr.ndef(video)) {
+      return "uninitialized";
+    }
 
     return `${video.width}x${video.height}`;
   }
@@ -350,7 +384,9 @@ class State {
     const dynamic = this.mpd.type === kMPDType.dynamic;
 
     // fail if actively buffering
-    if (this.loading) { return Promise.resolve([-1, -1, -1]); }
+    if (this.loading) {
+      return Promise.resolve([-1, -1, -1]);
+    }
     if (this.started && this.paused) {
       return Promise.resolve([-1, -1, -1]);
     }
@@ -358,9 +394,11 @@ class State {
     // base line time used for live buffering
     const now = clock.now();
     const lens = this.segmentLengths();
-    if (lens < 0) { return Promise.resolve([-1, -1, -1]) }
+    if (lens < 0) {
+      return Promise.resolve([-1, -1, -1]);
+    }
 
-    const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
+    const minTime = lens.reduce((a, b) => Math.min(a, b)) / 2;
 
     const startNumbers = this.streams.map(s => s.rep().startNumber);
     if (dynamic && startNumbers.includes(null)) {
@@ -373,9 +411,11 @@ class State {
       // times measured against current and desired state
       const start = this.bufferTime;
 
-      const lead = defer ?
-                   defer :
-                   (this.started ? this.config.lead : this.config.base);
+      const lead = defer
+        ? defer
+        : this.started
+        ? this.config.lead
+        : this.config.base;
 
       // handles case of no known duration (e.g. – dynamic streams)
       const projectedEnd = Math.min(this.mpd.duration, start + lead);
@@ -383,7 +423,8 @@ class State {
 
       // used for measuring speed (in bytes over time delta)
       let payloadSize = 0;
-      let payloadStart = clock.init().getTime(), payloadEnd;
+      let payloadStart = clock.init().getTime(),
+        payloadEnd;
 
       // load-based lock
       if (!dynamic || (dynamic && startNumbers.includes(null))) {
@@ -410,9 +451,9 @@ class State {
 
           // remove already cached point; prevents toe-stepping
           points = points.filter(p => !duplicates.includes(p));
-          
+
           if (points.length > 0) {
-            this.hooks.run('onBufferStart');
+            this.hooks.run("onBufferStart");
           } else {
             this.loading = false;
             resolve([-1, -1, -1]);
@@ -420,24 +461,29 @@ class State {
 
           return points.reduce((promise, point, pointIndex) => {
             return promise.then(() => {
-              return stream.fillBuffer(point).then((dataSize) => {
-                if (jr.ndef(dataSize)) { resolve([-1, -1, -1]); return; }
+              return stream.fillBuffer(point).then(dataSize => {
+                if (jr.ndef(dataSize)) {
+                  resolve([-1, -1, -1]);
+                  return;
+                }
 
-                const lastStream = streamIndex === this.streams.length-1;
+                const lastStream = streamIndex === this.streams.length - 1;
                 const lastPoint = pointIndex === points.length - 1;
 
                 // update payload weight
                 payloadSize += dataSize;
 
                 if (lastStream && lastPoint) {
-                  this.hooks.run('onBufferEnd');
+                  this.hooks.run("onBufferEnd");
 
                   payloadEnd = clock.init().getTime();
 
                   // const bufferLength = stream.bufferLength();
                   const delta = (payloadEnd - payloadStart) / 1000;
 
-                  if (delta > lead) { clearBpsHistory() }
+                  if (delta > lead) {
+                    clearBpsHistory();
+                  }
                   pushBpsHistory(bps(payloadSize, delta));
                   const kbpsSpeed = kbpsAvg();
 
@@ -454,8 +500,10 @@ class State {
 
                   this.lastTime = clock.now();
 
-                  console.log(`Buffers filled; download speed: ` +
-                              `${kbpsSpeed}kbps, speedFactor: ${factor}`);
+                  console.log(
+                    `Buffers filled; download speed: ` +
+                      `${kbpsSpeed}kbps, speedFactor: ${factor}`
+                  );
 
                   /*
                   if (this.mpd.dvr && bufferLength > this.mpd.dvr) {
@@ -476,11 +524,15 @@ class State {
   }
 
   imageStream() {
-    if (jr.ndef(this.streams)) { return null }
+    if (jr.ndef(this.streams)) {
+      return null;
+    }
 
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
-      if (stream.type === kStreamType.image) { return stream.rep; }
+      if (stream.type === kStreamType.image) {
+        return stream.rep;
+      }
     }
 
     return null;
@@ -488,14 +540,14 @@ class State {
 
   pause() {
     this.paused = true;
-    this.hooks.run('onPause');
+    this.hooks.run("onPause");
 
     return this.video.pause();
   }
 
   play() {
     this.paused = false;
-    this.hooks.run('onPlay');
+    this.hooks.run("onPlay");
 
     return this.video.play();
   }
@@ -520,9 +572,9 @@ class State {
 
         if (source.id === repID) {
           this.qualityAuto = false;
-          this.qualityQueued = { 
+          this.qualityQueued = {
             stream: stream,
-            repID: repID,
+            repID: repID
           };
 
           return;
@@ -532,7 +584,7 @@ class State {
   }
 
   segmentLengths() {
-    if (this.streams === null || typeof this.streams === 'undefined') {
+    if (this.streams === null || typeof this.streams === "undefined") {
       return -1;
     }
 
@@ -540,36 +592,48 @@ class State {
   }
 
   usingHLS() {
-    if (!hlsPreferred()) { return false; }
+    if (!hlsPreferred()) {
+      return false;
+    }
 
     const track = this.config.track;
     const current = this.config.playlist[track];
     const hls = current.hls;
-    
+
     return jr.def(hls) && (hls.url || hls.gen) ? true : false;
   }
 
   qualities() {
     let result = [];
-    if (jr.ndef(this.mpd) || jr.ndef(this.mpd.adps)) { return result }
+    if (jr.ndef(this.mpd) || jr.ndef(this.mpd.adps)) {
+      return result;
+    }
 
     const currentRep = this.videoRep();
-    if (jr.ndef(currentRep)) { return result }
+    if (jr.ndef(currentRep)) {
+      return result;
+    }
 
     for (let i = 0; i != this.mpd.adps.length; i++) {
       const adp = this.mpd.adps[i];
-      if (jr.ndef(adp.reps) || adp.reps.length < 1) { continue }
-      
+      if (jr.ndef(adp.reps) || adp.reps.length < 1) {
+        continue;
+      }
+
       const firstRep = adp.reps[0];
-      if (firstRep.type !== kStreamType.video &&
-          firstRep.type !== kStreamType.muxed) { continue }
+      if (
+        firstRep.type !== kStreamType.video &&
+        firstRep.type !== kStreamType.muxed
+      ) {
+        continue;
+      }
 
       for (let j = 0; j != adp.reps.length; j++) {
         const rep = adp.reps[j];
 
         result.push({
           rep: rep,
-          current: currentRep.id == rep.id,
+          current: currentRep.id == rep.id
         });
       }
     }
@@ -579,20 +643,29 @@ class State {
 
   videoRep() {
     const stream = this.videoStream();
-    if (!stream) { return null }
+    if (!stream) {
+      return null;
+    }
 
     return stream.rep();
   }
 
   videoStream() {
     let result = null;
-    if (jr.ndef(this.streams)) { return result; }
+    if (jr.ndef(this.streams)) {
+      return result;
+    }
 
     for (let i = 0; i != this.streams.length; i++) {
       const stream = this.streams[i];
       const rep = stream.rep();
-      if (rep.type === kStreamType.video ||
-          rep.type === kStreamType.muxed) { result = stream; break }
+      if (
+        rep.type === kStreamType.video ||
+        rep.type === kStreamType.muxed
+      ) {
+        result = stream;
+        break;
+      }
     }
 
     return result;

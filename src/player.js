@@ -1,23 +1,23 @@
-import jr from './jr';
-import os from './os';
-import Hooks from './hooks';
-import { State } from './state';
-import { mergeDicts } from './helpers';
-import { kMPDType } from './constants';
+import jr from "./jr";
+import os from "./os";
+import Hooks from "./hooks";
+import { State } from "./state";
+import { mergeDicts } from "./helpers";
+import { kMPDType } from "./constants";
 
 class Player {
   constructor(config = {}) {
     const kDefaultConfig = {
       playlist: [
         // {
-          // dash: {
-            // url:    null,
-            // base:   null,
-          // },
-          // hls: {
-            // url:    null,
-            // gen:    null,
-          // },
+        // dash: {
+        // url:    null,
+        // base:   null,
+        // },
+        // hls: {
+        // url:    null,
+        // gen:    null,
+        // },
         // },
       ],
 
@@ -35,28 +35,28 @@ class Player {
 
       drm: {
         playready: {
-          url: '',
-          data: '',
+          url: "",
+          data: ""
         },
 
         widevine: {
-          url: '',
-          data: '',
-        },
+          url: "",
+          data: ""
+        }
       },
-        
-      auto:   true,
-      adapt:  true,
-      base:   os.is('edge') ? 5000 : 1000,
-      debug:  false,
-      lead:   5000,
-      loop:   false,
-      muted:  false,
-      query:  ".pepper",
-      start:  0,
-      timed:  0,
-      track:  0,
-      ui:     true,
+
+      auto: true,
+      adapt: true,
+      base: os.is("edge") ? 5000 : 1000,
+      debug: false,
+      lead: 5000,
+      loop: false,
+      muted: false,
+      query: ".pepper",
+      start: 0,
+      timed: 0,
+      track: 0,
+      ui: true
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
@@ -75,7 +75,9 @@ class Player {
     this.config.hooks.onPlay();
     */
 
-    if (this.config.playlist.length > 0) { this.setup_(); }
+    if (this.config.playlist.length > 0) {
+      this.setup_();
+    }
   }
 
   async setup_() {
@@ -83,11 +85,15 @@ class Player {
     this.hooks = new Hooks(this.config.hooks);
 
     if (!this.config.query.length || this.config.query.length < 1) {
-      throw("Invalid insertion query");
+      throw "Invalid insertion query";
     }
 
-    if (this.config.base < 100) { this.config.base = 100; }
-    if (this.config.lead < 1000) { this.config.lead = 1000; }
+    if (this.config.base < 100) {
+      this.config.base = 100;
+    }
+    if (this.config.lead < 1000) {
+      this.config.lead = 1000;
+    }
 
     this.renderUI();
     this.state = new State(this.config, this.hooks);
@@ -130,10 +136,10 @@ class Player {
         this.safariStartTime = now / 1000;
       }
 
-      await this.state.adjustQuality(speed, factor)   
+      await this.state.adjustQuality(speed, factor);
 
       if (this.config.auto) {
-        if (type === kMPDType.dynamic && os.is('safari')) {
+        if (type === kMPDType.dynamic && os.is("safari")) {
           const start = this.safariStartTime;
           this.state.video.currentTime = start;
         }
@@ -144,8 +150,8 @@ class Player {
         }
       }
     }
-    
-    return Promise.resolve()
+
+    return Promise.resolve();
   }
 
   bufferTime() {
@@ -161,19 +167,23 @@ class Player {
   }
 
   currentTime() {
-    if (jr.ndef(this.state) || jr.ndef(this.state.video)) { return 0; }
+    if (jr.ndef(this.state) || jr.ndef(this.state.video)) {
+      return 0;
+    }
 
     // return this.forcedCurrentTime ||
     // this.state.video.currentTime * 1000;
-    
-    return this.forcedCurrentTime ?
-    this.forcedCurrentTime + this.state.video.currentTime * 1000 :
-    this.state.video.currentTime * 1000;
+
+    return this.forcedCurrentTime
+      ? this.forcedCurrentTime + this.state.video.currentTime * 1000
+      : this.state.video.currentTime * 1000;
   }
 
   didEnd() {
-    return Math.round(this.currentTime() / 1000) * 1000 >=
-    this.duration() - 2000;
+    return (
+      Math.round(this.currentTime() / 1000) * 1000 >=
+      this.duration() - 2000
+    );
   }
 
   duration() {
@@ -181,7 +191,9 @@ class Player {
   }
 
   isPaused() {
-    if (jr.ndef(this.state)) { return true; }
+    if (jr.ndef(this.state)) {
+      return true;
+    }
     return this.state.paused;
   }
 
@@ -201,16 +213,19 @@ class Player {
 
   async play() {
     this.recoverBlock_();
-    if (!this.initialized) { this.lazyStart = true; await this.setup_() }
+    if (!this.initialized) {
+      this.lazyStart = true;
+      await this.setup_();
+    }
 
     const type = this.state.mpd.type;
 
     try {
       await this.state.play();
-    } catch(e) {
+    } catch (e) {
       const error = "browser blocked player start";
       console.error(`ERROR : ${error}`);
-      this.hooks.run('onError', error);
+      this.hooks.run("onError", error);
 
       this.browserBlocked = true;
       await this.state.pause();
@@ -218,7 +233,7 @@ class Player {
 
     if (type === kMPDType.static) {
       this.state.video.ontimeupdate = async () => {
-        console.log('attempting update');
+        console.log("attempting update");
         this.recoverBlock_();
 
         const currentTime = this.currentTime();
@@ -233,7 +248,7 @@ class Player {
         }
 
         if (this.didEnd()) {
-          this.hooks.run('onEnd');
+          this.hooks.run("onEnd");
           this.state.video.currentTime = 0;
           if (!this.config.loop) {
             this.pause();
@@ -244,15 +259,16 @@ class Player {
       };
     } else if (type === kMPDType.dynamic) {
       const lens = this.state.segmentLengths();
-      const minTime = lens.reduce((a,b) => Math.min(a,b)) / 2;
-      const maxTime = lens.reduce((a,b) => Math.max(a,b));
-      const waitTime = this.lastSpeed ?
-                       maxTime - minTime * this.lastSpeed : minTime;
+      const minTime = lens.reduce((a, b) => Math.min(a, b)) / 2;
+      const maxTime = lens.reduce((a, b) => Math.max(a, b));
+      const waitTime = this.lastSpeed
+        ? maxTime - minTime * this.lastSpeed
+        : minTime;
 
       // this.state.video.ontimeupdate = () => this.renderUI();
 
       setInterval(async () => {
-        console.log('attempting update');
+        console.log("attempting update");
         this.recoverBlock_();
 
         const [speed, factor] = await this.state.fillBuffers(maxTime);
@@ -261,10 +277,10 @@ class Player {
         if (this.config.auto && !this.isPaused()) {
           try {
             await this.state.play();
-          } catch(e) {
+          } catch (e) {
             const error = "browser blocked player start";
             console.error(`ERROR : ${error}`);
-            this.hooks.run('onError', error);
+            this.hooks.run("onError", error);
 
             this.browserBlocked = true;
             await this.state.pause();
@@ -289,11 +305,11 @@ class Player {
   renderUI() {
     if (!this.injectedUI) {
       const injectPoint = jr.q(this.config.query, document)[0];
-      const vidExists = jr.q('video', injectPoint)[0];
+      const vidExists = jr.q("video", injectPoint)[0];
 
       if (!vidExists) {
         const hls = this.state && this.state.usingHLS();
-        const video = document.createElement('video');
+        const video = document.createElement("video");
 
         video.controls = false;
         video.autoplay = this.config.auto && !hls;
@@ -303,10 +319,10 @@ class Player {
           video.setAttribute("muted", "");
         }
 
-        video.addEventListener('click', () => {
-          this.state.video.play().catch((e) => console.log(e));
+        video.addEventListener("click", () => {
+          this.state.video.play().catch(e => console.log(e));
         });
-        video.addEventListener('contextmenu', e => e.preventDefault());
+        video.addEventListener("contextmenu", e => e.preventDefault());
 
         injectPoint.appendChild(video);
       }
@@ -316,9 +332,11 @@ class Player {
   }
 
   async seek(percentage) {
-    if (jr.ndef(percentage)) { return }
+    if (jr.ndef(percentage)) {
+      return;
+    }
 
-    this.hooks.run('onPause');
+    this.hooks.run("onPause");
 
     const time = this.state.mpd.duration * (percentage / 100);
     this.config.start = time;
@@ -334,8 +352,8 @@ class Player {
     await this.state.setup();
     await this.init_();
 
-    this.hooks.run('onPlay');
-    this.hooks.run('onSeek');
+    this.hooks.run("onPlay");
+    this.hooks.run("onSeek");
 
     // this.pause();
     // this.setup_();
@@ -354,7 +372,9 @@ class Player {
   */
 
   qualities() {
-    if (jr.ndef(this.state)) { return [] }
+    if (jr.ndef(this.state)) {
+      return [];
+    }
     return this.state.qualities();
   }
 
@@ -372,8 +392,12 @@ class Player {
   }
 
   volume(value = -1) {
-    if (jr.ndef(this.state) || jr.ndef(this.state.video)) { return -1 }
-    if (value > -1 && value <= 1) { this.state.video.volume = value }
+    if (jr.ndef(this.state) || jr.ndef(this.state.video)) {
+      return -1;
+    }
+    if (value > -1 && value <= 1) {
+      this.state.video.volume = value;
+    }
     return this.state.video.volume;
   }
 

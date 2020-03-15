@@ -1,22 +1,23 @@
-import os from './os';
+import os from "./os";
 // import clock from './clock';
-import { kMPDType, kStreamType } from './constants';
+import { kMPDType, kStreamType } from "./constants";
 
-const N = '\n';
+const N = "\n";
 const EXTM3U = `#EXTM3U\n`;
 const EXT_VERSION = `#EXT-X-VERSION:7\n`;
 
 // let lastPoint;
 const mimeType = "application/vnd.apple.mpegurl";
 
-const hlsSupported = (mpd) => {
+const hlsSupported = mpd => {
   const kHLSType = mimeType;
-  let video = document.createElement('video');
+  let video = document.createElement("video");
 
-  return (os.is('safari') && mpd && mpd.live) || (
-    video.canPlayType &&
-    !!video.canPlayType(kHLSType) &&
-    !('MediaSource' in window)
+  return (
+    (os.is("safari") && mpd && mpd.live) ||
+    (video.canPlayType &&
+      !!video.canPlayType(kHLSType) &&
+      !("MediaSource" in window))
   );
 
   /*
@@ -24,11 +25,11 @@ const hlsSupported = (mpd) => {
   return video.canPlayType &&
   !!video.canPlayType(kHLSType);
   */
-}
+};
 
-const hlsPreferred = (mpd) => {
+const hlsPreferred = mpd => {
   return hlsSupported(mpd); // && !('MediaSource' in window);
-}
+};
 
 const hlsMakePoints = (state, r, len) => {
   const mpd = state.mpd;
@@ -36,15 +37,17 @@ const hlsMakePoints = (state, r, len) => {
   // const now = clock.now();
   // const [points] = r.makePoints(state.mpd, 0, null, now, 0);
   // console.log(points);
-  const base = mpd.type === kMPDType.dynamic ?
-    r.timeline.slice(0, 10) :
-    Array(Math.ceil(mpd.duration / len)).fill();
+  const base =
+    mpd.type === kMPDType.dynamic
+      ? r.timeline.slice(0, 10)
+      : Array(Math.ceil(mpd.duration / len)).fill();
 
-  return base.map((s, i) =>
-    `#EXTINF:${parseFloat(len / 1000).toFixed(5)},
+  return base.map(
+    (s, i) =>
+      `#EXTINF:${parseFloat(len / 1000).toFixed(5)},
     ${r.mediaURL(mpd.type === kMPDType.dynamic ? s : i + 1)}`
   );
-}
+};
 
 const repToM3U8 = (state, r) => {
   const mpd = state.mpd;
@@ -53,23 +56,26 @@ const repToM3U8 = (state, r) => {
   const points = hlsMakePoints(state, r, len);
 
   const m3u8 =
-  EXTM3U +
-  `#EXT-X-TARGETDURATION:${parseInt(Math.ceil(len / 1000))}\n` +
-  EXT_VERSION +
-  `#EXT-X-PLAYLIST-TYPE:${mpd.type === kMPDType.static?'VOD':'EVENT'}\n` +
-  `#EXT-X-INDEPENDENT-SEGMENTS\n` +
-  `#EXT-X-MAP:URI="${r.initURL()}"\n` +
-  points.join(N) + N +
-  `${mpd.type === kMPDType.static ? '#EXT-X-ENDLIST' : ''}`
+    EXTM3U +
+    `#EXT-X-TARGETDURATION:${parseInt(Math.ceil(len / 1000))}\n` +
+    EXT_VERSION +
+    `#EXT-X-PLAYLIST-TYPE:${
+      mpd.type === kMPDType.static ? "VOD" : "EVENT"
+    }\n` +
+    `#EXT-X-INDEPENDENT-SEGMENTS\n` +
+    `#EXT-X-MAP:URI="${r.initURL()}"\n` +
+    points.join(N) +
+    N +
+    `${mpd.type === kMPDType.static ? "#EXT-X-ENDLIST" : ""}`;
 
   console.log(m3u8);
 
   const blob = new Blob([m3u8], { type: mimeType });
   return URL.createObjectURL(blob);
-}
+};
 
 // converts a valid, parsed MPD manifest to a valid HLS manifest
-const mpdToM3U8 = (state) => {
+const mpdToM3U8 = state => {
   const reps = [].concat(...state.mpd.adps.map(a => a.reps));
 
   const audio = reps.filter(r => r.type === kStreamType.audio);
@@ -105,19 +111,20 @@ const mpdToM3U8 = (state) => {
   console.log("state.mpd.type : " + state.mpd.type);
 
   const result =
-  EXTM3U +
-  EXT_VERSION +
-  "#EXT-X-INDEPENDENT-SEGMENTS\n" +
-  audioData.join(N) + N +
-  videoData.join(N);
+    EXTM3U +
+    EXT_VERSION +
+    "#EXT-X-INDEPENDENT-SEGMENTS\n" +
+    audioData.join(N) +
+    N +
+    videoData.join(N);
 
   return result;
-}
+};
 
 export {
   mimeType as hlsMimeType,
   hlsSupported,
   hlsPreferred,
   mpdToM3U8,
-  repToM3U8,
-}
+  repToM3U8
+};

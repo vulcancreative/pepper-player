@@ -43,6 +43,7 @@
     "husky": "3.1.0",
     "jest": "23.1.0",
     "lint-staged": "10.0.8",
+    "prettier": "1.19.1",
     "size-limit": "0.18.2",
     "style-loader": "0.21.0",
     "webpack": "4.6.0",

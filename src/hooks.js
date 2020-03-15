@@ -1,4 +1,4 @@
-import jr from './jr';
+import jr from "./jr";
 
 class Hooks {
   constructor(hooks) {
@@ -9,7 +9,9 @@ class Hooks {
     // fire and forget; who cares if it sticks
     return new Promise(() => {
       const hook = this.hooks[name];
-      if (jr.def(hook) && jr.fnc(hook)) { hook(...data) }
+      if (jr.def(hook) && jr.fnc(hook)) {
+        hook(...data);
+      }
     });
   }
 }

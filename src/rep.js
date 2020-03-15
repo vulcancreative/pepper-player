@@ -1,25 +1,39 @@
-import jr from './jr';
-import os from './os';
-import { toInt } from './convert';
-import { kMPDType, kStreamType } from './constants';
+import jr from "./jr";
+import os from "./os";
+import { toInt } from "./convert";
+import { kMPDType, kStreamType } from "./constants";
 
-const BLANK = '';
-const MIMETYPE_STR = 'mimeType';
-const SEGMENTTIMELINE_STR = 'SegmentTimeline';
-const SEGMENTTEMPLATE_STR = 'SegmentTemplate';
-const DURATION_STR = 'duration';
+const BLANK = "";
+const MIMETYPE_STR = "mimeType";
+const SEGMENTTIMELINE_STR = "SegmentTimeline";
+const SEGMENTTEMPLATE_STR = "SegmentTemplate";
+const DURATION_STR = "duration";
 
 class Rep {
   constructor(adp, rep, url, override, startTime) {
     this.presentationTime = startTime;
 
-    let id, codecs, width, height, bandwidth, baseURL,
-    initialization, mediaTemplate, segmentTimeline, segmentTemplate,
-    timeline, timelineParts, startNumber, timescale, mimeType,
-    segmentDuration, type, tileInfo;
+    let id,
+      codecs,
+      width,
+      height,
+      bandwidth,
+      baseURL,
+      initialization,
+      mediaTemplate,
+      segmentTimeline,
+      segmentTemplate,
+      timeline,
+      timelineParts,
+      startNumber,
+      timescale,
+      mimeType,
+      segmentDuration,
+      type,
+      tileInfo;
 
     // source id from rep attribute
-    id = jr.a('id', rep);
+    id = jr.a("id", rep);
 
     // mimeType can be on either the adp or the rep
     mimeType = jr.a(MIMETYPE_STR, adp);
@@ -28,27 +42,27 @@ class Rep {
     }
 
     // source codecs from rep attribute
-    codecs = jr.a('codecs', rep);
+    codecs = jr.a("codecs", rep);
 
     // find dimensions and parse to integer
-    const widthAttr = jr.a('width', rep);
-    const heightAttr = jr.a('height', rep);
+    const widthAttr = jr.a("width", rep);
+    const heightAttr = jr.a("height", rep);
 
     width = toInt(widthAttr) || 0;
     height = toInt(heightAttr) || 0;
 
     // find bandwidth and parse to integer
-    const bandwidthAttr = jr.a('bandwidth', rep);
+    const bandwidthAttr = jr.a("bandwidth", rep);
     bandwidth = toInt(bandwidthAttr);
 
     // get default baseURL, if available and no override
     baseURL = override || BLANK;
 
-    const srcParts = url.split('/');
+    const srcParts = url.split("/");
     const srcLen = srcParts.length;
 
-    baseURL = srcLen > 1 ? srcParts.slice(0,srcLen-1).join('/') : '/';
-    baseURL += baseURL.charAt(baseURL.length - 1) === '/' ? BLANK : '/';
+    baseURL = srcLen > 1 ? srcParts.slice(0, srcLen - 1).join("/") : "/";
+    baseURL += baseURL.charAt(baseURL.length - 1) === "/" ? BLANK : "/";
 
     // find segment template
     segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, rep)[0];
@@ -57,19 +71,19 @@ class Rep {
     }
 
     if (segmentTemplate) {
-      mediaTemplate = jr.a('media', segmentTemplate);
+      mediaTemplate = jr.a("media", segmentTemplate);
 
-      initialization = jr.a('initialization', segmentTemplate);
+      initialization = jr.a("initialization", segmentTemplate);
 
       if (jr.def(initialization)) {
         initialization = initialization.replace("$RepresentationID$", id);
       }
 
-      const startNumAttr = jr.a('startNumber', segmentTemplate);
+      const startNumAttr = jr.a("startNumber", segmentTemplate);
       startNumber = toInt(startNumAttr);
       // console.log(`startNumAttr : ${startNumAttr}`);
 
-      const timescaleAttr = jr.a('timescale', segmentTemplate);
+      const timescaleAttr = jr.a("timescale", segmentTemplate);
       timescale = toInt(timescaleAttr);
 
       const segDurationAttr = jr.a(DURATION_STR, segmentTemplate);
@@ -80,12 +94,14 @@ class Rep {
     if (jr.def(segmentTimeline)) {
       let s = [];
 
-      if (os.is('edge')) {
+      if (os.is("edge")) {
         const nodes = segmentTimeline.childNodes;
         for (let i = 0; i != nodes.length; i++) {
           const node = nodes[i];
 
-          if (node.nodeName.toLowerCase() === 's') { s.push(node) }
+          if (node.nodeName.toLowerCase() === "s") {
+            s.push(node);
+          }
         }
       } else {
         s = segmentTimeline.children;
@@ -96,29 +112,29 @@ class Rep {
       timeline = this.timeline_(pieces, startNumber);
     }
 
-    if (mimeType && mimeType.includes('video') && width && height) {
+    if (mimeType && mimeType.includes("video") && width && height) {
       type = kStreamType.video;
-    } else if (mimeType && mimeType.includes('audio') && bandwidth) {
+    } else if (mimeType && mimeType.includes("audio") && bandwidth) {
       type = kStreamType.audio;
-    } else if (mimeType && mimeType.includes('image')) {
+    } else if (mimeType && mimeType.includes("image")) {
       type = kStreamType.image;
     }
 
     if (type === kStreamType.image) {
-      let dimensionAttr = '1x1';
+      let dimensionAttr = "1x1";
 
       const durationAttr = jr.a(DURATION_STR, segmentTemplate);
-      const essential = jr.q('EssentialProperty', rep)[0];
+      const essential = jr.q("EssentialProperty", rep)[0];
 
       if (essential) {
-        dimensionAttr = jr.a('value', essential);
+        dimensionAttr = jr.a("value", essential);
       }
 
       tileInfo = {
         duration: parseInt(durationAttr) * 1000,
-        count: parseInt(dimensionAttr.split('x')[0]),
+        count: parseInt(dimensionAttr.split("x")[0]),
         width: width,
-        height: height,
+        height: height
       };
     }
 
@@ -133,8 +149,10 @@ class Rep {
     this.timeline = timeline;
     this.mediaTemplate = mediaTemplate;
     this.initialization = initialization;
-    this.startNumber = !startNumber || typeof startNumber==='undefined' ?
-    null : startNumber;
+    this.startNumber =
+      !startNumber || typeof startNumber === "undefined"
+        ? null
+        : startNumber;
     this.timescale = timescale;
     this.segmentDuration = segmentDuration;
     this.tileInfo = tileInfo;
@@ -145,7 +163,9 @@ class Rep {
     const initName = this.initialization;
     const baseURL = this.baseURL;
 
-    if (!initName) { return baseURL ? baseURL : "/" }
+    if (!initName) {
+      return baseURL ? baseURL : "/";
+    }
 
     let initURL = baseURL ? `${baseURL}${initName}` : initName;
     return initURL.replace(/\$RepresentationID\$/g, `${this.id}`);
@@ -160,9 +180,14 @@ class Rep {
   }
 
   makeTimelinePoints(last) {
-    let pos = 0, current = last, result = [], end;
+    let pos = 0,
+      current = last,
+      result = [],
+      end;
 
-    while (current <= last) { current = this.timeline[pos++] }
+    while (current <= last) {
+      current = this.timeline[pos++];
+    }
     pos -= 1; // fix trailing incrementation, without additional branching
 
     // ensure enough known segments to advance
@@ -171,22 +196,28 @@ class Rep {
     } else {
       const diff = this.timeline.length - pos;
 
-      if (diff <= 0) { return [[], last]; }
+      if (diff <= 0) {
+        return [[], last];
+      }
       end = pos + diff - 1;
     }
 
-    while(pos < end) {
+    while (pos < end) {
       result.push(this.timeline[pos]);
       pos++;
     }
 
     // ensure unique results
     result = result.filter((v, i, a) => a.indexOf(v) === i);
-    if (result.length < 1) { return [[], last] }
+    if (result.length < 1) {
+      return [[], last];
+    }
 
     for (let i = 0; i != result.length; i++) {
       const data = result[i];
-      if (last >= data) { throw("last >= data") }
+      if (last >= data) {
+        throw "last >= data";
+      }
     }
 
     if (this.startNumber) {
@@ -203,10 +234,10 @@ class Rep {
     if (mpd.type === kMPDType.static) {
       if (this.type === kStreamType.image && this.tileInfo !== null) {
         const count = Math.ceil(mpd.duration / this.tileInfo.duration);
-        return (new Array(count)).fill(0).map((s, i) => i + 1);
+        return new Array(count).fill(0).map((s, i) => i + 1);
       }
 
-      const delta = (target < current ? current+1000 : target)-current;
+      const delta = (target < current ? current + 1000 : target) - current;
       const steps = parseInt(
         Math.ceil(parseFloat(delta) / parseFloat(len))
       );
@@ -215,36 +246,33 @@ class Rep {
         Math.ceil(parseFloat(current) / parseFloat(len))
       );
 
-      return (new Array(steps).fill(last).map((v, i) => v + (i + 1)));
+      return new Array(steps).fill(last).map((v, i) => v + (i + 1));
     } else if (mpd.type === kMPDType.dynamic) {
       const delta = Math.abs(now - mpd.startTime);
 
       if (target && target > now) {
-        return Array(1 + ((target - now) / len)).fill().map((a, i) => {
-          return (delta + len * i) / len - 10;
-        });
+        return Array(1 + (target - now) / len)
+          .fill()
+          .map((a, i) => {
+            return (delta + len * i) / len - 10;
+          });
       }
 
       return [Math.ceil(delta / len - 10)];
     }
 
-    throw(`Unable to decipher source type ("${mpd.type}")`);
+    throw `Unable to decipher source type ("${mpd.type}")`;
   }
 
   mediaURL(next) {
-    const
-
-    //e.g "...$Time$.m4s"
-    nVarT = /\$Time\$/g,
-
-    //e.g "...$Number$.m4s"
-    nVarN = /\$Number\$/g,
-
-    //e.g "...$Number%05d$.m4s"
-    nVarD = /(\$Number%(\d+)d\$)/g,
-
-    //e.g "stream$RepresentationID$..."
-    rVarN = /\$RepresentationID\$/g;
+    const //e.g "...$Time$.m4s"
+      nVarT = /\$Time\$/g,
+      //e.g "...$Number$.m4s"
+      nVarN = /\$Number\$/g,
+      //e.g "...$Number%05d$.m4s"
+      nVarD = /(\$Number%(\d+)d\$)/g,
+      //e.g "stream$RepresentationID$..."
+      rVarN = /\$RepresentationID\$/g;
 
     /*
      * TODO: solidfy as trace-level debug text
@@ -264,7 +292,7 @@ class Rep {
 
       const matches = nVarDC.exec(mediaName);
       const amount = parseInt(matches[matches.length - 1]) + 1;
-      const segmentNumberExt = nStr.padStart(amount - 1, '0');
+      const segmentNumberExt = nStr.padStart(amount - 1, "0");
 
       mediaName = mediaName.replace(matches[0], segmentNumberExt);
       mediaName = mediaName.replace(nVarN, nStr);
@@ -284,14 +312,14 @@ class Rep {
       for (let i = 0; i < this.timelineParts.length; i++) {
         const point = this.timelineParts[i];
         const scale = this.timescale;
-        const d = parseInt(point.getAttribute('d'));
-        
+        const d = parseInt(point.getAttribute("d"));
+
         points.push(d / scale);
       }
 
       if (points.length > 0) {
         const sum = points.reduce((a, c) => a + c);
-        return sum / points.length * 1000;
+        return (sum / points.length) * 1000;
       }
     }
 
@@ -299,7 +327,9 @@ class Rep {
     const timescale = parseFloat(this.timescale);
     const duration = parseFloat(this.segmentDuration);
 
-    if (jr.ndef(timescale) || isNaN(timescale)) { return duration * 1000 }
+    if (jr.ndef(timescale) || isNaN(timescale)) {
+      return duration * 1000;
+    }
 
     const ticks = Math.floor(duration / timescale);
     const size = parseInt(ticks) * 1000;
@@ -324,9 +354,9 @@ class Rep {
       for (let i = 0; i != points.length; i++) {
         const point = points[i];
 
-        let t = parseInt(jr.a('t', point));
-        let d = parseInt(jr.a('d', point));
-        let r = parseInt(jr.a('r', point));
+        let t = parseInt(jr.a("t", point));
+        let d = parseInt(jr.a("d", point));
+        let r = parseInt(jr.a("r", point));
 
         // normalize t
         t -= this.presentationTime;

@@ -1,34 +1,34 @@
 const kMPDType = {
-  static: 'static',
-  dynamic: 'dynamic',
+  static: "static",
+  dynamic: "dynamic"
 };
 
 const kProtocol = {
-  hls: 'HLS',
-  dash: 'DASH',
+  hls: "HLS",
+  dash: "DASH"
 };
 
 const kStreamType = {
-  audio: 'audio',
-  video: 'video',
-  muxed: 'muxed',
-  image: 'image',
+  audio: "audio",
+  video: "video",
+  muxed: "muxed",
+  image: "image"
 };
 
 const kSegmentType = {
-  init: 'initialization',
-  segment: 'segment',
+  init: "initialization",
+  segment: "segment"
 };
 
 const kTransitions = {
-  countdown: 'countdown',
-  immedaite: 'immediate',
+  countdown: "countdown",
+  immedaite: "immediate"
 };
 
 const kBackingType = {
-  splitX: 'splitX',
-  splitY: 'splitY',
-  uniform: 'uniform',
+  splitX: "splitX",
+  splitY: "splitY",
+  uniform: "uniform"
 };
 
 export {
@@ -37,5 +37,5 @@ export {
   kStreamType,
   kSegmentType,
   kTransitions,
-  kBackingType,
+  kBackingType
 };

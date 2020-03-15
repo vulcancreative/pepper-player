@@ -1,15 +1,10 @@
-import {
-  sizeDict,
-  mergeDicts,
-  randInt,
-  isInt,
-} from './helpers';
+import { sizeDict, mergeDicts, randInt, isInt } from "./helpers";
 
-describe('sizeDict', () => {
-  test('should compare dictionary sizes', () => {
+describe("sizeDict", () => {
+  test("should compare dictionary sizes", () => {
     let dictOne = {
       a: 1,
-      b: 2,
+      b: 2
     };
 
     let dictTwo = {
@@ -20,9 +15,9 @@ describe('sizeDict', () => {
         "array",
         "of",
         {
-          "strings": "",
+          strings: ""
         }
-      ],
+      ]
     };
 
     expect(sizeDict(dictOne)).toBe(2);
@@ -30,18 +25,18 @@ describe('sizeDict', () => {
   });
 });
 
-describe('mergeDicts', () => {
-  test('should fill in blank strings in an object', () => {
+describe("mergeDicts", () => {
+  test("should fill in blank strings in an object", () => {
     let defaultObj = {
       a: "alpha",
       b: "beta",
-      c: null,
+      c: null
     };
 
     let baseObj = {
       a: null,
       b: "override",
-      c: "gamma",
+      c: "gamma"
     };
 
     const merge = mergeDicts(baseObj, defaultObj);
@@ -51,17 +46,17 @@ describe('mergeDicts', () => {
     expect(merge.c).toBe("gamma");
   });
 
-  test('should fill in blank integers in an object', () => {
+  test("should fill in blank integers in an object", () => {
     let defaultObj = {
       one: 1,
       two: null,
-      three: 3,
+      three: 3
     };
 
     let baseObj = {
       one: 3,
       two: 2,
-      three: null,
+      three: null
     };
 
     const merge = mergeDicts(baseObj, defaultObj);
@@ -72,47 +67,47 @@ describe('mergeDicts', () => {
   });
 });
 
-describe('randInt', () => {
+describe("randInt", () => {
   const intOne = randInt(10, 35),
-        intTwo = randInt(86, 114),
-        intThree = randInt(3, 7),
-        intFour = randInt(97, 101);
+    intTwo = randInt(86, 114),
+    intThree = randInt(3, 7),
+    intFour = randInt(97, 101);
 
-  test('should produce integers only within the provided range', () => {
+  test("should produce integers only within the provided range", () => {
     expect(intOne >= 10 && intOne <= 35).toBeTruthy();
     expect(intTwo >= 86 && intTwo <= 114).toBeTruthy();
     expect(intThree >= 3 && intThree <= 7).toBeTruthy();
     expect(intFour >= 97 && intFour <= 101).toBeTruthy();
   });
 
-  test('should produce sufficiently random output', () => {
+  test("should produce sufficiently random output", () => {
     expect(intOne).not.toBe(intTwo);
     expect(intTwo).not.toBe(intThree);
     expect(intThree).not.toBe(intFour);
   });
 });
 
-describe('isInt', () => {
+describe("isInt", () => {
   const i = isInt(1),
-        s = isInt('1'),
-        f = isInt(() => 1),
-        o = isInt({
-          one: 1,
-        });
+    s = isInt("1"),
+    f = isInt(() => 1),
+    o = isInt({
+      one: 1
+    });
 
-  test('should return true for integers', () => {
+  test("should return true for integers", () => {
     expect(i).toBeTruthy();
   });
 
-  test('should return convert strings to integers', () => {
+  test("should return convert strings to integers", () => {
     expect(s).toBeTruthy();
   });
 
-  test('should return false for non-integers (e.g. – functions)', () => {
+  test("should return false for non-integers (e.g. – functions)", () => {
     expect(f).toBeFalsy();
   });
 
-  test('should return false for non-integers (e.g. – objects)', () => {
+  test("should return false for non-integers (e.g. – objects)", () => {
     expect(o).toBeFalsy();
   });
 });

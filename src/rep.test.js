@@ -1,14 +1,14 @@
 // import rep from './rep';
-import { MPD } from './mpd';
-import { 
+import { MPD } from "./mpd";
+import {
   tfVodMpd as caseA,
   bbb4kVodMpd as caseB,
   bbb4kThumbnailsVodMpd as caseC,
-  echoLiveMpd as caseD,
-} from './testdata/mpd.testdata.js';
+  echoLiveMpd as caseD
+} from "./testdata/mpd.testdata.js";
 
-describe('Rep.initURL', () => {
-  it('should identify the correct initURLs', () => {
+describe("Rep.initURL", () => {
+  it("should identify the correct initURLs", () => {
     const inputA = caseA.data;
     const inputB = caseB.data;
     const inputC = caseC.data;
@@ -18,7 +18,7 @@ describe('Rep.initURL', () => {
       "/init-stream0.m4s",
       "/init-stream1.m4s",
       "/init-stream2.m4s",
-      "/init-stream3.m4s",
+      "/init-stream3.m4s"
     ];
     const outputB = [
       "/bbb_30fps_320x180_200k/bbb_30fps_320x180_200k_0.m4v",
@@ -31,7 +31,7 @@ describe('Rep.initURL', () => {
       "/bbb_30fps_1280x720_4000k/bbb_30fps_1280x720_4000k_0.m4v",
       "/bbb_30fps_1920x1080_8000k/bbb_30fps_1920x1080_8000k_0.m4v",
       "/bbb_30fps_3840x2160_12000k/bbb_30fps_3840x2160_12000k_0.m4v",
-      "/bbb_a64k/bbb_a64k_0.m4a",
+      "/bbb_a64k/bbb_a64k_0.m4a"
     ];
     const outputC = [
       "/bbb_30fps_320x180_200k/bbb_30fps_320x180_200k_0.m4v",
@@ -45,38 +45,35 @@ describe('Rep.initURL', () => {
       "/bbb_30fps_1920x1080_8000k/bbb_30fps_1920x1080_8000k_0.m4v",
       "/bbb_30fps_3840x2160_12000k/bbb_30fps_3840x2160_12000k_0.m4v",
       "/bbb_a64k/bbb_a64k_0.m4a",
-      "/",
+      "/"
     ];
-    const outputD = [
-      "/A48/init.mp4",
-      "/V300/init.mp4",
-    ];
+    const outputD = ["/A48/init.mp4", "/V300/init.mp4"];
 
     expect.assertions(4);
 
     const promises = [
-      (new MPD({ data: inputA })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps));
+      new MPD({ data: inputA }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps));
         expect(reps.map(r => r.initURL())).toEqual(outputA);
       }),
-      (new MPD({ data: inputB })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps));
+      new MPD({ data: inputB }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps));
         expect(reps.map(r => r.initURL())).toEqual(outputB);
       }),
-      (new MPD({ data: inputC })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps));
+      new MPD({ data: inputC }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps));
         expect(reps.map(r => r.initURL())).toEqual(outputC);
       }),
-      (new MPD({ data: inputD })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps));
+      new MPD({ data: inputD }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps));
         expect(reps.map(r => r.initURL())).toEqual(outputD);
-      }),
+      })
     ];
 
     return Promise.all(promises);
   });
 
-  it('should handle baseURL overrides', () => {
+  it("should handle baseURL overrides", () => {
     const inputA = caseA.data;
     const inputB = caseB.data;
     const inputC = caseC.data;
@@ -86,7 +83,7 @@ describe('Rep.initURL', () => {
       "/init-stream0.m4s",
       "/init-stream1.m4s",
       "/init-stream2.m4s",
-      "/init-stream3.m4s",
+      "/init-stream3.m4s"
     ].map(i => `http://vulcanca.com${i}`);
     const outputB = [
       "/bbb_30fps_320x180_200k/bbb_30fps_320x180_200k_0.m4v",
@@ -99,7 +96,7 @@ describe('Rep.initURL', () => {
       "/bbb_30fps_1280x720_4000k/bbb_30fps_1280x720_4000k_0.m4v",
       "/bbb_30fps_1920x1080_8000k/bbb_30fps_1920x1080_8000k_0.m4v",
       "/bbb_30fps_3840x2160_12000k/bbb_30fps_3840x2160_12000k_0.m4v",
-      "/bbb_a64k/bbb_a64k_0.m4a",
+      "/bbb_a64k/bbb_a64k_0.m4a"
     ].map(i => `http://vulcanca.com${i}`);
     const outputC = [
       "/bbb_30fps_320x180_200k/bbb_30fps_320x180_200k_0.m4v",
@@ -113,77 +110,69 @@ describe('Rep.initURL', () => {
       "/bbb_30fps_1920x1080_8000k/bbb_30fps_1920x1080_8000k_0.m4v",
       "/bbb_30fps_3840x2160_12000k/bbb_30fps_3840x2160_12000k_0.m4v",
       "/bbb_a64k/bbb_a64k_0.m4a",
-      "/",
+      "/"
     ].map(i => `http://vulcanca.com${i}`);
-    const outputD = [
-      "/A48/init.mp4",
-      "/V300/init.mp4",
-    ].map(i => `http://vulcanca.com${i}`);
+    const outputD = ["/A48/init.mp4", "/V300/init.mp4"].map(
+      i => `http://vulcanca.com${i}`
+    );
 
     expect.assertions(4);
 
     const promises = [
-      (new MPD({ data: inputA })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps)).map(r => {
+      new MPD({ data: inputA }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps)).map(r => {
           r.baseURL = "http://vulcanca.com/";
           return r;
         });
         expect(reps.map(r => r.initURL())).toEqual(outputA);
       }),
-      (new MPD({ data: inputB })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps)).map(r => {
+      new MPD({ data: inputB }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps)).map(r => {
           r.baseURL = "http://vulcanca.com/";
           return r;
         });
         expect(reps.map(r => r.initURL())).toEqual(outputB);
       }),
-      (new MPD({ data: inputC })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps)).map(r => {
+      new MPD({ data: inputC }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps)).map(r => {
           r.baseURL = "http://vulcanca.com/";
           return r;
         });
         expect(reps.map(r => r.initURL())).toEqual(outputC);
       }),
-      (new MPD({ data: inputD })).setup().then(mpd => {
-        let reps = [].concat(...mpd.adps.map((a) => a.reps)).map(r => {
+      new MPD({ data: inputD }).setup().then(mpd => {
+        let reps = [].concat(...mpd.adps.map(a => a.reps)).map(r => {
           r.baseURL = "http://vulcanca.com/";
           return r;
         });
         expect(reps.map(r => r.initURL())).toEqual(outputD);
-      }),
+      })
     ];
 
     return Promise.all(promises);
   });
 });
 
-describe('Rep.mediaURL', () => {
-  it('should return segment URLs', () => {
-  });
+describe("Rep.mediaURL", () => {
+  it("should return segment URLs", () => {});
 
-  it('should respect baseURL overrides', () => {
-  });
+  it("should respect baseURL overrides", () => {});
 });
 
-describe('Rep.makePoints', () => {
-  it('should make points for template/timeline-based MPDs', () => {
-  });
+describe("Rep.makePoints", () => {
+  it("should make points for template/timeline-based MPDs", () => {});
 });
 
-describe('Rep.makeTimelinePoints', () => {
-  it('should make points for timeline-based MPDs', () => {
-  });
+describe("Rep.makeTimelinePoints", () => {
+  it("should make points for timeline-based MPDs", () => {});
 });
 
-describe('Rep.makeTemplatePoints', () => {
-  it('should make points for template-based MPDs', () => {
-  });
+describe("Rep.makeTemplatePoints", () => {
+  it("should make points for template-based MPDs", () => {});
 });
 
-describe('Rep.segmentLength', () => {
-  it('should compute an average length if timeline-based', () => {
-  });
+describe("Rep.segmentLength", () => {
+  it("should compute an average length if timeline-based", () => {});
 
-  it('should return a direct size if template-based', () => {
-  });
+  it("should return a direct size if template-based", () => {});
 });

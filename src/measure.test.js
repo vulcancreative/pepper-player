@@ -4,16 +4,16 @@ import {
   clearBpsHistory,
   pushBpsHistory,
   bpsAvg,
-  kbpsAvg,
-} from './measure';
+  kbpsAvg
+} from "./measure";
 
-describe('kbps', () => {
-  it('should take a bytes and a time (ms), returning kbps', () => {
+describe("kbps", () => {
+  it("should take a bytes and a time (ms), returning kbps", () => {
     const inputA = [100, 4];
     const inputB = [44444, 8234];
     const inputC = [123456789, 65432];
 
-    const outputA = 0.20;
+    const outputA = 0.2;
     const outputB = 0.04;
     const outputC = 14.74;
 
@@ -23,9 +23,9 @@ describe('kbps', () => {
   });
 });
 
-describe('speedFactor', () => {
-  it('should convert download speed to meaningful metrics', () => {
-    const inputA = [0.20, 100, 4];
+describe("speedFactor", () => {
+  it("should convert download speed to meaningful metrics", () => {
+    const inputA = [0.2, 100, 4];
     const inputB = [0.04, 44444, 8234];
     const inputC = [14.74, 123456789, 65432];
 
@@ -41,15 +41,15 @@ describe('speedFactor', () => {
   });
 });
 
-describe('clearBpsHistory', () => {
-  it('should dump the BPS history vector', () => {
+describe("clearBpsHistory", () => {
+  it("should dump the BPS history vector", () => {
     const inputA = 4;
     const inputB = 6;
     const inputC = 8;
 
-    const outputA = 6.00;
-    const outputB = 0.00;
-    const outputC = 4.00;
+    const outputA = 6.0;
+    const outputB = 0.0;
+    const outputC = 4.0;
 
     clearBpsHistory();
 
@@ -58,7 +58,7 @@ describe('clearBpsHistory', () => {
     pushBpsHistory(inputC);
 
     expect(bpsAvg()).toBe(outputA);
-    
+
     clearBpsHistory();
     expect(bpsAvg()).toBe(outputB);
 
@@ -67,26 +67,17 @@ describe('clearBpsHistory', () => {
   });
 });
 
-describe('pushBpsHistory', () => {
-  it('should push BPS values onto the stack', () => {
+describe("pushBpsHistory", () => {
+  it("should push BPS values onto the stack", () => {
     const inputA = 11111.1234;
     const inputB = 1234554321.1234;
     const inputC = 9876543123.1234567;
 
-    const outputA = [
-      11111.12,
-      10.85,
-    ];
+    const outputA = [11111.12, 10.85];
 
-    const outputB = [
-      617282716.12,
-      602815.15,
-    ];
+    const outputB = [617282716.12, 602815.15];
 
-    const outputC = [
-      3703702851.79,
-      3616897.32,
-    ];
+    const outputC = [3703702851.79, 3616897.32];
 
     clearBpsHistory();
 

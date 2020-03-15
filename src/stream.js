@@ -1,18 +1,18 @@
-import jr from './jr';
-import Hooks from './hooks';
-import { bps, pushBpsHistory, clearBpsHistory } from './measure';
-import { isInt, mergeDicts } from './helpers';
-import { arrayBufferToBase64 } from './convert';
-import { kMPDType, kStreamType, kSegmentType } from './constants';
+import jr from "./jr";
+import Hooks from "./hooks";
+import { bps, pushBpsHistory, clearBpsHistory } from "./measure";
+import { isInt, mergeDicts } from "./helpers";
+import { arrayBufferToBase64 } from "./convert";
+import { kMPDType, kStreamType, kSegmentType } from "./constants";
 
 class Stream {
   constructor(config = {}, hooks = new Hooks()) {
     const kDefaultConfig = {
       adp: null,
-      id:  null,
-      mediaSource:  null,
-      mpd:  null,
-      sources:  null,
+      id: null,
+      mediaSource: null,
+      mpd: null,
+      sources: null
     };
 
     this.config = mergeDicts(config, kDefaultConfig);
@@ -48,7 +48,7 @@ class Stream {
       }
 
       this.buffer = this.mediaSource.addSourceBuffer(this.codecs);
-      this.buffer.mode = 'sequence';
+      this.buffer.mode = "sequence";
 
       if (this.mpd.type === kMPDType.dynamic) {
         this.buffer.timestampOffset = 0.1;
@@ -84,60 +84,64 @@ class Stream {
       */
 
       let bufferStarted = false;
-      const initSegments = await Promise.all(this.sources.map(source => {
-        return new Promise(resolve => {
-        const initURL = source.initURL();
+      const initSegments = await Promise.all(
+        this.sources.map(source => {
+          return new Promise(resolve => {
+            const initURL = source.initURL();
 
-          this.fetchSegment_(initURL).then((data) => {
-            if (!bufferStarted) {
-              this.hooks.run('onBufferStart');
-              bufferStarted = true;
-            }
+            this.fetchSegment_(initURL).then(data => {
+              if (!bufferStarted) {
+                this.hooks.run("onBufferStart");
+                bufferStarted = true;
+              }
 
-            const segment = {
-              type: kSegmentType.init,
-              rep: source.id,
-              point: 0,
-              data: data,
-              size: data.byteLength,
-            };
+              const segment = {
+                type: kSegmentType.init,
+                rep: source.id,
+                point: 0,
+                data: data,
+                size: data.byteLength
+              };
 
-            cache.push(segment);
-            resolve(segment);
+              cache.push(segment);
+              resolve(segment);
+            });
           });
-        });
-      }));
+        })
+      );
 
       // TODO: fix buffer append overlap
       for (let i = 0; i != initSegments.length; i++) {
         const segment = initSegments[i];
         if (segment.point === 0 && segment.rep === rep.id) {
-          this.appendBuffer(this.buffer, segment).then((buffer) => {
-            this.buffer = buffer;
-            resolve();
-          })
-          .catch(() => {
-            console.warn("WARNING: buffer not ready");
-            resolve();
-          });
+          this.appendBuffer(this.buffer, segment)
+            .then(buffer => {
+              this.buffer = buffer;
+              resolve();
+            })
+            .catch(() => {
+              console.warn("WARNING: buffer not ready");
+              resolve();
+            });
         }
       }
 
-      this.hooks.run('onBufferEnd');
+      this.hooks.run("onBufferEnd");
       resolve(cache);
     });
   }
 
   fetchSegment_(url = "") {
     let payloadSize = 0;
-    let payloadStart = (new Date()).getTime(), payloadEnd;
+    let payloadStart = new Date().getTime(),
+      payloadEnd;
 
     return new Promise((resolve, reject) => {
       const rep = this.rep();
 
       const id = rep.id;
       const type = this.mpd.type;
-      const xhr = new XMLHttpRequest;
+      const xhr = new XMLHttpRequest();
 
       const segmentLength = this.segmentLength();
 
@@ -146,7 +150,7 @@ class Stream {
           if (type === kMPDType.dynamic) {
             console.log(
               "Playing bleeding edge in dynamic mode; " +
-              "waiting for more viable segments"
+                "waiting for more viable segments"
             );
 
             resolve(null);
@@ -162,11 +166,13 @@ class Stream {
           const data = xhr.response;
 
           payloadSize += data.byteLength;
-          payloadEnd = (new Date()).getTime();
+          payloadEnd = new Date().getTime();
 
           const delta = (payloadEnd - payloadStart) / 1000;
 
-          if (delta > segmentLength) { clearBpsHistory() }
+          if (delta > segmentLength) {
+            clearBpsHistory();
+          }
           pushBpsHistory(bps(payloadSize, delta));
 
           // console.log(`Fetched segment at "${url}" for rep "${id}"`);
@@ -174,22 +180,22 @@ class Stream {
         } else {
           reject(`Unable to fetch segment at "${url}" for rep "${id}"`);
         }
-      }
+      };
 
-      const timestamp = (new Date()).getTime();
+      const timestamp = new Date().getTime();
 
       if (type === kMPDType.dynamic) {
         xhr.open(
-          'GET',
-          url.includes('?') ?
-          `${url}&timestamp=${timestamp}` :
-          `${url}?timestamp=${timestamp}`
+          "GET",
+          url.includes("?")
+            ? `${url}&timestamp=${timestamp}`
+            : `${url}?timestamp=${timestamp}`
         );
       } else {
-        xhr.open('GET', url);
+        xhr.open("GET", url);
       }
 
-      xhr.responseType = 'arraybuffer';
+      xhr.responseType = "arraybuffer";
       xhr.send();
     });
   }
@@ -198,8 +204,12 @@ class Stream {
     return new Promise((resolve, reject) => {
       const rep = this.rep();
 
-      if (jr.ndef(buffer)) { reject("Buffer invalid!") }
-      if (jr.ndef(segment)) { reject("Segment invalid!") }
+      if (jr.ndef(buffer)) {
+        reject("Buffer invalid!");
+      }
+      if (jr.ndef(segment)) {
+        reject("Segment invalid!");
+      }
 
       const append = () => {
         try {
@@ -211,11 +221,11 @@ class Stream {
             `buffer for rep "${rep.id}"`
           );
           */
-        } catch(err) {
+        } catch (err) {
           console.log(err);
           console.log(
             `Failed to append ${segment.type} to buffer for ` +
-            `rep "${rep.id}"`
+              `rep "${rep.id}"`
           );
         }
       };
@@ -223,14 +233,14 @@ class Stream {
       if (buffer.updating) {
         buffer.onupdateend = () => {
           append();
-          buffer.onupdateend = (() => resolve(buffer));
+          buffer.onupdateend = () => resolve(buffer);
         };
       } else {
         append();
-        buffer.onupdateend = (() => resolve(buffer));
+        buffer.onupdateend = () => resolve(buffer);
       }
 
-     /*
+      /*
       buffer.onupdateend = (() => resolve(buffer));
       append();
      */
@@ -240,7 +250,9 @@ class Stream {
   bufferedLength() {
     const cachedAmt = this.cache.length;
 
-    if (cachedAmt < 2) { return 0; }
+    if (cachedAmt < 2) {
+      return 0;
+    }
     return Math.round((cachedAmt - 1) * this.segmentLength());
   }
 
@@ -256,25 +268,28 @@ class Stream {
 
       try {
         data = await this.fetchSegment_(mediaURL);
-      } catch(err) {
+      } catch (err) {
         if (this.mpd.type === kMPDType.dynamic) {
           console.log(
             "Playing bleeding edge in dynamic mode; " +
-            "waiting for more viable segments"
+              "waiting for more viable segments"
           );
         } else {
           console.log(`Unable to fetch segment "${mediaURL}" : ${err}`);
         }
       }
 
-      if (jr.ndef(data)) { resolve(null); return }
+      if (jr.ndef(data)) {
+        resolve(null);
+        return;
+      }
 
       if (this.type === kStreamType.image) {
         this.cache.push({
           point: next,
           mime: rep.mimeType,
           data: arrayBufferToBase64(data),
-          info: rep.tileInfo,
+          info: rep.tileInfo
         });
 
         resolve(data.byteLength);
@@ -285,14 +300,14 @@ class Stream {
         type: kSegmentType.segment,
         point: next,
         data: data,
-        size: data.byteLength,
+        size: data.byteLength
       });
 
       const i = this.cache.length - 1;
 
       try {
         this.buffer = await this.appendBuffer(this.buffer, this.cache[i]);
-      } catch(e) {
+      } catch (e) {
         console.warn("WARNING: buffer not ready");
         resolve(null);
       }
@@ -305,17 +320,18 @@ class Stream {
   inCache(points = []) {
     let duplicates = [];
 
-    let binSearchCache = (point) => {
+    let binSearchCache = point => {
       let min = 0;
       let max = this.cache.length - 1;
-      let current, index = this.cache.length - 1;
+      let current,
+        index = this.cache.length - 1;
 
       if (this.cache.length > 0 && this.cache[index].point === point) {
         return index;
       }
 
       while (min <= max) {
-        index = (min + max) / 2 | 0;
+        index = ((min + max) / 2) | 0;
         current = this.cache[index];
 
         if (current.point < point) {
@@ -332,20 +348,26 @@ class Stream {
 
     for (let i = 0; i != points.length; i++) {
       const point = points[i];
-      if (binSearchCache(point) > -1) { duplicates.push(point); }
+      if (binSearchCache(point) > -1) {
+        duplicates.push(point);
+      }
     }
 
     // assumes potential for both Array and int input; weak, so pulled
     if (points.constructor === Array) {
       for (let i = 0; i != points.length; i++) {
         const point = points[i];
-        if (binSearchCache(point) > -1) { duplicates.push(point); }
+        if (binSearchCache(point) > -1) {
+          duplicates.push(point);
+        }
       }
     } else if (isInt(points)) {
       const point = points;
-      if (binSearchCache(point) > -1) { duplicates.push(point); }
+      if (binSearchCache(point) > -1) {
+        duplicates.push(point);
+      }
     } else {
-      throw(`Invalid argument value : "${points}"`);
+      throw `Invalid argument value : "${points}"`;
     }
 
     /*
@@ -377,7 +399,9 @@ class Stream {
     return new Promise((resolve, reject) => {
       let breakIndex = 0;
 
-      if (this.cache.length < amt + 1) { resolve(); }
+      if (this.cache.length < amt + 1) {
+        resolve();
+      }
       for (let i = 1; i < this.cache.length; i++) {
         if (this.cache[i].type === kSegmentType.init) {
           continue;
@@ -392,8 +416,12 @@ class Stream {
         }
       }
 
-      if (breakIndex === 0) { reject(); }
-      if (breakIndex + 1 + amt > this.cache.length) { reject(); }
+      if (breakIndex === 0) {
+        reject();
+      }
+      if (breakIndex + 1 + amt > this.cache.length) {
+        reject();
+      }
 
       this.cache.splice(breakIndex, amt);
       resolve();
@@ -408,7 +436,7 @@ class Stream {
     const rep = this.rep();
 
     if (jr.ndef(rep)) {
-      throw(`Unable to determine segment length of rep "${rep.id}"`);
+      throw `Unable to determine segment length of rep "${rep.id}"`;
     }
 
     return rep.segmentLength();
@@ -420,20 +448,24 @@ class Stream {
         const segment = this.cache[i];
 
         if (segment.point === 0 && segment.rep === repID) {
-          this.appendBuffer(this.buffer, segment).then((buffer) => {
-            this.buffer = buffer;
-            
-            for (let j = 0; j != this.sources.length; j++) {
-              const source = this.sources[j];
-              if (source.id === repID) { this.id = source.id; break; }
-            }
+          this.appendBuffer(this.buffer, segment)
+            .then(buffer => {
+              this.buffer = buffer;
 
-            resolve();
-          })
-          .catch(() => {
-            console.warn("WARNING: buffer not ready");
-            resolve();
-          });
+              for (let j = 0; j != this.sources.length; j++) {
+                const source = this.sources[j];
+                if (source.id === repID) {
+                  this.id = source.id;
+                  break;
+                }
+              }
+
+              resolve();
+            })
+            .catch(() => {
+              console.warn("WARNING: buffer not ready");
+              resolve();
+            });
         }
       }
     });
