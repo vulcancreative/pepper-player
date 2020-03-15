@@ -56,7 +56,21 @@
   },
   "babel": {
     "presets": [
-      "react-app"
+      [
+        "env",
+        {
+          "targets": {
+            "edge": "16",
+            "firefox": "59",
+            "chrome": "65",
+            "safari": "11.1"
+          },
+          "exclude": [
+            "transform-async-to-generator"
+          ]
+        }
+      ],
+      "preact"
     ]
   },
   "eslintConfig": {
