@@ -5,8 +5,10 @@ import { kMPDType, kStreamType } from "./constants";
 
 const BLANK = "";
 const MIMETYPE_STR = "mimeType";
+const SEGMENTLIST_STR = "SegmentList";
 const SEGMENTTIMELINE_STR = "SegmentTimeline";
 const SEGMENTTEMPLATE_STR = "SegmentTemplate";
+const SEGMENTURL_STR = "SegmentURL";
 const DURATION_STR = "duration";
 
 class Rep {
@@ -20,7 +22,9 @@ class Rep {
       bandwidth,
       baseURL,
       initialization,
+      listParts,
       mediaTemplate,
+      segmentList,
       segmentTimeline,
       segmentTemplate,
       timeline,
@@ -65,9 +69,19 @@ class Rep {
     baseURL += baseURL.charAt(baseURL.length - 1) === "/" ? BLANK : "/";
 
     // find segment template
+    segmentList = jr.q(SEGMENTLIST_STR, rep)[0];
     segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, rep)[0];
-    if (!segmentTemplate) {
+
+    if (!segmentList && !segmentTemplate) {
       segmentTemplate = jr.q(SEGMENTTEMPLATE_STR, adp)[0];
+    }
+
+    if (segmentList) {
+      const segmentURLs = jr.q(SEGMENTURL_STR, rep);
+      listParts = segmentURLs.map(url => jr.a("media", url));
+
+      initialization = jr.q("Initialization", rep)[0];
+      initialization = jr.a("sourceURL", initialization);
     }
 
     if (segmentTemplate) {
@@ -78,15 +92,26 @@ class Rep {
       if (jr.def(initialization)) {
         initialization = initialization.replace("$RepresentationID$", id);
       }
+    }
 
-      const startNumAttr = jr.a("startNumber", segmentTemplate);
+    if (segmentList || segmentTemplate) {
+      const startNumAttr = jr.a(
+        "startNumber",
+        segmentList || segmentTemplate
+      );
       startNumber = toInt(startNumAttr);
       // console.log(`startNumAttr : ${startNumAttr}`);
 
-      const timescaleAttr = jr.a("timescale", segmentTemplate);
+      const timescaleAttr = jr.a(
+        "timescale",
+        segmentList || segmentTemplate
+      );
       timescale = toInt(timescaleAttr);
 
-      const segDurationAttr = jr.a(DURATION_STR, segmentTemplate);
+      const segDurationAttr = jr.a(
+        DURATION_STR,
+        segmentList || segmentTemplate
+      );
       segmentDuration = toInt(segDurationAttr);
     }
 
@@ -145,6 +170,7 @@ class Rep {
     this.height = height;
     this.bandwidth = bandwidth;
     this.baseURL = baseURL;
+    this.listParts = listParts;
     this.timelineParts = timelineParts;
     this.timeline = timeline;
     this.mediaTemplate = mediaTemplate;
@@ -238,9 +264,14 @@ class Rep {
       }
 
       const delta = (target < current ? current + 1000 : target) - current;
+      console.log("target : ", target);
+      console.log("current : ", current);
+      console.log("delta : ", delta);
+
       const steps = parseInt(
         Math.ceil(parseFloat(delta) / parseFloat(len))
       );
+      console.log("steps : ", steps);
 
       const last = parseInt(
         Math.ceil(parseFloat(current) / parseFloat(len))
@@ -282,22 +313,32 @@ class Rep {
                 `steps : ${steps}`);
     */
 
-    const nStr = `${next}`;
-    let mediaName = this.mediaTemplate.replace(rVarN, `${this.id}`);
+    let mediaName;
 
-    if (nVarT.test(mediaName) && this.timeline.length > 0) {
-      mediaName = mediaName.replace(nVarT, nStr);
-    } else if (nVarD.test(mediaName)) {
-      const nVarDC = /(\$Number%(\d+)d\$)/g;
-
-      const matches = nVarDC.exec(mediaName);
-      const amount = parseInt(matches[matches.length - 1]) + 1;
-      const segmentNumberExt = nStr.padStart(amount - 1, "0");
-
-      mediaName = mediaName.replace(matches[0], segmentNumberExt);
-      mediaName = mediaName.replace(nVarN, nStr);
+    if (this.listParts) {
+      if (next - 1 > 0 && next - 1 < this.listParts.length) {
+        mediaName = this.listParts[next - 1];
+      } else {
+        mediaName = this.listParts[0];
+      }
     } else {
-      mediaName = mediaName.replace(nVarN, nStr);
+      const nStr = `${next}`;
+      mediaName = this.mediaTemplate.replace(rVarN, `${this.id}`);
+
+      if (nVarT.test(mediaName) && this.timeline.length > 0) {
+        mediaName = mediaName.replace(nVarT, nStr);
+      } else if (nVarD.test(mediaName)) {
+        const nVarDC = /(\$Number%(\d+)d\$)/g;
+
+        const matches = nVarDC.exec(mediaName);
+        const amount = parseInt(matches[matches.length - 1]) + 1;
+        const segmentNumberExt = nStr.padStart(amount - 1, "0");
+
+        mediaName = mediaName.replace(matches[0], segmentNumberExt);
+        mediaName = mediaName.replace(nVarN, nStr);
+      } else {
+        mediaName = mediaName.replace(nVarN, nStr);
+      }
     }
 
     const baseURL = this.baseURL;
@@ -327,12 +368,18 @@ class Rep {
     const timescale = parseFloat(this.timescale);
     const duration = parseFloat(this.segmentDuration);
 
+    console.log("timescale : ", timescale);
+    console.log("duration : ", duration);
+
     if (jr.ndef(timescale) || isNaN(timescale)) {
       return duration * 1000;
     }
 
     const ticks = Math.floor(duration / timescale);
     const size = parseInt(ticks) * 1000;
+
+    console.log("ticks : ", ticks);
+    console.log("size : ", size);
 
     return size;
   }

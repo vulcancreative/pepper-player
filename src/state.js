@@ -56,7 +56,9 @@ class State {
       }
       */
 
-      const root = jr.q(this.config.query, document)[0];
+      console.log("[state] this.config.query : ", this.config.query);
+      const root = document.querySelector(this.config.query);
+      console.log("[state] root : ", root);
 
       if (jr.ndef(root)) {
         reject(ERR_ROOT_INJECT);

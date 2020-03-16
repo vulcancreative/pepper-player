@@ -80,49 +80,66 @@ class Player {
     }
   }
 
-  async setup_() {
-    this.initialized = true;
-    this.hooks = new Hooks(this.config.hooks);
+  setup_() {
+    const exec = () => {
+      console.log("exec called");
+      this.initialized = true;
+      this.hooks = new Hooks(this.config.hooks);
 
-    if (!this.config.query.length || this.config.query.length < 1) {
-      throw "Invalid insertion query";
+      if (!this.config.query.length || this.config.query.length < 1) {
+        throw "Invalid insertion query";
+      }
+
+      if (this.config.base < 100) {
+        this.config.base = 100;
+      }
+      if (this.config.lead < 1000) {
+        this.config.lead = 1000;
+      }
+
+      this.renderCallback = async () => {
+        console.log("callback hit");
+        this.state = new State(this.config, this.hooks);
+
+        await this.state.setup();
+        console.log("State ready");
+
+        const diff = this.state.config.timed;
+
+        if (diff > 0) {
+          this.startsInMs = diff;
+
+          /*
+          setTimeout(() => {
+            this.startsInMs = diff >= 1000 ?
+              diff - 1000 : diff;
+
+            // this.renderUI();
+
+            this.updateTimer_(
+              diff >= 1000 ? diff - 1000 : diff
+            );
+          }, 1000);
+          */
+
+          return;
+        }
+
+        this.init_();
+      };
+
+      this.renderUI();
+    };
+
+    const windowLoaded = performance.timing.loadEventEnd;
+    const documentLoaded =
+      ["complete", "interactive"].indexOf(document.readyState) > -1;
+
+    if (windowLoaded && documentLoaded) {
+      exec();
+    } else {
+      window.addEventListener("DOMContentLoaded", () => exec());
     }
-
-    if (this.config.base < 100) {
-      this.config.base = 100;
-    }
-    if (this.config.lead < 1000) {
-      this.config.lead = 1000;
-    }
-
-    this.renderUI();
-    this.state = new State(this.config, this.hooks);
-
-    await this.state.setup();
-    console.log("State ready");
-
-    const diff = this.state.config.timed;
-
-    if (diff > 0) {
-      this.startsInMs = diff;
-
-      /*
-      setTimeout(() => {
-        this.startsInMs = diff >= 1000 ?
-          diff - 1000 : diff;
-
-        // this.renderUI();
-
-        this.updateTimer_(
-          diff >= 1000 ? diff - 1000 : diff
-        );
-      }, 1000);
-      */
-
-      return;
-    }
-
-    this.init_();
   }
 
   async init_() {
@@ -249,10 +266,8 @@ class Player {
 
         if (this.didEnd()) {
           this.hooks.run("onEnd");
-          this.state.video.currentTime = 0;
-          if (!this.config.loop) {
-            this.pause();
-          }
+          console.log("stream ended");
+          !this.config.loop ? this.pause() : this.seek(0);
         }
 
         return Promise.resolve();
@@ -304,30 +319,46 @@ class Player {
 
   renderUI() {
     if (!this.injectedUI) {
-      const injectPoint = jr.q(this.config.query, document)[0];
-      const vidExists = jr.q("video", injectPoint)[0];
+      const inject = injectPoint => {
+        const vidExists = !!injectPoint.querySelector("video");
+        console.log("vidExists : ", vidExists);
 
-      if (!vidExists) {
-        const hls = this.state && this.state.usingHLS();
-        const video = document.createElement("video");
+        let video;
 
-        video.controls = false;
-        video.autoplay = this.config.auto && !hls;
+        if (!vidExists) {
+          const hls = this.state && this.state.usingHLS();
+          video = document.createElement("video");
 
-        if (this.config.muted) {
-          video.setAttribute("playsinline", "");
-          video.setAttribute("muted", "");
+          video.controls = false;
+          video.autoplay = this.config.auto && !hls;
+
+          if (this.config.muted) {
+            video.setAttribute("webkit-playsinline", "");
+            video.setAttribute("playsinline", "");
+            video.muted = "muted";
+          }
+
+          video.addEventListener("click", () => {
+            this.state.video.play().catch(e => console.log(e));
+          });
+          video.addEventListener("contextmenu", e => e.preventDefault());
+
+          injectPoint.appendChild(video);
         }
 
-        video.addEventListener("click", () => {
-          this.state.video.play().catch(e => console.log(e));
-        });
-        video.addEventListener("contextmenu", e => e.preventDefault());
+        this.injectedUI = true;
+        this.renderCallback && this.renderCallback();
+      };
 
-        injectPoint.appendChild(video);
+      if (this.renderInterval) clearInterval(this.renderInterval);
+      const injectPoint = document.querySelector(this.config.query);
+      if (injectPoint) {
+        console.log("has injectPoint, taking the plunge : ", injectPoint);
+        inject(injectPoint);
+      } else {
+        this.renderInterval = setInterval(() => this.renderUI(), 500);
       }
-
-      this.injectedUI = true;
+      console.log("injectPoint : ", injectPoint);
     }
   }
 
