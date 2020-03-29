@@ -53,6 +53,7 @@ class Player {
       loop: false,
       muted: false,
       query: ".pepper",
+      recover: true,
       start: 0,
       timed: 0,
       track: 0,
@@ -101,7 +102,7 @@ class Player {
         console.log("callback hit");
         this.state = new State(this.config, this.hooks);
 
-        await this.state.setup();
+        await this.state.setup(() => this.recoverError_());
         console.log("State ready");
 
         const diff = this.state.config.timed;
@@ -267,7 +268,12 @@ class Player {
         if (this.didEnd()) {
           this.hooks.run("onEnd");
           console.log("stream ended");
-          !this.config.loop ? this.pause() : this.seek(0);
+
+          if (!this.config.loop) {
+            this.pause();
+          } else {
+            this.reset_();
+          }
         }
 
         return Promise.resolve();
@@ -380,7 +386,7 @@ class Player {
     }
 
     this.state = new State(this.config, this.hooks);
-    await this.state.setup();
+    await this.state.setup(() => this.recoverError_());
     await this.init_();
 
     this.hooks.run("onPlay");
@@ -432,13 +438,25 @@ class Player {
     return this.state.video.volume;
   }
 
+  async reset_() {
+    console.log("resetting");
+    delete this.state;
+    this.state = new State(this.config, this.hooks);
+    await this.state.setup(() => this.recoverError_());
+    this.init_();
+  }
+
+  async recoverError_() {
+    if (this.config.recover) {
+      console.log("recovering from fatal error");
+      await this.reset_();
+    }
+  }
+
   async recoverBlock_() {
     if (this.browserBlocked) {
       console.log("recovering from browser block");
-      this.state = new State(this.config, this.hooks);
-      await this.state.setup();
-      this.init_();
-
+      await this.reset_();
       return true;
     }
 

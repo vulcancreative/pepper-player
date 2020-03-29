@@ -39,7 +39,7 @@ class State {
     this.hooks = hooks;
   }
 
-  setup() {
+  setup(recover) {
     return new Promise(async (resolve, reject) => {
       /*
       if (this.config.timed.start !== -1) {
@@ -59,6 +59,7 @@ class State {
       console.log("[state] this.config.query : ", this.config.query);
       const root = document.querySelector(this.config.query);
       console.log("[state] root : ", root);
+      root.style.display = "block";
 
       if (jr.ndef(root)) {
         reject(ERR_ROOT_INJECT);
@@ -67,10 +68,13 @@ class State {
       // Handle weird, browser-specific DOMExceptions
       root.onerror = e => {
         if (e.target && e.target.error) {
-          console.error(e.target.error);
+          console.log("ERROR : ", e.target.error);
         } else {
-          console.error(e);
+          console.log("ERROR : ", e);
         }
+
+        root.style.display = "none";
+        setTimeout(() => recover(), 1000);
       };
 
       root.addEventListener("encrypted", () => {

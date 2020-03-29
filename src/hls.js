@@ -13,18 +13,15 @@ const hlsSupported = mpd => {
   const kHLSType = mimeType;
   let video = document.createElement("video");
 
+  // force desktop Safari to play HLS
+  // return video.canPlayType && !!video.canPlayType(kHLSType);
+
   return (
     (os.is("safari") && mpd && mpd.live) ||
     (video.canPlayType &&
       !!video.canPlayType(kHLSType) &&
       !("MediaSource" in window))
   );
-
-  /*
-  // force desktop Safari to play HLS
-  return video.canPlayType &&
-  !!video.canPlayType(kHLSType);
-  */
 };
 
 const hlsPreferred = mpd => {
@@ -101,9 +98,11 @@ const mpdToM3U8 = state => {
     return (
       `#EXT-X-STREAM-INF:` +
       `BANDWIDTH=${r.bandwidth},` +
-      `CODECS="${r.codecs},${audio[0].codecs}",` +
+      `CODECS="${r.codecs}${
+        audio && audio.length >= 1 ? `,${audio[0].codecs}` : ""
+      }",` +
       `RESOLUTION=${r.width}x${r.height},` +
-      `AUDIO="${audio[0].id}"\n` +
+      `${audio && audio.length >= 1 ? `AUDIO="${audio[0].id}"\n` : ""}` +
       `${hlsRepURL}`
     );
   });
