@@ -60,6 +60,7 @@
         "env",
         {
           "targets": {
+            "ie": "11",
             "edge": "16",
             "firefox": "59",
             "chrome": "65",
