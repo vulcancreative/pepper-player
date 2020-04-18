@@ -209,9 +209,7 @@ class Player {
   }
 
   isPaused() {
-    if (jr.ndef(this.state)) {
-      return true;
-    }
+    if (jr.ndef(this.state)) return true;
     return this.state.paused;
   }
 
@@ -241,7 +239,7 @@ class Player {
     try {
       await this.state.play();
     } catch (e) {
-      const error = "browser blocked player start";
+      const error = `browser blocked player start, ${e}`;
       console.error(`ERROR : ${error}`);
       this.hooks.run("onError", error);
 
@@ -299,7 +297,7 @@ class Player {
           try {
             await this.state.play();
           } catch (e) {
-            const error = "browser blocked player start";
+            const error = `browser blocked player start, ${e}`;
             console.error(`ERROR : ${error}`);
             this.hooks.run("onError", error);
 

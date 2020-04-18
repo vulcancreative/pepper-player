@@ -393,16 +393,14 @@ class State {
     if (this.loading) {
       return Promise.resolve([-1, -1, -1]);
     }
-    if (this.started && this.paused) {
+    if (this.started || this.paused) {
       return Promise.resolve([-1, -1, -1]);
     }
 
     // base line time used for live buffering
     const now = clock.now();
     const lens = this.segmentLengths();
-    if (lens < 0) {
-      return Promise.resolve([-1, -1, -1]);
-    }
+    if (lens < 0) return Promise.resolve([-1, -1, -1]);
 
     const minTime = lens.reduce((a, b) => Math.min(a, b)) / 2;
 
